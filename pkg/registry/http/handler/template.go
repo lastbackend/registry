@@ -1,11 +1,11 @@
 package handler
 
 import (
+	"encoding/json"
 	"github.com/gorilla/mux"
 	e "github.com/lastbackend/registry/libs/errors"
 	"github.com/lastbackend/registry/pkg/registry/context"
 	"github.com/lastbackend/registry/pkg/template"
-	"k8s.io/kubernetes/staging/src/k8s.io/client-go/1.4/pkg/util/json"
 	"net/http"
 )
 

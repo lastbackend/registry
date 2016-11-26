@@ -282,11 +282,6 @@
 		{
 			"ImportPath": "k8s.io/client-go/1.5/pkg/util/yaml",
 			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
-		},
-		{
-			"ImportPath": "k8s.io/kubernetes/staging/src/k8s.io/client-go/1.4/pkg/util/json",
-			"Comment": "v1.4.6",
-			"Rev": "e569a27d02001e343cb68086bc06d47804f62af6"
 		}
 	]
 }

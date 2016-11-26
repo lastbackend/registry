@@ -195,13 +195,13 @@ func Get(name, version string) *Template {
 
 func List() map[string][]string {
 
-  var lists = make(map[string][]string)
+	var lists = make(map[string][]string)
 
-  for name, versions := range storage {
-    for version := range versions {
-      lists[name] = append(lists[name], version)
-    }
-  }
+	for name, versions := range storage {
+		for version := range versions {
+			lists[name] = append(lists[name], version)
+		}
+	}
 
 	return lists
 }
