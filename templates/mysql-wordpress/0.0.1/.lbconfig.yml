@@ -1,0 +1,34 @@
+name: mysql-wordpress
+version: 0.0.1
+dependensies:
+- file: wordpress-deployment
+  name: wordpress
+  type: Service
+- file: wordpress-deployment
+  name: wp-pv-claim
+  type: PersistentVolumeClaim
+- file: wordpress-deployment
+  name: wordpress
+  type: Deployment
+- file: mysql-deployment
+  name: wordpress-mysql
+  type: Service
+- file: mysql-deployment
+  name: mysql-pv-claim
+  type: PersistentVolumeClaim
+- file: mysql-deployment
+  name: wordpress-mysql
+  type: PersistentVolumeClaim
+- file: local-volumes
+  name: wordpress-pv-1
+  type: PersistentVolume
+- file: local-volumes
+  name: wordpress-pv-2
+  type: PersistentVolume
+- file: gce-volumes
+  name: wordpress-pv-1
+  type: PersistentVolume
+- file: gce-volumes
+  name: wordpress-pv-2
+  type: PersistentVolume
+
