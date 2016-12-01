@@ -6,8 +6,8 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/lastbackend/registry/pkg/registry/context"
 	"io/ioutil"
-	"k8s.io/client-go/1.5/pkg/api"
-	"k8s.io/client-go/1.5/pkg/apis/extensions"
+	"k8s.io/client-go/1.5/pkg/api/v1"
+	"k8s.io/client-go/1.5/pkg/apis/extensions/v1beta1"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,14 +16,14 @@ import (
 var storage map[string]map[string]*Template = make(map[string]map[string]*Template)
 
 type Template struct {
-	Namespaces             []api.Namespace             `json:"namespaces,omitempty"`
-	PersistentVolumes      []api.PersistentVolume      `json:"persistent_volumes,omitempty"`
-	PersistentVolumeClaims []api.PersistentVolumeClaim `json:"persistent_volume_claims,omitempty"`
-	ServiceAccounts        []api.ServiceAccount        `json:"service_accounts,omitempty"`
-	Services               []api.Service               `json:"services,omitempty"`
-	ReplicationControllers []api.ReplicationController `json:"replication_controllers,omitempty"`
-	Pods                   []api.Pod                   `json:"pods,omitempty"`
-	Deployments            []extensions.Deployment     `json:"deployments,omitempty"`
+	Secrets                []v1.Secret                `json:"secrets,omitempty"`
+	PersistentVolumes      []v1.PersistentVolume      `json:"persistent_volumes,omitempty"`
+	PersistentVolumeClaims []v1.PersistentVolumeClaim `json:"persistent_volume_claims,omitempty"`
+	ServiceAccounts        []v1.ServiceAccount        `json:"service_accounts,omitempty"`
+	Services               []v1.Service               `json:"services,omitempty"`
+	ReplicationControllers []v1.ReplicationController `json:"replication_controllers,omitempty"`
+	Pods                   []v1.Pod                   `json:"pods,omitempty"`
+	Deployments            []v1beta1.Deployment       `json:"deployments,omitempty"`
 }
 
 func (t *Template) ToJson() ([]byte, error) {
@@ -89,17 +89,17 @@ func Load(path string) {
 				}
 
 				switch a.Kind {
-				case "Namespace":
-					var namespace = new(api.Namespace)
+				case "Secret":
+					var namespace = new(v1.Secret)
 
 					err := json.Unmarshal(buf, namespace)
 					if err != nil {
 						fmt.Println(err)
 					}
 
-					storage[template][version].Namespaces = append(storage[template][version].Namespaces, *namespace)
+					storage[template][version].Secrets = append(storage[template][version].Secrets, *namespace)
 				case "PersistentVolume":
-					var persistentVolume = new(api.PersistentVolume)
+					var persistentVolume = new(v1.PersistentVolume)
 
 					err := json.Unmarshal(buf, persistentVolume)
 					if err != nil {
@@ -108,7 +108,7 @@ func Load(path string) {
 
 					storage[template][version].PersistentVolumes = append(storage[template][version].PersistentVolumes, *persistentVolume)
 				case "PersistentVolumeClaim":
-					var persistentVolumeClaim = new(api.PersistentVolumeClaim)
+					var persistentVolumeClaim = new(v1.PersistentVolumeClaim)
 
 					err := json.Unmarshal(buf, persistentVolumeClaim)
 					if err != nil {
@@ -117,7 +117,7 @@ func Load(path string) {
 
 					storage[template][version].PersistentVolumeClaims = append(storage[template][version].PersistentVolumeClaims, *persistentVolumeClaim)
 				case "ServiceAccount":
-					var serviceAccount = new(api.ServiceAccount)
+					var serviceAccount = new(v1.ServiceAccount)
 
 					err := json.Unmarshal(buf, serviceAccount)
 					if err != nil {
@@ -126,7 +126,7 @@ func Load(path string) {
 
 					storage[template][version].ServiceAccounts = append(storage[template][version].ServiceAccounts, *serviceAccount)
 				case "Service":
-					var service = new(api.Service)
+					var service = new(v1.Service)
 
 					err := json.Unmarshal(buf, service)
 					if err != nil {
@@ -135,7 +135,7 @@ func Load(path string) {
 
 					storage[template][version].Services = append(storage[template][version].Services, *service)
 				case "Deployment":
-					var deployment = new(extensions.Deployment)
+					var deployment = new(v1beta1.Deployment)
 
 					err := json.Unmarshal(buf, deployment)
 					if err != nil {
@@ -144,7 +144,7 @@ func Load(path string) {
 
 					storage[template][version].Deployments = append(storage[template][version].Deployments, *deployment)
 				case "ReplicationController":
-					var replicationController = new(api.ReplicationController)
+					var replicationController = new(v1.ReplicationController)
 
 					err := json.Unmarshal(buf, replicationController)
 					if err != nil {
@@ -153,7 +153,7 @@ func Load(path string) {
 
 					storage[template][version].ReplicationControllers = append(storage[template][version].ReplicationControllers, *replicationController)
 				case "Pod":
-					var pod = new(api.Pod)
+					var pod = new(v1.Pod)
 
 					err := json.Unmarshal(buf, pod)
 					if err != nil {
