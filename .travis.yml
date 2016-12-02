@@ -1,0 +1,7 @@
+language: go
+
+go:
+  - tip
+
+notifications:
+  slack: lastbackend:IhTIns2zne944hjFoPLaOUuE
