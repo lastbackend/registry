@@ -170,13 +170,6 @@ func Load(path string) {
 		return nil
 	})
 
-	buf, err := json.Marshal(storage)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println("template: >> ", string(buf))
-
 	return
 }
 

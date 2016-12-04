@@ -21,7 +21,7 @@ func TemplateGetH(w http.ResponseWriter, r *http.Request) {
 
 	t := template.Get(name, version)
 	if t == nil {
-		e.Template.NotFound().Http(w)
+		e.New("template").NotFound().Http(w)
 		return
 	}
 
