@@ -20,6 +20,16 @@
 			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
 		},
 		{
+			"ImportPath": "github.com/docker/distribution/digest",
+			"Comment": "v2.4.0-rc.1-38-gcd27f17",
+			"Rev": "cd27f179f2c10c5d300e6d09025b538c475b0d51"
+		},
+		{
+			"ImportPath": "github.com/docker/distribution/reference",
+			"Comment": "v2.4.0-rc.1-38-gcd27f17",
+			"Rev": "cd27f179f2c10c5d300e6d09025b538c475b0d51"
+		},
+		{
 			"ImportPath": "github.com/ghodss/yaml",
 			"Rev": "73d445a93680fa1a78ae23a5839bad48f32ba1ee"
 		},
@@ -95,7 +105,19 @@
 			"Rev": "e90d6d0afc4c315a0d87a568ae68577cc15149a0"
 		},
 		{
+			"ImportPath": "golang.org/x/net/http2",
+			"Rev": "e90d6d0afc4c315a0d87a568ae68577cc15149a0"
+		},
+		{
+			"ImportPath": "golang.org/x/net/http2/hpack",
+			"Rev": "e90d6d0afc4c315a0d87a568ae68577cc15149a0"
+		},
+		{
 			"ImportPath": "golang.org/x/net/idna",
+			"Rev": "e90d6d0afc4c315a0d87a568ae68577cc15149a0"
+		},
+		{
+			"ImportPath": "golang.org/x/net/lex/httplex",
 			"Rev": "e90d6d0afc4c315a0d87a568ae68577cc15149a0"
 		},
 		{
@@ -168,6 +190,10 @@
 			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
 		},
 		{
+			"ImportPath": "k8s.io/client-go/1.5/pkg/api/v1",
+			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
+		},
+		{
 			"ImportPath": "k8s.io/client-go/1.5/pkg/apis/autoscaling",
 			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
 		},
@@ -177,6 +203,10 @@
 		},
 		{
 			"ImportPath": "k8s.io/client-go/1.5/pkg/apis/extensions",
+			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
+		},
+		{
+			"ImportPath": "k8s.io/client-go/1.5/pkg/apis/extensions/v1beta1",
 			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
 		},
 		{
@@ -224,6 +254,10 @@
 			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
 		},
 		{
+			"ImportPath": "k8s.io/client-go/1.5/pkg/runtime/serializer/streaming",
+			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
+		},
+		{
 			"ImportPath": "k8s.io/client-go/1.5/pkg/runtime/serializer/versioning",
 			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
 		},
@@ -237,6 +271,10 @@
 		},
 		{
 			"ImportPath": "k8s.io/client-go/1.5/pkg/types",
+			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
+		},
+		{
+			"ImportPath": "k8s.io/client-go/1.5/pkg/util",
 			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
 		},
 		{
@@ -260,7 +298,19 @@
 			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
 		},
 		{
+			"ImportPath": "k8s.io/client-go/1.5/pkg/util/net",
+			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
+		},
+		{
+			"ImportPath": "k8s.io/client-go/1.5/pkg/util/parsers",
+			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
+		},
+		{
 			"ImportPath": "k8s.io/client-go/1.5/pkg/util/rand",
+			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
+		},
+		{
+			"ImportPath": "k8s.io/client-go/1.5/pkg/util/runtime",
 			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
 		},
 		{
@@ -280,7 +330,19 @@
 			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
 		},
 		{
+			"ImportPath": "k8s.io/client-go/1.5/pkg/util/wait",
+			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
+		},
+		{
 			"ImportPath": "k8s.io/client-go/1.5/pkg/util/yaml",
+			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
+		},
+		{
+			"ImportPath": "k8s.io/client-go/1.5/pkg/watch",
+			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
+		},
+		{
+			"ImportPath": "k8s.io/client-go/1.5/pkg/watch/versioned",
 			"Rev": "4e647cdbb29217f9f0855caeaab354e7f19d7e42"
 		}
 	]
