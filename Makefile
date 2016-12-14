@@ -26,10 +26,10 @@ build:
 install:
 	echo "Install Last.Backend, ${OS} version:= ${VERSION}"
 ifeq ($(OS),Linux)
-	mv build/linux/$(NAME) /usr/local/bin/lb
+	mv build/linux/$(NAME) /usr/local/bin/$(NAME)
 endif
 ifeq ($(OS) ,Darwin)
-	mv build/darwin/$(NAME) /usr/local/bin/lb
+	mv build/darwin/$(NAME) /usr/local/bin/$(NAME)
 endif
 	chmod +x /usr/local/bin/$(NAME)
 
