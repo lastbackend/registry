@@ -39,6 +39,7 @@ spec:
       labels:
         app: wordpress
         tier: frontend
+        role: placeholder
     spec:
       containers:
       - image: wordpress:4.4-apache
