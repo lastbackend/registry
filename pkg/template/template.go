@@ -41,6 +41,12 @@ func Load(path string) {
 
 	ctx.Log.Info("Load templates")
 
+	path, err := filepath.Abs(path)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	// walk all files in directory
 	filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 
