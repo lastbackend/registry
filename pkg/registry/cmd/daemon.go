@@ -53,7 +53,7 @@ func Daemon(cmd *cli.Cmd) {
 			cfg.HttpServer.Port = 3000
 		}
 
-		template.Load("./templates")
+		template.Load("./../../templates")
 	}
 
 	cmd.Action = func() {
