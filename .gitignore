@@ -9,8 +9,6 @@ _test
 .idea
 .vagrant
 contrib/vagrant/ssl
-rethinkdb_data
-build
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -29,4 +27,10 @@ _testmain.go
 *.prof
 *.iml
 *.srl
+.DS_Store
 
+vendor/*/
+docs/output/
+coverage.txt
+/build/
+/profile.out
