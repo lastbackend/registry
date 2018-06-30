@@ -19,4 +19,3 @@
 package types
 
 const logLevel = 3
-

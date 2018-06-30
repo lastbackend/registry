@@ -20,57 +20,35 @@ package validator
 
 import (
 	"github.com/asaskevich/govalidator"
+	"reflect"
 	"regexp"
+	"strconv"
+	"strings"
 )
 
-func IsUsername(s string) bool {
-	reg, _ := regexp.Compile("[A-Za-z0-9]+(?:[_-][A-Za-z0-9]+)*")
-	str := reg.FindStringSubmatch(s)
-	if len(str) == 1 && str[0] == s && len(s) >= 4 && len(s) <= 64 {
+func IsNil(a interface{}) bool {
+	defer func() { recover() }()
+	return a == nil || reflect.ValueOf(a).IsNil()
+}
+
+func IsBool(s string) bool {
+	s = strings.ToLower(s)
+	if s == "true" || s == "1" || s == "t" || s == "false" || s == "0" || s == "f" {
 		return true
 	}
 	return false
 }
 
-func IsPassword(s string) bool {
-	return len(s) > 6
+func IsIP(ip string) bool {
+	return govalidator.IsIP(ip)
 }
 
-func IsEmail(s string) bool {
-	return govalidator.IsEmail(s)
+func IsUUID(uuid string) bool {
+	return govalidator.IsUUIDv4(uuid)
 }
 
-func IsServiceName(s string) bool {
-	reg, _ := regexp.Compile("[A-Za-z0-9]+(?:[_-][A-Za-z0-9]+)*")
-	str := reg.FindStringSubmatch(s)
-	if len(str) == 1 && str[0] == s && len(s) >= 4 && len(s) <= 64 {
-		return true
-	}
-	return false
-}
-
-func IsNamespaceName(s string) bool {
-	reg, _ := regexp.Compile("^[A-Za-z0-9][A-Za-z0-9\\.]+(?:[_-][A-Za-z0-9\\.]+)*")
-	str := reg.FindStringSubmatch(s)
-	if len(str) == 1 && str[0] == s && len(s) >= 4 && len(s) <= 64 {
-		return true
-	}
-	return false
-}
-
-func IsClusterName(s string) bool {
-	reg, _ := regexp.Compile("^([A-Za-z0-9]+(?:[_-][A-Za-z0-9]+)*)\\.([A-Za-z0-9]+(?:[_-][A-Za-z0-9]+)*)$")
-	str := reg.FindStringSubmatch(s)
-	return len(str) == 3
-}
-
-func IsRepoName(s string) bool {
-	reg, _ := regexp.Compile("[a-z0-9]+(?:[._-][a-z0-9]+)*")
-	str := reg.FindStringSubmatch(s)
-	if len(str) == 1 && str[0] == s && len(s) > 0 {
-		return true
-	}
-	return false
+func IsPort(port int) bool {
+	return govalidator.IsPort(strconv.Itoa(port))
 }
 
 // Check incoming string on git valid utl
@@ -84,6 +62,15 @@ func IsGitUrl(url string) bool {
 	}
 
 	return res
+}
+
+func IsRepoName(s string) bool {
+	reg, _ := regexp.Compile("[a-z0-9]+(?:[._-][a-z0-9]+)*")
+	str := reg.FindStringSubmatch(s)
+	if len(str) == 1 && str[0] == s && len(s) > 0 {
+		return true
+	}
+	return false
 }
 
 func IsValueInList(value string, list []string) bool {

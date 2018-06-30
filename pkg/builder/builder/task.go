@@ -26,17 +26,17 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lastbackend/registry/pkg/builder/envs"
+	"github.com/lastbackend/registry/pkg/runtime/cri"
+	"github.com/lastbackend/registry/pkg/runtime/cri/docker"
 	"github.com/lastbackend/registry/pkg/builder/logger"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/events"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/blob"
 	"github.com/lastbackend/registry/pkg/util/generator"
 	"github.com/lastbackend/registry/pkg/util/validator"
-	lbt "github.com/lastbackend/lastbackend/pkg/distribution/types"
-	"github.com/lastbackend/lastbackend/pkg/node/runtime/cri"
-	"github.com/lastbackend/lastbackend/pkg/node/runtime/cri/docker"
+	"github.com/lastbackend/registry/pkg/builder/envs"
+
+	lbt "github.com/lastbackend/registry/pkg/distribution/types"
 )
 
 const (
@@ -361,7 +361,7 @@ func (t *task) push() error {
 	}()
 
 	result := new(struct {
-		Progress    map[string]interface{} `json:"progressDetail"`
+		Progress map[string]interface{} `json:"progressDetail"`
 		ErrorDetail *struct {
 			Message string `json:"message"`
 			Error   string `json:"error"`
@@ -543,7 +543,7 @@ func (t *task) sendEvent(event taskEvent) {
 
 	log.Debugf("Task: SendEvent: send task status event %s", t.job.ID)
 
-	e := types.BuildStateBuilderEventPayload{}
+	e := new(types.TaskStatusBuilderEvent)
 	e.Build = t.job.ID
 	e.Builder = t.builder
 	e.Task = t.id
@@ -552,11 +552,18 @@ func (t *task) sendEvent(event taskEvent) {
 	e.State.Error = event.error
 	e.State.Canceled = t.ctx.Err() == context.Canceled
 
-	events.BuildStateEventRequest(envs.Get().GetRPC(), e)
+	envs.Get().GetClient().Event().SendTaskStatus(t.ctx, e)
 }
 
 // Send status build event to controller
 func (t *task) sendInfo(info *lbt.ImageInfo) {
 	log.Debugf("Task: SendEvent: send task status event %s", t.job.ID)
-	events.BuildImageInfoRequest(envs.Get().GetRPC(), t.job.ID, info)
+
+	e := new(types.ImageInfoBuilderEvent)
+	e.Size = info.Size
+	e.ID = info.ID
+	e.VirtualSize = info.VirtualSize
+	e.JobID = t.job.ID
+
+	envs.Get().GetClient().Event().SendImageInfo(t.ctx, e)
 }

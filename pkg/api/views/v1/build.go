@@ -46,15 +46,15 @@ type BuildState struct {
 	Processing bool       `json:"processing"`
 	Canceled   bool       `json:"canceled"`
 	Error      bool       `json:"error"`
-	Finished   time.Time  `json:"finished"`
-	Started    *time.Time `json:"started,omitempty"`
+	Finished   *time.Time `json:"finished"`
+	Started    *time.Time `json:"started"`
 }
 
 type BuildStats struct {
+	Size int64 `json:"size"`
 }
 
 type BuildSource struct {
-	Token  string `json:"token"`
 	Hub    string `json:"hub"`
 	Owner  string `json:"owner"`
 	Name   string `json:"name"`
@@ -69,7 +69,11 @@ type BuildSource struct {
 }
 
 type BuildImage struct {
-	Tag string `json:"tag"`
+	Hub   string `json:"hub"`
+	Name  string `json:"name"`
+	Owner string `json:"owner"`
+	Tag   string `json:"tag"`
+	Hash  string `json:"hash"`
 }
 
 type BuildList []*Build

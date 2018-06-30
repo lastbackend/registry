@@ -23,22 +23,25 @@ import (
 	"io"
 	"net/http"
 
-	v "github.com/lastbackend/registry/pkg/api/views"
-
 	"github.com/lastbackend/registry/pkg/api/envs"
+	"github.com/lastbackend/registry/pkg/distribution"
+	"github.com/lastbackend/registry/pkg/distribution/errors"
+	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/http/utils"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/spf13/viper"
-	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/distribution"
+
+	v "github.com/lastbackend/registry/pkg/api/views"
 )
 
-const logLevel = 2
+const (
+	logLevel  = 2
+	logPrefix = "registry:api:handler:build"
+)
 
-func BuildList(w http.ResponseWriter, r *http.Request) {
+func BuildListH(w http.ResponseWriter, r *http.Request) {
 
-	log.Debug("Handler: Builds: get build list")
+	log.V(logLevel).Debugf("%s:build:list:> get build list", logPrefix)
 
 	var (
 		owner  = utils.Vars(r)[`owner`]
@@ -48,92 +51,92 @@ func BuildList(w http.ResponseWriter, r *http.Request) {
 		rm     = distribution.NewRepoModel(r.Context(), envs.Get().GetStorage())
 	)
 
-	rps, err := rm.Get("")
+	rps, err := rm.Get(owner, name)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Builds: get repo info err: %s", err)
+		log.V(logLevel).Errorf("%s:build:list:>  get repo info err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if rps == nil {
-		log.V(logLevel).Warnf("Handler: Builds: repo `%s/%s` not found", owner, name)
+		log.V(logLevel).Warnf("%s:build:list:> repo `%s/%s` not found", logPrefix, owner, name)
 		errors.New("repo").NotFound().Http(w)
 		return
 	}
 
 	builds, err := bm.List(rps, active)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Build: get builds list err: %s", err)
+		log.V(logLevel).Errorf("%s:build:list:> get builds list err: %s", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	response, err := v.V1().Build().NewList(builds).ToJson()
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Build: convert struct to json err: %v", err)
+		log.V(logLevel).Errorf("%s:build:list:> convert struct to json err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if _, err = w.Write(response); err != nil {
-		log.Error("Error: write response", err)
+		log.V(logLevel).Errorf("%s:build:list:> write response err: %v", err)
 		return
 	}
 }
 
-func BuildGet(w http.ResponseWriter, r *http.Request) {
+func BuildGetH(w http.ResponseWriter, r *http.Request) {
 
-	log.Debug("Get build info handler")
+	log.V(logLevel).Debugf("%s:build:get:> get build info handler", logPrefix)
 
 	var (
-		id    = utils.Vars(r)[`build`]
+		build = utils.Vars(r)[`build`]
 		owner = utils.Vars(r)[`owner`]
 		name  = utils.Vars(r)[`name`]
 		rm    = distribution.NewRepoModel(r.Context(), envs.Get().GetStorage())
 		bm    = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
 	)
 
-	rps, err := rm.Get("")
+	rps, err := rm.Get(owner, name)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Builds: get repo info err: %s", err)
+		log.V(logLevel).Errorf("%s:build:get:> get repo info err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if rps == nil {
-		log.V(logLevel).Warnf("Handler: Builds: repo `%s/%s` not found", owner, name)
+		log.V(logLevel).Warnf("%s:build:get:> repo `%s/%s` not found", logPrefix, owner, name)
 		errors.New("repo").NotFound().Http(w)
 		return
 	}
 
-	b, err := bm.Get(id)
+	b, err := bm.Get(build)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Build: get info err: %s", err)
+		log.V(logLevel).Errorf("%s:build:get:> get info err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if b == nil {
-		log.V(logLevel).Warnf("Handler: Build: build `%s` not found", id)
+		log.V(logLevel).Warnf("%s:build:get:> build `%s` not found", logPrefix, build)
 		errors.New("build").NotFound().Http(w)
 		return
 	}
 
 	response, err := v.V1().Build().New(b).ToJson()
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Build: convert struct to json err: %v", err)
+		log.V(logLevel).Errorf("%s:build:get:> convert struct to json err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if _, err = w.Write(response); err != nil {
-		log.Error("Error: write response", err)
+		log.V(logLevel).Errorf("%s:build:get:> write response err: %v", logPrefix, err)
 		return
 	}
 }
 
-func BuildLogs(w http.ResponseWriter, r *http.Request) {
+func BuildLogsH(w http.ResponseWriter, r *http.Request) {
 
-	log.Debug("Get build logs handler")
+	log.V(logLevel).Debugf("%s:build:logs:>  get build logs handler", logPrefix)
 
 	var (
 		id    = utils.Vars(r)[`build`]
@@ -143,26 +146,26 @@ func BuildLogs(w http.ResponseWriter, r *http.Request) {
 		bm    = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
 	)
 
-	rps, err := rm.Get("")
+	rps, err := rm.Get(owner, name)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Builds: get repo info err: %s", err)
+		log.V(logLevel).Errorf("%s:build:logs:> get repo info err: %s", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if rps == nil {
-		log.V(logLevel).Warnf("Handler: Builds: repo `%s/%s` not found", owner, name)
+		log.V(logLevel).Warnf("%s:build:logs:> repo `%s/%s` not found", logPrefix, owner, name)
 		errors.New("repo").NotFound().Http(w)
 		return
 	}
 
 	b, err := bm.Get(id)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Build: get info err: %s", err)
+		log.V(logLevel).Errorf("%s:build:logs:> get info err: %s", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if b == nil {
-		log.V(logLevel).Warnf("Handler: Build: build `%s` not found", id)
+		log.V(logLevel).Warnf("%s:build:logs:> build `%s` not found", logPrefix, id)
 		errors.New("build").NotFound().Http(w)
 		return
 	}
@@ -184,11 +187,11 @@ func BuildLogs(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, read)
 }
 
-func BuildCancel(w http.ResponseWriter, r *http.Request) {
+func BuildCancelH(w http.ResponseWriter, r *http.Request) {
 
 	var id = utils.Vars(r)[`build`]
 
-	log.Debugf("Cancel build %s handler", id)
+	log.V(logLevel).Debugf("%s:build:cancel:> cancel build %s handler", logPrefix, id)
 
 	var (
 		owner = utils.Vars(r)[`owner`]
@@ -197,109 +200,103 @@ func BuildCancel(w http.ResponseWriter, r *http.Request) {
 		bm    = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
 	)
 
-	rps, err := rm.Get("")
+	rps, err := rm.Get(owner, name)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Builds: get repo info err: %s", err)
+		log.V(logLevel).Errorf("%s:build:cancel:> get repo info err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if rps == nil {
-		log.V(logLevel).Warnf("Handler: Builds: repo `%s/%s` not found", owner, name)
+		log.V(logLevel).Warnf("%s:build:cancel:> repo `%s/%s` not found", logPrefix, owner, name)
 		errors.New("repo").NotFound().Http(w)
 		return
 	}
 
 	b, err := bm.Get(id)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Build: get info err: %s", err)
+		log.V(logLevel).Errorf("%s:build:cancel:> get info err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if b == nil {
-		log.V(logLevel).Warnf("Handler: Build: build `%s` not found", id)
+		log.V(logLevel).Warnf("%s:build:cancel:> build `%s` not found", logPrefix, id)
 		errors.New("build").NotFound().Http(w)
 		return
 	}
 
 	err = bm.Cancel(b)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Build: cancel build err: %v", err)
+		log.V(logLevel).Errorf("%s:build:cancel:> cancel build err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte{}); err != nil {
-		log.Error("Error: write response", err)
+		log.V(logLevel).Errorf("%s:build:cancel:> write response err: %v", logPrefix, err)
 		return
 	}
 }
 
-func BuildCreate(w http.ResponseWriter, r *http.Request) {
+func BuildCreateH(w http.ResponseWriter, r *http.Request) {
 
-	log.Debug("New build handler")
+	log.V(logLevel).Debugf("New build handler", logPrefix)
 
 	var (
 		owner = utils.Vars(r)[`owner`]
-		repo  = utils.Vars(r)[`name`]
+		name  = utils.Vars(r)[`name`]
 		bm    = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
 		rm    = distribution.NewRepoModel(r.Context(), envs.Get().GetStorage())
 	)
 
 	opts := new(types.BuildCreateOptions)
 	if err := opts.DecodeAndValidate(r.Body); err != nil {
-		log.V(logLevel).Errorf("Handler: Build: validation incoming data err: %v", err.Err())
+		log.V(logLevel).Errorf("%s:build:create:> validation incoming data err: %v", logPrefix, err)
 		err.Http(w)
 		return
 	}
 
-	rps, err := rm.Get("")
+	rps, err := rm.Get(owner, name)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Build: get repo info err: %s", err)
+		log.V(logLevel).Errorf("%s:build:create:> get repo info err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if rps == nil {
-		log.V(logLevel).Warnf("Handler: Build: repo `%s/%s` not found", owner, repo)
+		log.V(logLevel).Warnf("%s:build:create:> repo `%s/%s` not found", logPrefix, owner, name)
 		errors.New("repo").NotFound().Http(w)
 		return
 	}
 
-	if _, ok := rps.Tags[*opts.Tag]; !ok && !rps.Tags[*opts.Tag].AutoBuild {
-		log.V(logLevel).Warn("Handler: Build: tag %s not found in build rules", *opts.Tag)
+	if _, ok := rps.Tags[*opts.Tag]; !ok {
+		log.V(logLevel).Warn("%s:build:create:> tag %s not found in build rules", logPrefix, *opts.Tag)
 		errors.HTTP.NotFound(w)
 		return
 	}
 
 	b, err := bm.Create(rps, rps.Tags[*opts.Tag].Name)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Build: create build err: %v", err)
+		log.V(logLevel).Errorf("%s:build:create:> create build err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
-	//if err := rm.UpdateTag(rps.Meta.ID, rps.Tags[*opts.Tag].Name); err != nil {
-	//	log.V(logLevel).Errorf("Handler: Build: update repo tag err: %s", err)
-	//	errors.HTTP.InternalServerError(w)
-	//	return
-	//}
-
-	//if err := events.BuildProvisionRequest(envs.Get().GetRPC(), rps.Meta.ID, rps.Tags[*opts.Tag].Name); err != nil {
-	//	log.V(logLevel).Errorf("Handler: Build: send event for provision build err: %s", err.Error())
-	//	errors.HTTP.InternalServerError(w)
-	//	return
-	//}
+	if err := rm.UpdateTag(rps.Meta.ID, rps.Tags[*opts.Tag].Name); err != nil {
+		log.V(logLevel).Errorf("%s:build:create:> update repo tag err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
 
 	response, err := v.V1().Build().New(b).ToJson()
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Build: convert struct to json err: %v", err)
+		log.V(logLevel).Errorf("%s:build:create:> convert struct to json err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if _, err = w.Write(response); err != nil {
-		log.Error("Error: write response", err)
+		log.V(logLevel).Errorf("%s:build:create:> write response err: %v", logPrefix, err)
 		return
 	}
 }

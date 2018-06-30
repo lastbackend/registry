@@ -19,7 +19,7 @@
 package request
 
 import (
-	"github.com/lastbackend/lastbackend/pkg/api/types/v1/request"
+	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 )
 
 type ServiceCreateOptions struct {

@@ -19,76 +19,68 @@
 package repo
 
 import (
-	"net/http"
+	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/api/envs"
+	v "github.com/lastbackend/registry/pkg/api/views"
 	"github.com/lastbackend/registry/pkg/distribution"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/http/utils"
-	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
-	v "github.com/lastbackend/registry/pkg/api/views"
+	"net/http"
 )
 
-const logLevel = 2
+const (
+	logLevel  = 2
+	logPrefix = "registry:api:handler:repo"
+)
 
 func RepoCreateH(w http.ResponseWriter, r *http.Request) {
-
-	if r.Context().Value("account") == nil {
-		errors.HTTP.Unauthorized(w)
-		return
-	}
 
 	var (
 		rm = distribution.NewRepoModel(r.Context(), envs.Get().GetStorage())
 	)
 
-	log.V(logLevel).Debug("Handler: Repo: create repo")
+	log.V(logLevel).Debugf("%s:create:> create new repo", logPrefix)
 
 	// request body struct
 	opts := new(types.RepoCreateOptions)
 	if err := opts.DecodeAndValidate(r.Body); err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: validation incoming data err: %s", err.Err())
+		log.V(logLevel).Errorf("%s:create:> validation incoming data err: %v", logPrefix, err)
 		err.Http(w)
 		return
 	}
 
-	rps, err := rm.Get("")
+	image := opts.Spec.Image
+
+	rps, err := rm.Get(image.Owner, image.Name)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: get repo err: %v", err)
+		log.V(logLevel).Errorf("%s:create:> get repo err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if rps != nil {
-		log.V(logLevel).Warnf("Handler: Repo: repo `%s` already exists", opts.Name)
+		log.V(logLevel).Warnf("%s:create:> repo `%s` already exists", logPrefix, image.Name)
 		errors.New("repo").NotUnique("name").Http(w)
 		return
 	}
 
 	rps, err = rm.Create(opts)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: create repo err: %v", err)
+		log.V(logLevel).Errorf("%s:create:> create repo err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
-	//for _, tag := range rps.Tags {
-		//if err := events.BuildProvisionRequest(envs.Get().GetRPC(), rps.Meta.ID, tag.Name); err != nil {
-		//	log.V(logLevel).Errorf("Handler: Repo: send event for provision build err: %s", err.Error())
-		//	errors.HTTP.InternalServerError(w)
-		//	return
-		//}
-	//}
-
 	response, err := v.V1().Repo().New(rps).ToJson()
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: convert struct to json err: %s", err)
+		log.V(logLevel).Errorf("%s:create:> convert struct to json err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if _, err = w.Write(response); err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: write response err: %s", err)
+		log.V(logLevel).Errorf("%s:create:> write response err: %v", logPrefix, err)
 		return
 	}
 }
@@ -98,90 +90,70 @@ func RepoInfoH(w http.ResponseWriter, r *http.Request) {
 	owner := utils.Vars(r)[`owner`]
 	name := utils.Vars(r)[`name`]
 
-	log.V(logLevel).Debugf("Handler: Repo: get repo %s/%s info", owner, name)
-
-	if r.Context().Value("account") == nil {
-		errors.HTTP.Unauthorized(w)
-		return
-	}
-
-	if r.Context().Value("owner_account") == nil {
-		errors.HTTP.Forbidden(w)
-		return
-	}
+	log.V(logLevel).Debugf("%s:info:> get repo %s/%s info", logPrefix, owner, name)
 
 	var (
 		rm = distribution.NewRepoModel(r.Context(), envs.Get().GetStorage())
 	)
 
-	rps, err := rm.Get("")
+	rps, err := rm.Get(owner, name)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: get repo info err: %s", err)
+		log.V(logLevel).Errorf("%s:info:> get repo info err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if rps == nil {
-		log.V(logLevel).Warnf("Handler: Repo: repo `%s/%s` not found", owner, name)
+		log.V(logLevel).Warnf("%s:info:> repo `%s/%s` not found", logPrefix, owner, name)
 		errors.New("repo").NotFound().Http(w)
 		return
 	}
 
 	response, err := v.V1().Repo().New(rps).ToJson()
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: convert struct to json err: %s", err)
+		log.V(logLevel).Errorf("%s:info:> convert struct to json err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(response); err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: write response err: %s", err)
+		log.V(logLevel).Errorf("%s:info:> write response err: %v", logPrefix, err)
 		return
 	}
 }
 
 func RepoListH(w http.ResponseWriter, r *http.Request) {
 
-	log.V(logLevel).Debug("Handler: Repo: get repos list")
-
-	if r.Context().Value("account") == nil {
-		errors.HTTP.Unauthorized(w)
-		return
-	}
-
-	if r.Context().Value("owner_account") == nil {
-		errors.HTTP.Unauthorized(w)
-		return
-	}
+	log.V(logLevel).Debugf("%s:list:> get repos list", logPrefix)
 
 	var (
-		rm  = distribution.NewRepoModel(r.Context(), envs.Get().GetStorage())
+		rm = distribution.NewRepoModel(r.Context(), envs.Get().GetStorage())
 	)
 
 	item, err := rm.List()
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: get repos list err: %s", err)
+		log.V(logLevel).Errorf("%s:list:> get repos list err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	response, err := v.V1().Repo().NewList(item).ToJson()
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: convert struct to json err: %s", err)
+		log.V(logLevel).Errorf("%s:list:> convert struct to json err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(response); err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: write response err: %s", err)
+		log.V(logLevel).Errorf("%s:list:> write response err: %v", logPrefix, err)
 		return
 	}
 }
 
 func RepoUpdateH(w http.ResponseWriter, r *http.Request) {
 
-	log.V(logLevel).Debug("Handler: Repo: update repo info")
+	log.V(logLevel).Debugf("%s:update:> update repo info", logPrefix)
 
 	var (
 		rm    = distribution.NewRepoModel(r.Context(), envs.Get().GetStorage())
@@ -192,46 +164,46 @@ func RepoUpdateH(w http.ResponseWriter, r *http.Request) {
 	// request body struct
 	opts := new(types.RepoUpdateOptions)
 	if err := opts.DecodeAndValidate(r.Body); err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: validation incoming data err: %s", err.Err())
+		log.V(logLevel).Errorf("%s:update:> validation incoming data err: %v", logPrefix, err)
 		err.Http(w)
 		return
 	}
 
-	rps, err := rm.Get("")
+	rps, err := rm.Get(owner, name)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: get repo info err: %s", err)
+		log.V(logLevel).Errorf("%s:update:> get repo info err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if rps == nil {
-		log.V(logLevel).Warnf("Handler: Repo: repo `%s/%s` not found", owner, name)
+		log.V(logLevel).Warnf("%s:update:> repo `%s/%s` not found", logPrefix, owner, name)
 		errors.New("repo").NotFound().Http(w)
 		return
 	}
 
 	if err := rm.Update(rps, opts); err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: update repo info err: %s", err)
+		log.V(logLevel).Errorf("%s:update:> update repo info err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	response, err := v.V1().Repo().New(rps).ToJson()
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: convert struct to json err: %s", err)
+		log.V(logLevel).Errorf("%s:update:> convert struct to json err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(response); err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: write response err: %s", err)
+		log.V(logLevel).Errorf("%s:update:> write response err: %v", logPrefix, err)
 		return
 	}
 }
 
 func RepoRemoveH(w http.ResponseWriter, r *http.Request) {
 
-	log.V(logLevel).Debug("Handler: Repo: remove repo")
+	log.V(logLevel).Debugf("%s:remove:> remove repo", logPrefix)
 
 	var (
 		rm    = distribution.NewRepoModel(r.Context(), envs.Get().GetStorage())
@@ -239,27 +211,27 @@ func RepoRemoveH(w http.ResponseWriter, r *http.Request) {
 		name  = utils.Vars(r)[`name`]
 	)
 
-	rps, err := rm.Get("")
+	rps, err := rm.Get(owner, name)
 	if err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: get repo err: %s", err)
+		log.V(logLevel).Errorf("%s:remove:> get repo err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if rps == nil {
-		log.V(logLevel).Warnf("Handler: Repo: repo `%s/%s` not found", owner, name)
+		log.V(logLevel).Warnf("%s:remove:> repo `%s/%s` not found", logPrefix, owner, name)
 		errors.New("repo").NotFound().Http(w)
 		return
 	}
 
 	if err := rm.Remove(rps.Meta.ID); err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: remove repo err: %s", err)
+		log.V(logLevel).Errorf("%s:remove:> remove repo err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte{}); err != nil {
-		log.V(logLevel).Errorf("Handler: Repo: write response err: %s", err)
+		log.V(logLevel).Errorf("%s:remove:> write response err: %v", logPrefix, err)
 		return
 	}
 }

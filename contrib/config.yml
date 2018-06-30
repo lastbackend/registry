@@ -6,7 +6,7 @@ token: lstbknd
 ssl: true
 
 # Database and Messages broker
-psql: "host=127.0.0.1 user=lastbackend password=lastbackend dbname=lastbackend sslmode=disable binary_parameters=yes"
+psql: "host=127.0.0.1 port=5431 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"
 amqp: "amqp://guest:guest@127.0.0.1:5672"
 
 # Storage
@@ -16,57 +16,20 @@ storage:
     account: "devcnrcustoragestandard"
     key: "rGAinAq7+L+GRz2b65Zob+5VOmQeq2m6+CMkemzMMkHdNliycSqzI3Ggp17tTKGbJTi/+oz4iedV0uxW/y0AAA=="
 
-# Domain
-domain:
-  internal: "lb.local"
-  external: "lstbknd.io"
-
-app:
-  ssl: true
-  uri: "app.lstbknd.net"
-
 git:
   uri: "git.lstbknd.net"
 
 api:
   host: 0.0.0.0
-  port: 2965
+  port: 2955
   uri: "api.lstbknd.net"
-  tls: true
-
-gtw:
-  host: 0.0.0.0
-  port: 2968
-  uri: "gtw.lstbknd.net"
-  uuid: "85c6e91e-dd45-4b7b-8330-e2e3bd0a7bac"
-
-wss:
-  host: 0.0.0.0
-  port: 2969
-  uri: "wss.lstbknd.net"
-  uuid: "85c6e91e-dd45-4b7b-8330-e2e3bd0a7baf"
+  tls:
+    insecure: true
+    cert: "/opt/ssl/cert.pem"
+    key: "/opt/ssl/key.pem"
 
 ctl:
   uuid: "85c6e91e-dd45-4b7b-8330-e2e3bd0a7bad"
-
-dns:
-  host: 0.0.0.0
-  port: 53
-  default_ip: "127.0.0.1"
-
-node:
-  gateway: "gtw.lstbknd.net"
-  token: "cluster-token"
-  cri:
-    type: "docker"
-  cni:
-    type: "vxlan"
-  volume: "/var/lib/lastbackend/"
-  services:
-    router:
-      external_ip: "127.0.0.1"
-      enabled: true
-    builder: false
 
 builder:
   workers: 2
@@ -77,6 +40,14 @@ builder:
   extra_hosts:
    - "hub.lstbknd.net:172.17.0.1"
    - "api.lstbknd.net:172.17.0.1"
+  cri:
+    type: "docker"
+  host: 0.0.0.0
+  port: 2954
+  tls:
+    insecure: true
+    cert: "/opt/ssl/cert.pem"
+    key: "/opt/ssl/key.pem"
 
 # Runtime
 runtime:
@@ -84,73 +55,9 @@ runtime:
 #  docker:
 #    certs: "/opt/ssl/"
 
-# Email
-email:
-  sender:
-    name: "Last.Backend"
-    email: "team@lastbackend.com"
-  templates: "./pkg/mail/templates"
-  sendgrid:
-    key: "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"
-
 # Registry
 registry:
-  host: "hub.lstbknd.net"
+  uri: "hub.lstbknd.net"
   key: "/opt/ssl/lstbknd.net.key"
   issuer: "api.lstbknd.net"
   service: "hub.lstbknd.net"
-
-# Vendors
-github:
-  auth:
-    client: "b132a0d089a4076e7307"
-    secret: "36fe73d5cdce59583982a2f215a3ca41ed97dc21"
-    uri: "https://app.lstbknd.net/github/oauth"
-  platform:
-    client: "06124adcbd914403a4ee"
-    secret: "b46955bfd1a48ebf34645d0b2e8c9ca09fda868e"
-    uri: "https://app.lstbknd.net/github/oauth"
-
-bitbucket:
-  auth:
-    client: "cc4bFHDm3L3ZqJhYhL"
-    secret: "EjcxZCYwhJm4JE8dMvLBRJQvu8WghUZN"
-    uri: "https://app.lstbknd.net/bitbucket/oauth"
-  platform:
-    client: "YWz8E64QqTQHhC5H3Y"
-    secret: "LbdHp2abLMxYG8y5pdX6w7JtmBE79Upw"
-    uri: "https://app.lstbknd.net/bitbucket/oauth"
-
-gitlab:
-  auth:
-    client: "06d97f2c6197ffd18a04ed092cc17565cef0567ce34fd0c2f8d978d9d7187498"
-    secret: "bae639703a0699ceb158981c5e4835e4dafe7a2059f00dcb0c702101476890d2"
-    uri: "https://app.lstbknd.net/gitlab/oauth"
-  platform:
-    client: "ca17e4f396a46efaf1b10739e5215d4c0f37efbb6157f996450facb10627a141"
-    secret: "cf8b16eb6401b2ba4c4d8758a85796e0890746fd4675c5a5d5913750df6b15f4"
-    uri: "https://app.lstbknd.net/gitlab/oauth"
-
-wechat:
-  auth:
-    client: "wx5335e4e2119041d3"
-    secret: "da389e582607f7efdf41de381208915a"
-    uri: "https://app.lstbknd.net/"
-
-slack:
-  platform:
-    client: "183291718448.305810959379"
-    secret: "ec8e580d7528dbc7573798a188cce8c3"
-
-
-analytics:
-  ga:
-    disable: true
-    traking_id: "UA-50023825-5"
-
-# Sandbox workspace
-sandbox:
-  name: "Sandbox"
-  desc: "Sandbox workspace"
-  ram: 512
-  routes: 1

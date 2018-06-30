@@ -21,17 +21,21 @@ package pgsql
 import (
 	_ "github.com/lib/pq"
 
+	"time"
 	"context"
 	"database/sql"
 	"fmt"
+
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage/storage"
 	"github.com/lastbackend/registry/pkg/storage/store"
 	"github.com/lib/pq"
-	"time"
 )
 
-const logLevel = 5
+const (
+	logLevel  = 5
+	logPrefix = "storage:pgsql"
+)
 
 var client store.IDB
 

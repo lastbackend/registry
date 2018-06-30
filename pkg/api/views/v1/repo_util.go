@@ -28,15 +28,11 @@ type RepoView struct{}
 func (rv *RepoView) New(obj *types.Repo) *Repo {
 	i := new(Repo)
 	i.Meta = rv.ToRepoMeta(&obj.Meta)
-	i.State = rv.ToRepoState(&obj.State)
-	i.Stats = rv.ToRepoStats(&obj.Stats)
 	i.Sources = rv.ToRepoSource(&obj.Sources)
 	i.TagList = rv.ToRepoTagList(obj.Tags)
 	i.RuleList = rv.ToRepoRuleList(obj.Tags)
-	i.LastBuild = rv.ToRepoLastBuild(obj.LastBuild)
 	i.Readme = obj.Readme
 	i.Remote = obj.Remote
-	i.Private = obj.Private
 	return i
 }
 
@@ -67,31 +63,11 @@ func (rv *RepoView) ToRepoMeta(obj *types.RepoMeta) RepoMeta {
 	return RepoMeta{
 		Name:        obj.Name,
 		Owner:       obj.Owner,
-		Technology:  obj.Technology,
-		Technical:   obj.Technical,
+		Labels:      obj.Labels,
 		Description: obj.Description,
 		SelfLink:    obj.SelfLink,
 		Created:     obj.Created,
 		Updated:     obj.Updated,
-	}
-}
-
-func (rv *RepoView) ToRepoState(obj *types.RepoState) RepoState {
-	return RepoState{
-		State:   obj.State,
-		Status:  obj.Status,
-		Deleted: obj.Deleted,
-		Liked:   obj.Liked,
-	}
-}
-
-func (rv *RepoView) ToRepoStats(obj *types.RepoStats) RepoStats {
-	return RepoStats{
-		ViewsQuantity:    obj.ViewsQuantity,
-		StarsQuantity:    obj.StarsQuantity,
-		PullsQuantity:    obj.PullsQuantity,
-		BuildsQuantity:   obj.BuildsQuantity,
-		ServicesQuantity: obj.ServicesQuantity,
 	}
 }
 
@@ -110,33 +86,50 @@ func (rv *RepoView) ToRepoTagList(obj map[string]*types.RepoTag) []*RepoTag {
 	for _, item := range obj {
 		tag := new(RepoTag)
 		tag.Name = item.Name
+
 		tag.Builds.Size = item.Builds.Size
 		tag.Builds.Total = item.Builds.Total
-		tag.Layers.Count = item.Layers.Count
-		tag.Layers.Size.Average = item.Layers.Size.Average
-		tag.Layers.Size.Max = item.Layers.Size.Max
-		tag.Build0.ID = item.Build0.ID
-		tag.Build0.Number = item.Build0.Number
-		tag.Build0.Status = item.Build0.Status
-		tag.Build1.ID = item.Build1.ID
-		tag.Build1.Number = item.Build1.Number
-		tag.Build1.Status = item.Build1.Status
-		tag.Build2.ID = item.Build2.ID
-		tag.Build2.Number = item.Build2.Number
-		tag.Build2.Status = item.Build2.Status
-		tag.Build3.ID = item.Build3.ID
-		tag.Build3.Number = item.Build3.Number
-		tag.Build3.Status = item.Build3.Status
-		tag.Build4.ID = item.Build4.ID
-		tag.Build4.Number = item.Build4.Number
-		tag.Build4.Status = item.Build4.Status
+
+		if item.Build0 != nil {
+			tag.Build0 = new(RepoBuildView)
+			tag.Build0.ID = item.Build0.ID
+			tag.Build0.Number = item.Build0.Number
+			tag.Build0.Status = item.Build0.Status
+		}
+
+		if item.Build1 != nil {
+			tag.Build1 = new(RepoBuildView)
+			tag.Build1.ID = item.Build1.ID
+			tag.Build1.Number = item.Build1.Number
+			tag.Build1.Status = item.Build1.Status
+		}
+
+		if item.Build2 != nil {
+			tag.Build2 = new(RepoBuildView)
+			tag.Build2.ID = item.Build2.ID
+			tag.Build2.Number = item.Build2.Number
+			tag.Build2.Status = item.Build2.Status
+		}
+
+		if item.Build3 != nil {
+			tag.Build3 = new(RepoBuildView)
+			tag.Build3.ID = item.Build3.ID
+			tag.Build3.Number = item.Build3.Number
+			tag.Build3.Status = item.Build3.Status
+		}
+
+		if item.Build4 != nil {
+			tag.Build4 = new(RepoBuildView)
+			tag.Build4.ID = item.Build4.ID
+			tag.Build4.Number = item.Build4.Number
+			tag.Build4.Status = item.Build4.Status
+		}
+
 		tag.Disabled = item.Disabled
-		tag.AutoBuild = item.AutoBuild
 		tag.Updated = item.Updated
 		tag.Created = item.Created
 
 		tag.Spec.EnvVars = item.Spec.EnvVars
-		tag.Spec.Registry = item.Spec.Registry
 		tag.Spec.Branch = item.Spec.Branch
 		tag.Spec.FilePath = item.Spec.FilePath
 
@@ -154,12 +147,9 @@ func (rv *RepoView) ToRepoRuleList(obj map[string]*types.RepoTag) []*RepoBuildRu
 		}
 
 		rule := new(RepoBuildRule)
-		rule.ID = item.ID
 		rule.Branch = item.Spec.Branch
 		rule.FilePath = item.Spec.FilePath
 		rule.Tag = item.Name
-		rule.Registry = item.Spec.Registry
-		rule.AutoBuild = item.AutoBuild
 		rule.Config.EnvVars = item.Spec.EnvVars
 
 		rules = append(rules, rule)

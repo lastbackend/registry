@@ -23,11 +23,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/lastbackend/registry/pkg/runtime/cri/cri"
 	"github.com/lastbackend/registry/pkg/builder/builder"
 	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/log"
-	"github.com/lastbackend/lastbackend/pkg/node/runtime/cri/cri"
 	"github.com/spf13/viper"
+	"github.com/lastbackend/registry/pkg/builder/client"
+	"github.com/lastbackend/registry/pkg/builder/http"
 )
 
 // Daemon - run builder daemon
@@ -42,6 +44,19 @@ func Daemon() bool {
 		log.Fatalf("Cannot initialize runtime: %v", err)
 	}
 
+	cfg := client.NewConfig()
+	cfg.BearerToken = viper.GetString("token")
+	cfg.TLS.Insecure = viper.GetBool("api.tls.insecure")
+	cfg.TLS.CAFile = viper.GetString("api.tls.ca")
+	cfg.TLS.CertFile = viper.GetString("api.tls.cert")
+	cfg.TLS.KeyFile = viper.GetString("api.tls.key")
+
+	c, err := client.New(client.ClientHTTP, viper.GetString("api.uri"), cfg)
+	if err != nil {
+		log.Fatalf("Init client err: %s", err)
+	}
+
+	envs.Get().SetClient(c)
 	b := builder.New(
 		ri,
 		viper.GetString("builder.uuid"),
@@ -56,6 +71,17 @@ func Daemon() bool {
 	if err := b.Start(); err != nil {
 		log.Fatalf("Create pool err: %s", err)
 	}
+
+	go func() {
+		opts := new(http.HttpOpts)
+		opts.Insecure = viper.GetBool("builder.tls.insecure")
+		opts.CertFile = viper.GetString("builder.tls.cert")
+		opts.KeyFile = viper.GetString("builder.tls.key")
+
+		if err := http.Listen(viper.GetString("builder.host"), viper.GetInt("builder.port"), opts); err != nil {
+			log.Fatalf("Http server start error: %v", err)
+		}
+	}()
 
 	// Handle SIGINT and SIGTERM.
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)

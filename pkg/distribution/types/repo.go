@@ -20,9 +20,9 @@ package types
 
 import (
 	"encoding/json"
+	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/validator"
-	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -39,26 +39,14 @@ type Repo struct {
 	lock sync.RWMutex
 	// Repo meta
 	Meta RepoMeta `json:"meta"`
-	// Repo state
-	State RepoState `json:"state"`
-	// Repo stats
-	Stats RepoStats `json:"stats"`
 	// Repo source
 	Sources RepoSources `json:"sources"`
-	// Repo last build
-	LastBuild RepoLastBuild `json:"last_build"`
 	// Repo tags
 	Tags map[string]*RepoTag `json:"tags"`
-	// Repo created time
-	Registry string `json:"registry"`
 	// Repo meta readme
 	Readme string `json:"readme"`
 	// Remote repo option
 	Remote bool `json:"remote"`
-	// Private repo option
-	Private bool `json:"private"`
-	// Technial repo
-	Technical bool `json:"technical"`
 	// Repo created time
 	Created time.Time `json:"created"`
 	// Repo updated time
@@ -71,12 +59,6 @@ type RepoMeta struct {
 	Meta
 	// Repo meta user
 	Owner string `json:"owner"`
-	// Repo meta user
-	AccountID string `json:"account"`
-	// Meta technical
-	Technical bool `json:"technical"`
-	// Repo readme
-	Technology string `json:"technology"`
 	// Repo self_link
 	SelfLink string `json:"self_link"`
 }
@@ -96,68 +78,29 @@ type RepoLastBuild struct {
 	Updated time.Time `json:"updated"`
 }
 
-type RepoState struct {
-	// Repo state
-	State string `json:"state"`
-	// Repo state status
-	Status string `json:"status"`
-	// Meta deleted
-	Deleted bool `json:"deleted"`
-	// Meta liked
-	Liked bool `json:"liked"`
-	// Last build
-	LastBuild struct {
-		Status  string    `json:"status"`
-		Updated time.Time `json:"updated"`
-	} `json:"last_build"`
-}
-
-type RepoStats struct {
-	// Repo last build
-	LastBuild time.Time `json:"last_build"`
-	// Repo stats pulls quantity
-	PullsQuantity int64 `json:"pulls_quantity"`
-	// Repo stats builds quantity
-	BuildsQuantity int64 `json:"builds_quantity"`
-	// Repo stats services quantity
-	ServicesQuantity int64 `json:"services_quantity"`
-	// Repo stats stars quantity
-	StarsQuantity int64 `json:"stars_quantity"`
-	// Repo stats views quantity
-	ViewsQuantity int64 `json:"views_quantity"`
-}
-
 type RepoTag struct {
 	ID     string      `json:"id"`
 	RepoID string      `json:"repo"`
+	Owner  string      `json:"owner"`
 	Name   string      `json:"name"`
 	Spec   RepoTagSpec `json:"spec"`
 	Builds struct {
 		Total int64 `json:"total"`
 		Size  int64 `json:"size"`
 	} `json:"builds"`
-	Layers struct {
-		Count int64 `json:"count"`
-		Size  struct {
-			Average int64 `json:"average"`
-			Max     int64 `json:"max"`
-		} `json:"size"`
-	} `json:"layers"`
-	Build0    BuildView `json:"build_0"`
-	Build1    BuildView `json:"build_1"`
-	Build2    BuildView `json:"build_2"`
-	Build3    BuildView `json:"build_3"`
-	Build4    BuildView `json:"build_4"`
-	Disabled  bool      `json:"disabled"`
-	AutoBuild bool      `json:"autobuild"`
-	Created   time.Time `json:"created"`
-	Updated   time.Time `json:"updated"`
+	Build0   *BuildView `json:"build_0"`
+	Build1   *BuildView `json:"build_1"`
+	Build2   *BuildView `json:"build_2"`
+	Build3   *BuildView `json:"build_3"`
+	Build4   *BuildView `json:"build_4"`
+	Disabled bool       `json:"disabled"`
+	Created  time.Time  `json:"created"`
+	Updated  time.Time  `json:"updated"`
 }
 
 type RepoTagSpec struct {
 	Branch   string   `json:"branch"`
 	FilePath string   `json:"filepath"`
-	Registry string   `json:"registry"`
 	EnvVars  []string `json:"environments"`
 }
 
@@ -168,21 +111,34 @@ type BuildView struct {
 }
 
 type RepoCreateOptions struct {
-	Name       string          `json:"name"`
-	Url        *string         `json:"url"`
-	Technology string          `json:"technology"`
-	Private    bool            `json:"private"`
-	Technical  bool            `json:"technical"`
-	Rules      []RepoBuildRule `json:"rules"`
+	Meta struct {
+		Labels map[string]string `json:"labels"`
+	} `json:"meta"`
+	Spec struct {
+		Image  RepoImageOpts   `json:"image"`
+		Source *RepoSourceOpts `json:"source"`
+		Rules  RepoBuildRules  `json:"rules"`
+	} `json:"spec"`
 }
 
+type RepoImageOpts struct {
+	Owner string `json:"owner"`
+	Name  string `json:"name"`
+	Auth  string `json:"auth"`
+}
+
+type RepoSourceOpts struct {
+	Url   string `json:"url"`
+	Token string `json:"token"`
+}
+
+type RepoBuildRules []RepoBuildRule
+
 type RepoBuildRule struct {
-	Branch    string              `json:"branch"`
-	FilePath  string              `json:"filepath"`
-	Tag       string              `json:"tag"`
-	Registry  string              `json:"registry"`
-	AutoBuild bool                `json:"autobuild"`
-	Config    RepoBuildRuleConfig `json:"config"`
+	Branch   string              `json:"branch"`
+	FilePath string              `json:"filepath"`
+	Tag      string              `json:"tag"`
+	Config   RepoBuildRuleConfig `json:"config"`
 }
 
 type RepoBuildRuleConfig struct {
@@ -207,59 +163,58 @@ func (s *RepoCreateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 	}
 
 	// Local source does not have url
-	if s.Url != nil {
+	if len(s.Spec.Source.Url) == 0 {
+		log.V(logLevel).Error("Request: Repo: url parameter is required")
+		return errors.New("repo").BadParameter("url")
+	}
 
-		if *s.Url == "" {
-			log.V(logLevel).Error("Request: Repo: url parameter is required")
-			return errors.New("repo").BadParameter("url")
+	url := s.Spec.Source.Url
+	rules := s.Spec.Rules
+
+	match := strings.Split(url, "#")
+
+	if !validator.IsGitUrl(match[0]) {
+		log.V(logLevel).Error("Request: Repo: parameter url not valid")
+		return errors.New("repo").BadParameter("url")
+	}
+
+	uniq := make(map[string]bool, len(rules))
+	for index := range rules {
+
+		setting := rules[index]
+
+		if setting.Branch == "" {
+			return errors.New("repo").BadParameter("branch")
 		}
 
-		match := strings.Split(*s.Url, "#")
-
-		if !validator.IsGitUrl(match[0]) {
-			log.V(logLevel).Error("Request: Repo: parameter url not valid")
-			return errors.New("repo").BadParameter("url")
+		if setting.Tag == "" {
+			return errors.New("repo").BadParameter("tag")
 		}
 
-		uniq := make(map[string]bool, len(s.Rules))
-		for index := range s.Rules {
+		if _, exists := uniq[setting.Tag]; exists {
+			return errors.New("repo").BadParameter("tag")
+		}
 
-			setting := s.Rules[index]
+		uniq[setting.Tag] = true
 
-			if setting.Branch == "" {
-				return errors.New("repo").BadParameter("branch")
-			}
+		if rules[index].Config.EnvVars == nil {
+			emptySlice := make([]string, 0)
+			rules[index].Config.EnvVars = &emptySlice
+		}
 
-			if setting.Tag == "" {
-				return errors.New("repo").BadParameter("tag")
-			}
-
-			if _, exists := uniq[setting.Tag]; exists {
-				return errors.New("repo").BadParameter("tag")
-			}
-
-			uniq[setting.Tag] = true
-
-			if s.Rules[index].Config.EnvVars == nil {
-				emptySlice := make([]string, 0)
-				s.Rules[index].Config.EnvVars = &emptySlice
-			}
-
-			if s.Rules[index].Config.Command == nil {
-				s.Rules[index].Config.Command = new(string)
-			}
-
+		if rules[index].Config.Command == nil {
+			rules[index].Config.Command = new(string)
 		}
 	}
 
-	if s.Name == "" {
+	if s.Spec.Image.Name == "" {
 		log.V(logLevel).Error("Request: Repo: parameter name can not be empty")
 		return errors.New("repo").BadParameter("name")
 	}
 
-	s.Name = strings.ToLower(s.Name)
+	s.Spec.Image.Name = strings.ToLower(s.Spec.Image.Name)
 
-	if !validator.IsRepoName(s.Name) {
+	if !validator.IsRepoName(s.Spec.Image.Name) {
 		return errors.New("repo").BadParameter("name")
 	}
 
@@ -267,20 +222,12 @@ func (s *RepoCreateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 }
 
 type RepoUpdateOptions struct {
-	Technology  *string `json:"technology,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Private     *bool   `json:"private,omitempty"`
-	Rules       *[]struct {
-		Branch    string `json:"branch"`
-		FilePath  string `json:"filepath"`
-		Tag       string `json:"tag"`
-		Registry  string `json:"registry"`
-		AutoBuild bool   `json:"autobuild"`
-		Config    struct {
-			Command *string   `json:"command"`
-			EnvVars *[]string `json:"environments"`
-		} `json:"config"`
-	} `json:"rules,omitempty"`
+	Meta struct {
+		Labels map[string]string `json:"labels"`
+	} `json:"meta"`
+	Spec struct {
+		Rules *RepoBuildRules `json:"rules"`
+	} `json:"spec"`
 }
 
 func (s *RepoUpdateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
@@ -299,13 +246,14 @@ func (s *RepoUpdateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 		return errors.New("repo").IncorrectJSON(err)
 	}
 
-	if s.Rules != nil {
+	if s.Spec.Rules != nil {
 
-		uniq := make(map[string]bool, len(*s.Rules))
+		rules := *s.Spec.Rules
 
-		for index := range *s.Rules {
+		uniq := make(map[string]bool, len(rules))
+		for index := range rules {
 
-			setting := (*s.Rules)[index]
+			setting := rules[index]
 
 			if setting.Branch == "" {
 				return errors.New("repo").BadParameter("branch")
@@ -316,18 +264,18 @@ func (s *RepoUpdateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 			}
 
 			if _, exists := uniq[setting.Tag]; exists {
-				return errors.New("repo").NotUnique("tag")
+				return errors.New("repo").BadParameter("tag")
 			}
 
 			uniq[setting.Tag] = true
 
-			if (*s.Rules)[index].Config.EnvVars == nil {
+			if rules[index].Config.EnvVars == nil {
 				emptySlice := make([]string, 0)
-				(*s.Rules)[index].Config.EnvVars = &emptySlice
+				rules[index].Config.EnvVars = &emptySlice
 			}
 
-			if (*s.Rules)[index].Config.Command == nil {
-				(*s.Rules)[index].Config.Command = new(string)
+			if rules[index].Config.Command == nil {
+				rules[index].Config.Command = new(string)
 			}
 		}
 	}

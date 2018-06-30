@@ -153,7 +153,7 @@ func BuildCancelHandler(ctx context.Context, _ rpc.Sender, payload []byte) error
 func BuildStateHandler(ctx context.Context, _ rpc.Sender, payload []byte) error {
 	log.Debug("Build Controller: BuildStateHandler: set finish state handler")
 
-	var e = new(types.BuildStateBuilderEvent)
+	var e = new(types.TaskStatusBuilderEvent)
 	if err := json.Unmarshal(payload, &e); err != nil {
 		log.Errorf("Parse incoming data: %s", err)
 		return err

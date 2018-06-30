@@ -24,8 +24,8 @@ import (
 	"io/ioutil"
 
 	// lastbackend
-	lbr "github.com/lastbackend/lastbackend/pkg/api/types/v1/request"
-	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
+	lbr "github.com/lastbackend/registry/pkg/api/types/v1/request"
+	"github.com/lastbackend/registry/pkg/distribution/errors"
 )
 
 type ClusterRequest struct{}

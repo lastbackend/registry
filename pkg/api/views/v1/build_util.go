@@ -79,6 +79,13 @@ func (bv *BuildView) ToBuildState(obj *types.BuildState) BuildState {
 		started = &obj.Started
 	}
 
+	finished := &time.Time{}
+	if obj.Finished.IsZero() {
+		finished = nil
+	} else {
+		finished = &obj.Finished
+	}
+
 	return BuildState{
 		Step:       obj.Step,
 		Message:    obj.Message,
@@ -87,13 +94,15 @@ func (bv *BuildView) ToBuildState(obj *types.BuildState) BuildState {
 		Processing: obj.Processing,
 		Canceled:   obj.Canceled,
 		Error:      obj.Error,
-		Finished:   obj.Finished,
+		Finished:   finished,
 		Started:    started,
 	}
 }
 
-func (bv *BuildView) ToBuildStats(obj *types.BuildInfo) BuildStats {
-	return BuildStats{}
+func (bv *BuildView) ToBuildStats(obj *types.BuildStats) BuildStats {
+	return BuildStats{
+		Size: obj.Size,
+	}
 }
 
 func (bv *BuildView) ToBuildSource(obj *types.BuildSources) BuildSource {
@@ -108,6 +117,10 @@ func (bv *BuildView) ToBuildSource(obj *types.BuildSources) BuildSource {
 
 func (bv *BuildView) ToBuildImage(obj *types.BuildImage) BuildImage {
 	return BuildImage{
-		Tag: obj.Tag,
+		Hub:   obj.Hub,
+		Name:  obj.Name,
+		Owner: obj.Owner,
+		Tag:   obj.Tag,
+		Hash:  obj.Hash,
 	}
 }

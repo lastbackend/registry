@@ -19,12 +19,15 @@
 package storage
 
 import (
+	"github.com/lastbackend/registry/pkg/storage/mock"
 	"github.com/lastbackend/registry/pkg/storage/pgsql"
 )
 
 func Get(c string) (Storage, error) {
 	var driver = ""
 	switch driver {
+	case "mock":
+		return mock.New()
 	default:
 		return pgsql.New(c)
 	}

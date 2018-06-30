@@ -28,12 +28,16 @@ type Build interface {
 	Get(ctx context.Context, id string) (*types.Build, error)
 	List(ctx context.Context, repo string) (map[string]*types.Build, error)
 	Insert(ctx context.Context, build *types.Build) error
+	Update(ctx context.Context, build *types.Build) error
 }
 
 type Repo interface {
-	Get(ctx context.Context, id string) (*types.Repo, error)
+	Get(ctx context.Context, owner, name string) (*types.Repo, error)
 	List(ctx context.Context) (map[string]*types.Repo, error)
 	Insert(ctx context.Context, repo *types.Repo) error
 	Update(ctx context.Context, repo *types.Repo) error
 	Remove(ctx context.Context, id string) error
+
+	InsertTag(ctx context.Context, tag *types.RepoTag) error
+	UpdateTag(ctx context.Context, repo, tag string) error
 }

@@ -24,9 +24,9 @@ import (
 )
 
 var Routes = []http.Route{
-	{Path: "/repo/{owner}/{name}/build", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Context}, Handler: BuildList},
-	{Path: "/repo/{owner}/{name}/build", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Context}, Handler: BuildCreate},
-	{Path: "/repo/{owner}/{name}/build/{build}", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Context}, Handler: BuildGet},
-	{Path: "/repo/{owner}/{name}/build/{build}/logs", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Context}, Handler: BuildLogs},
-	{Path: "/repo/{owner}/{name}/build/{build}/cancel", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Context}, Handler: BuildCancel},
+	{Path: "/repo/{owner}/{name}/build", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Context}, Handler: BuildListH},
+	{Path: "/repo/{owner}/{name}/build", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Context}, Handler: BuildCreateH},
+	{Path: "/repo/{owner}/{name}/build/{build}", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Context}, Handler: BuildGetH},
+	{Path: "/repo/{owner}/{name}/build/{build}/logs", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Context}, Handler: BuildLogsH},
+	{Path: "/repo/{owner}/{name}/build/{build}/cancel", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Context}, Handler: BuildCancelH},
 }

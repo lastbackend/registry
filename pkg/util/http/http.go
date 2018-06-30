@@ -20,8 +20,9 @@ package http
 
 import (
 	"fmt"
-	"github.com/lastbackend/registry/pkg/util/http/cors"
 	"net/http"
+
+	"github.com/lastbackend/registry/pkg/util/http/cors"
 )
 
 type NotFoundHandler struct {
@@ -62,4 +63,9 @@ func Handle(h http.HandlerFunc, middleware ...Middleware) http.HandlerFunc {
 
 func Listen(host string, port int, router http.Handler) error {
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), router)
+}
+
+func ListenWithTLS(host string, port int, certFile, keyFile string, router http.Handler) error {
+	return http.ListenAndServeTLS(fmt.Sprintf("%s:%d", host, port), certFile, keyFile, router)
+
 }

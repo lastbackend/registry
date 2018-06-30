@@ -22,11 +22,11 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/rpc"
-	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 )
 
 // BuildTaskExecuteHandler - handler called build task execute

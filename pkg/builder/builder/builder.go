@@ -25,15 +25,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/lastbackend/registry/pkg/builder/envs"
-	"github.com/lastbackend/registry/pkg/builder/runtime"
+	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/events"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/stream"
-	lbt "github.com/lastbackend/lastbackend/pkg/distribution/types"
-	"github.com/lastbackend/lastbackend/pkg/node/runtime/cri"
 	"github.com/spf13/viper"
+
+	lbt "github.com/lastbackend/registry/pkg/distribution/types"
 )
 
 // The main entity that is responsible for
@@ -47,8 +45,6 @@ type Builder struct {
 	limit      int
 	extraHosts []string
 	logdir     string
-
-	rpc *runtime.Runtime
 
 	tasks   chan *task
 	workers chan chan *task
@@ -75,7 +71,6 @@ func New(cri cri.CRI, id, dockerHost string, extraHosts []string, limit int, log
 	b.dockerHost = dockerHost
 	b.extraHosts = extraHosts
 	b.cri = cri
-	b.rpc = runtime.New()
 
 	b.tasks = make(chan *task, limit)
 	b.workers = make(chan chan *task, limit)
@@ -148,9 +143,8 @@ func (b *Builder) Start() error {
 
 	go b.dispatch()
 
-	b.rpc.Start(b.ctx)
-
-	events.BuildOnlineEventRequest(envs.Get().GetRPC(), b.id)
+	// TODO: send event online
+	//events.BuildOnlineEventRequest(envs.Get().GetRPC(), b.id)
 
 	return nil
 }
@@ -287,9 +281,9 @@ func (b *Builder) Shutdown() {
 
 	log.Info("Build: Shutdown: Shutdown builder")
 
-	events.BuildOfflineEventRequest(envs.Get().GetRPC(), b.id)
+	// TODO: send event offline
+	//events.BuildOfflineEventRequest(envs.Get().GetRPC(), b.id)
 
-	b.rpc.Stop()
 	b.await()
 
 	b.done <- true

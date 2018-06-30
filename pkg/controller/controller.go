@@ -19,13 +19,13 @@
 package controller
 
 import (
-	"syscall"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/lastbackend/registry/pkg/controller/envs"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/controller/runtime"
+	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage"
 	"github.com/spf13/viper"
 )

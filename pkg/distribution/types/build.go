@@ -25,8 +25,8 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/log"
-	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 )
 
 // Statuses
@@ -54,8 +54,8 @@ type Build struct {
 	Meta    BuildMeta    `json:"meta"`
 	Repo    BuildRepo    `json:"repo"`
 	State   BuildState   `json:"state"`
-	Stats   BuildInfo    `json:"info"`
 	Image   BuildImage   `json:"image"`
+	Stats   BuildStats   `json:"stats"`
 	Sources BuildSources `json:"sources"`
 	Config  BuildConfig  `json:"config"`
 }
@@ -92,6 +92,10 @@ type BuildState struct {
 type BuildInfo struct {
 	ImageHash string `json:"image_hash"`
 	Size      int64  `json:"size"`
+}
+
+type BuildStats struct {
+	Size int64 `json:"size"`
 }
 
 type BuildImage struct {

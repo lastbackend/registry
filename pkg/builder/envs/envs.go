@@ -19,10 +19,10 @@
 package envs
 
 import (
+	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/lastbackend/registry/pkg/builder/types"
-	"github.com/lastbackend/registry/pkg/rpc"
 	"github.com/lastbackend/registry/pkg/storage"
-	"github.com/lastbackend/lastbackend/pkg/node/runtime/cri"
+	"github.com/lastbackend/registry/pkg/builder/client"
 )
 
 var e Env
@@ -33,31 +33,31 @@ func Get() *Env {
 
 type Env struct {
 	builder types.IBuilder
+	client  client.IClient
 	storage storage.Storage
 	cri     cri.CRI
-	rpc     *rpc.RPC
 }
 
-func (c *Env) SetCri(cri cri.CRI) {
-	c.cri = cri
+func (env *Env) SetCri(cri cri.CRI) {
+	env.cri = cri
 }
 
-func (c *Env) GetCri() cri.CRI {
-	return c.cri
+func (env Env) GetCri() cri.CRI {
+	return env.cri
 }
 
-func (c *Env) SetBuilder(b types.IBuilder) {
-	c.builder = b
+func (env *Env) SetClient(c client.IClient) {
+	env.client = c
 }
 
-func (c *Env) GetBuilder() types.IBuilder {
-	return c.builder
+func (env Env) GetClient() client.IClient {
+	return env.client
 }
 
-func (c *Env) SetRPC(rpc *rpc.RPC) {
-	c.rpc = rpc
+func (env *Env) SetBuilder(b types.IBuilder) {
+	env.builder = b
 }
 
-func (c *Env) GetRPC() *rpc.RPC {
-	return c.rpc
+func (env Env) GetBuilder() types.IBuilder {
+	return env.builder
 }

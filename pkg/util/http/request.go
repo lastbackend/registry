@@ -24,12 +24,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	_url "github.com/lastbackend/registry/pkg/util/url"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
-
-	_url "github.com/lastbackend/registry/pkg/util/url"
 )
 
 const (
@@ -65,7 +64,7 @@ func New(host string, opts *ReqOpts) (*RawReq, error) {
 
 	u, err := _url.Parse(raw.host)
 	if err != nil {
-		fmt.Printf("HTTP Client parse host error: %v\n", err)
+		fmt.Println(err.Error())
 		return nil, err
 	}
 
@@ -93,10 +92,6 @@ func (r *RawReq) Request(successV, failureV interface{}) (req *http.Request, res
 	resp, err = client.Do(req)
 	if err != nil {
 		return nil, nil, err
-	}
-
-	if resp.StatusCode == http.StatusBadGateway {
-		return nil, nil, errors.New("host is not available")
 	}
 
 	err = decodeResponseJSON(resp, successV, failureV)
@@ -135,10 +130,6 @@ func (r *RawReq) Do() (req *http.Request, resp *http.Response, err error) {
 func (r *RawReq) AddHeader(key, value string) *RawReq {
 	r.header.Set(key, value)
 	return r
-}
-
-func (r *RawReq) Authorization(token string) *RawReq {
-	return r.AddHeader("Authorization", "Bearer "+token)
 }
 
 func (r *RawReq) getRequest() (*http.Request, error) {
@@ -201,7 +192,6 @@ func decodeResponseJSON(resp *http.Response, successV, failureV interface{}) err
 				buf.ReadFrom(resp.Body)
 			case "application/json":
 				return decodeResponseBodyJSON(resp, failureV)
-				//fmt.Printf("%+v", failureV)
 			default:
 				return errors.New(fmt.Sprintf("Unknown content-type (%+v)", strings.Split(resp.Header.Get("Content-type"), ";")))
 			}

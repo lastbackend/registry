@@ -23,9 +23,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/generator"
-	"github.com/lastbackend/lastbackend/pkg/node/runtime/cri"
 )
 
 type worker struct {

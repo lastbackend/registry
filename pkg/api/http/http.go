@@ -20,17 +20,27 @@ package http
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/lastbackend/registry/pkg/api/http/build"
+	"github.com/lastbackend/registry/pkg/api/http/repo"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/http"
 	"github.com/lastbackend/registry/pkg/util/http/cors"
-	"github.com/lastbackend/registry/pkg/api/http/build"
-	"github.com/lastbackend/registry/pkg/api/http/repo"
 )
 
-const logLevel = 2
+const (
+	logLevel = 2
+	logPrefix = "api:http"
+)
 
 // Extends routes variable
 var Routes = make([]http.Route, 0)
+
+type HttpOpts struct {
+	Insecure bool
+
+	CertFile string
+	KeyFile  string
+}
 
 func AddRoutes(r ...[]http.Route) {
 	for i := range r {
@@ -46,9 +56,13 @@ func init() {
 
 }
 
-func Listen(host string, port int) error {
+func Listen(host string, port int, opts *HttpOpts) error {
 
-	log.V(logLevel).Debugf("HTTP: listen HTTP server on %s:%d", host, port)
+	if opts == nil {
+		opts = new(HttpOpts)
+	}
+
+	log.V(logLevel).Debugf("%s:> listen HTTP server on %s:%d", logPrefix, host, port)
 
 	r := mux.NewRouter()
 	r.Methods("OPTIONS").HandlerFunc(cors.Headers)
@@ -60,9 +74,17 @@ func Listen(host string, port int) error {
 	r.MethodNotAllowedHandler = notAllowed
 
 	for _, route := range Routes {
-		log.V(logLevel).Debugf("HTTP: init route: %s", route.Path)
+		log.V(logLevel).Debugf("%s:> init route: %s", logPrefix, route.Path)
 		r.Handle(route.Path, http.Handle(route.Handler, route.Middleware...)).Methods(route.Method)
 	}
 
-	return http.Listen(host, port, r)
+	if opts.Insecure {
+		log.V(logLevel).Debugf("%s:> run insecure http server", logPrefix)
+		return http.Listen(host, port, r)
+	}
+
+
+	log.V(logLevel).Debugf("%s:> run http server  with tls", logPrefix)
+	return http.ListenWithTLS(host, port, opts.CertFile, opts.KeyFile, r)
 }
+

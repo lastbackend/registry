@@ -20,23 +20,15 @@ package http
 
 import "net/http"
 
-const (
-	MethodGet     = http.MethodGet
-	MethodHead    = http.MethodHead
-	MethodPost    = http.MethodPost
-	MethodPut     = http.MethodPut
-	MethodPatch   = http.MethodPatch
-	MethodDelete  = http.MethodDelete
-	MethodConnect = http.MethodConnect
-	MethodOptions = http.MethodOptions
-	MethodTrace   = http.MethodTrace
-)
-
 type Route struct {
 	Path       string
 	Handler    func(w http.ResponseWriter, r *http.Request)
 	Middleware []Middleware
 	Method     string
 }
+
+//type Middleware interface {
+//	Handler(func(w http.ResponseWriter, r *http.Request) error) func(w http.ResponseWriter, r *http.Request) error
+//}
 
 type Middleware func(http.HandlerFunc) http.HandlerFunc
