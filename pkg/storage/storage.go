@@ -21,6 +21,7 @@ package storage
 import (
 	"github.com/lastbackend/registry/pkg/storage/mock"
 	"github.com/lastbackend/registry/pkg/storage/pgsql"
+	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )
 
 func Get(c string) (Storage, error) {
@@ -31,4 +32,8 @@ func Get(c string) (Storage, error) {
 	default:
 		return pgsql.New(c)
 	}
+}
+
+func Filter() IFilter {
+	return filter.NewFilter()
 }

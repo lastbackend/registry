@@ -23,97 +23,104 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lastbackend/registry/pkg/runtime/cri"
+	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
+	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/lastbackend/registry/pkg/util/generator"
+	"github.com/lastbackend/registry/pkg/util/stream"
+	"github.com/lastbackend/registry/pkg/builder/envs"
+	"github.com/lastbackend/registry/pkg/api/types/v1/request"
+)
+
+const (
+	logWorkerPrefix = "builder:worker"
 )
 
 type worker struct {
-	ctx  context.Context
-	lock sync.RWMutex
+	ctx    context.Context
+	cancel context.CancelFunc
+	lock   sync.RWMutex
 
-	id  string
-	cri cri.CRI
-
-	tasks chan *task
+	id   string
+	task *task
+	cri  cri.CRI
 }
 
 // Create and configure new worker
 func newWorker(ctx context.Context, cri cri.CRI) *worker {
 	var w = new(worker)
+	w.ctx, w.cancel = context.WithCancel(ctx)
 	w.id = generator.GetUUIDV4()
 	w.cri = cri
-	w.ctx = ctx
-	w.tasks = make(chan *task)
 	return w
 }
 
 // Start worker process
-func (w *worker) Run(queue chan chan *task) error {
+func (w *worker) Run() error {
 
-	log.Infof("Worker: Run: run worker with id %s", w.id)
+	log.Infof("%s:run:> run worker with id %s", logWorkerPrefix, w.id)
 
-	// Allow to put tasks in queue of this worker.
-	queue <- w.tasks
-
-	select {
-	case <-w.ctx.Done():
-		log.Debugf("Worker: Run: worker stop: %s", w.id)
-		close(w.tasks)
-		return nil
-
-	case task := <-w.tasks:
-
-		log.Debugf("Worker: Run: worker %s task %s start", w.id, task.id)
-
-		startTime := time.Now()
-
-		if err := w.handle(task); err != nil {
-			log.Errorf("Worker: Run: worker %s task %s start err: %s", w.id, task.id, err)
-			return err
-		}
-
-		log.Debugf("Worker: Run: worker %s task %s finish %v", w.id, task.id, time.Since(startTime))
-
-		return nil
-	}
-}
-
-// The execution of a new task by the worker step by step
-func (w *worker) handle(task *task) error {
-
-	log.Infof("Worker: Handle: worker %s start task %s", w.id, task.job.ID)
-
-	defer func() {
-		if err := task.finish(); err != nil && err != context.Canceled {
-			log.Errorf("Worker: Handle: worker %s finish task %s err:  %s", w.id, task.id, err)
-		}
-	}()
-
-	err := task.build()
-	if err == nil && task.Canceled() {
-		return nil
-	}
-	if err != nil && err != context.Canceled {
-		log.Errorf("Worker: Handle: worker %s build task %s err:  %s", w.id, task.id, err)
+	task, err := NewTask(w.ctx, w.id, w.cri)
+	if err != nil {
+		log.Errorf("%s:run:> create new task err:  %v", logWorkerPrefix, w.id, task.id, err)
 		return err
 	}
 
-	err = task.push()
-	if err == nil && task.Canceled() {
-		return nil
-	}
-	if err != nil && err != context.Canceled {
-		log.Errorf("Worker: Handle: worker %s push task %s err:  %s", w.id, task.id, err)
+	opts := new(request.BuilderCreateManifestOptions)
+	opts.TaskID = task.id
+
+	manifest, err := envs.Get().GetClient().V1().Builder().GetManifest(w.ctx, envs.Get().GetHostname(), opts)
+	if err != nil {
+		log.Errorf("%s:spawn:> get manifest err: %v", logWorkerPrefix, err)
 		return err
 	}
+
+	if manifest == nil {
+		return nil
+	}
+
+	m := new(types.BuildManifest)
+
+	m.Source.Url = manifest.Source.Url
+	m.Source.Branch = manifest.Source.Branch
+
+	m.Image.Host = manifest.Image.Host
+	m.Image.Name = manifest.Image.Name
+	m.Image.Owner = manifest.Image.Owner
+	m.Image.Tag = manifest.Image.Tag
+	m.Image.Auth = manifest.Image.Auth
+
+	m.Config.Dockerfile = manifest.Config.Dockerfile
+	m.Config.Workdir = manifest.Config.Workdir
+	m.Config.EnvVars = manifest.Config.EnvVars
+	m.Config.Command = manifest.Config.Command
+
+	w.task = task
+
+	startTime := time.Now()
+
+	log.Infof("%s:run:> worker %s start task %s", logWorkerPrefix, w.id, task.id)
+
+	if err := task.Start(m); err != nil {
+		log.Errorf("%s:run:> worker %s task %s start err: %s", w.id, task.id, err)
+		return err
+	}
+
+	log.Debugf("%s:run:> worker %s task %s finish %v", logWorkerPrefix, w.id, task.id, time.Since(startTime))
 
 	return nil
+}
+
+func (w *worker) Logs() error {
+	endpoint := w.ctx.Value("endpoint").(string)
+	return w.task.logger.Stream(stream.NewStream().AddSocketBackend(endpoint))
 }
 
 // Destroy worker process.
 // When the process is complete, you must wait for all tasks to complete
 func (w *worker) destroy() error {
-	log.Infof("Worker: Destroy: destroy worker process %s", w.id)
+	log.Infof("%s:destroy:> destroy worker process %s", logWorkerPrefix, w.id)
+	w.task.stop()
+	w.cancel()
 	return nil
 }

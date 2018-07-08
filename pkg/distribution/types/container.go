@@ -31,13 +31,13 @@ const ContainerStatePending = "pending"
 type Container struct {
 	// Container CID
 	ID string `json:"id"`
-	// Container Pod ID
+	// Container Pod Hash
 	Pod string `json:"pod"`
-	// Container Deployment ID
+	// Container Deployment Hash
 	Deployment string `json:"deployment"`
-	// Container Namespace ID
+	// Container Namespace Hash
 	Namespace string `json:"namespace"`
-	// Spec ID
+	// Spec Hash
 	Spec ContainerSpec `json:"spec"`
 	// Container name
 	Name string `json:"name"`
@@ -126,7 +126,7 @@ type ContainerNetworkSpec struct {
 	Hostname string `json:"hostname"`
 	// Container host domain
 	Domain string `json:"domain"`
-	// Network ID to use
+	// Network Hash to use
 	Network string `json:"network"`
 	// Network Mode to use
 	Mode string `json:"mode"`
@@ -177,9 +177,9 @@ type ContainerLinkSpec struct {
 }
 
 type ContainerStatusInfo struct {
-	// Container ID on host
+	// Container Hash on host
 	ID string `json:"cid"`
-	// Image ID
+	// Image Hash
 	Image string `json:"image"`
 	// Container current state
 	State string `json:"state"`

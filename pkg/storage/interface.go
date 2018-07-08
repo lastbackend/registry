@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"github.com/lastbackend/registry/pkg/storage/storage"
+	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )
 
 type Storage interface {
@@ -30,5 +31,10 @@ type Storage interface {
 	Listen(ctx context.Context, key string, event chan string) error
 
 	Build() storage.Build
-	Repo() storage.Repo
+	Image() storage.Image
+	Builder() storage.Builder
+}
+
+type IFilter interface {
+	Image() *filter.ImageFilter
 }

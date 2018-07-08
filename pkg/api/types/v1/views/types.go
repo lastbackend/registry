@@ -18,49 +18,22 @@
 
 package views
 
-const logLevel = 5
-
 type IView interface {
-	Cluster() *ClusterView
-	Node() *NodeView
-
-	Namespace() *NamespaceView
-	//Route() *RouteView
-	//Service() *ServiceView
-	//Secret() *SecretView
-	Deployment() *DeploymentView
-	Pod() *Pod
-	Container() *ContainerView
+	Build() *BuildView
+	Builder() *BuilderView
+	Image() *ImageView
 }
 
 type View struct{}
 
-func (View) Cluster() *ClusterView {
-	return new(ClusterView)
-}
-func (View) Node() *NodeView {
-	return new(NodeView)
+func (View) Build() *BuildView {
+	return new(BuildView)
 }
 
-func (View) Namespace() *NamespaceView {
-	return new(NamespaceView)
+func (View) Builder() *BuilderView {
+	return new(BuilderView)
 }
 
-//func (View) Route() *RouteView {
-//	return new(RouteView)
-//}
-//func (View) Service() *ServiceView {
-//	return new(ServiceView)
-//}
-//func (View) Secret() *SecretView {
-//	return new(SecretView)
-//}
-func (View) Deployment() *DeploymentView {
-	return new(DeploymentView)
-}
-func (View) Pod() *Pod {
-	return new(Pod)
-}
-func (View) Container() *ContainerView {
-	return new(ContainerView)
+func (View) Image() *ImageView {
+	return new(ImageView)
 }

@@ -20,9 +20,9 @@ package http
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/lastbackend/registry/pkg/util/http"
+	"github.com/lastbackend/registry/pkg/builder/http/build"
 	"github.com/lastbackend/registry/pkg/log"
-	"github.com/lastbackend/registry/pkg/api/http/build"
+	"github.com/lastbackend/registry/pkg/util/http"
 	"github.com/lastbackend/registry/pkg/util/http/cors"
 )
 
@@ -48,7 +48,6 @@ func AddRoutes(r ...[]http.Route) {
 }
 
 func init() {
-	// Events
 	AddRoutes(build.Routes)
 }
 

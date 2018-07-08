@@ -21,10 +21,10 @@ package pgsql
 import (
 	_ "github.com/lib/pq"
 
-	"time"
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage/storage"
@@ -46,7 +46,8 @@ type Storage struct {
 	context.CancelFunc
 
 	*BuildStorage
-	*RepoStorage
+	*BuilderStorage
+	*ImageStorage
 }
 
 const sql_connection_name = "sqlc"
@@ -125,11 +126,18 @@ func (s *Storage) Build() storage.Build {
 	return s.BuildStorage
 }
 
-func (s *Storage) Repo() storage.Repo {
+func (s *Storage) Builder() storage.Builder {
 	if s == nil {
 		return nil
 	}
-	return s.RepoStorage
+	return s.BuilderStorage
+}
+
+func (s *Storage) Image() storage.Image {
+	if s == nil {
+		return nil
+	}
+	return s.ImageStorage
 }
 
 func New(c string) (*Storage, error) {
@@ -165,8 +173,9 @@ func New(c string) (*Storage, error) {
 	s := new(Storage)
 	s.conn = c
 
-	s.RepoStorage = newRepoStorage()
 	s.BuildStorage = newBuildStorage()
+	s.BuilderStorage = newBuilderStorage()
+	s.ImageStorage = newImageStorage()
 
 	return s, nil
 }

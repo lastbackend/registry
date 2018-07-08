@@ -19,14 +19,9 @@
 package types
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
-	"io/ioutil"
 	"time"
-
-	"github.com/lastbackend/registry/pkg/distribution/errors"
-	"github.com/lastbackend/registry/pkg/log"
+	"github.com/spf13/viper"
+	"fmt"
 )
 
 // Statuses
@@ -51,31 +46,20 @@ const (
 type BuildList []*Build
 
 type Build struct {
-	Meta    BuildMeta    `json:"meta"`
-	Repo    BuildRepo    `json:"repo"`
-	State   BuildState   `json:"state"`
-	Image   BuildImage   `json:"image"`
-	Stats   BuildStats   `json:"stats"`
-	Sources BuildSources `json:"sources"`
-	Config  BuildConfig  `json:"config"`
+	Meta   BuildMeta   `json:"meta"`
+	Status BuildStatus `json:"status"`
+	Spec   BuildSpec   `json:"spec"`
 }
 
 type BuildMeta struct {
 	Meta
-	Number   int64  `json:"number"`
-	SelfLink string `json:"self_link"`
-	Builder  string `json:"builder"`
-	Task     string `json:"task"`
+	Number  int64  `json:"number"`
+	Builder string `json:"builder"`
+	TaskID  string `json:"task"`
 }
 
-type BuildRepo struct {
-	ID       string `json:"id"`
-	Owner    string `json:"owner"`
-	Name     string `json:"name"`
-	SelfLink string `json:"self_link"`
-}
-
-type BuildState struct {
+type BuildStatus struct {
+	Size       int64     `json:"size"`
 	Step       string    `json:"step"`
 	Status     string    `json:"status"`
 	Message    string    `json:"message"`
@@ -89,30 +73,29 @@ type BuildState struct {
 	Started    time.Time `json:"started"`
 }
 
+type BuildSpec struct {
+	Image  BuildImage  `json:"image"`
+	Source BuildSource `json:"source"`
+	Config BuildConfig `json:"config"`
+}
+
 type BuildInfo struct {
 	ImageHash string `json:"image_hash"`
 	Size      int64  `json:"size"`
 }
 
-type BuildStats struct {
-	Size int64 `json:"size"`
-}
-
 type BuildImage struct {
-	Hub   string `json:"hub"`
+	ID    string `json:"id"`
 	Name  string `json:"name"`
 	Owner string `json:"owner"`
 	Tag   string `json:"tag"`
+	Auth  string `json:"auth"`
 	Hash  string `json:"hash"`
 }
 
-type BuildSources struct {
-	Token  string      `json:"token,omitempty"`
-	Hub    string      `json:"hub,omitempty"`
-	Owner  string      `json:"owner,omitempty"`
-	Name   string      `json:"name,omitempty"`
-	Branch string      `json:"branch,omitempty"`
-	Commit BuildCommit `json:"commit,omitempty"`
+type BuildSource struct {
+	Source
+	Commit *BuildCommit `json:"commit,omitempty"`
 }
 
 type BuildCommit struct {
@@ -127,34 +110,31 @@ type BuildConfig struct {
 	Dockerfile string   `json:"dockerfile"`
 	Workdir    string   `json:"workdir"`
 	EnvVars    []string `json:"env"`
+	Command    string   `json:"command"`
 }
 
 type BuildStep string
 
-type BuildJob struct {
-	ID     string         `json:"id,omitempty"`
-	Meta   BuildJobMeta   `json:"meta"`
-	Image  BuildJobImage  `json:"image"`
-	Config BuildJobConfig `json:"config"`
-	Repo   string         `json:"repo"`
-	Branch string         `json:"branch"`
-	LogUri string         `json:"log_uri"`
+type BuildManifest struct {
+	Source BuildManifestSource `json:"source"`
+	Image  BuildManifestImage  `json:"image"`
+	Config BuildManifestConfig `json:"config"`
 }
 
-type BuildJobMeta struct {
-	ID      string `json:"id"`
-	LogsUri string `json:"logs_uri"`
+type BuildManifestSource struct {
+	Url    string `json:"url"`
+	Branch string `json:"branch"`
 }
 
-type BuildJobImage struct {
+type BuildManifestImage struct {
 	Host  string `json:"host"`
 	Name  string `json:"name"`
 	Owner string `json:"owner"`
 	Tag   string `json:"tag"`
-	Token string `json:"token"`
+	Auth  string `json:"auth"`
 }
 
-type BuildJobConfig struct {
+type BuildManifestConfig struct {
 	BuildConfig
 }
 
@@ -169,133 +149,141 @@ type SourceJobConfig struct {
 	WorkDir string `json:"dir"`
 }
 
-func (b *Build) NewBuildJob() *BuildJob {
-
-	job := new(BuildJob)
-	job.ID = b.Meta.ID
-	job.Image.Name = b.Image.Name
-	job.Image.Owner = b.Image.Owner
-	job.Image.Tag = b.Image.Tag
-	job.Image.Host = b.Image.Hub
-
-	url := ""
-
-	if b.Sources.Hub == GithubHost {
-		url = fmt.Sprintf("https://github.com/%s/%s", b.Sources.Owner, b.Sources.Name)
-
-		if b.Sources.Token != "" {
-			url = fmt.Sprintf("https://%s@github.com/%s/%s", b.Sources.Token, b.Sources.Owner, b.Sources.Name)
-		}
-	}
-
-	if b.Sources.Hub == BitbucketHost {
-		url = fmt.Sprintf("https://bitbucket.org/%s/%s", b.Sources.Owner, b.Sources.Name)
-
-		if b.Sources.Token != "" {
-			url = fmt.Sprintf("https://x-token-auth:%s@bitbucket.org/%s/%s", b.Sources.Token, b.Sources.Owner, b.Sources.Name)
-		}
-	}
-
-	if b.Sources.Hub == GitlabHost {
-		url = fmt.Sprintf("https://gitlab.com/%s/%s", b.Sources.Owner, b.Sources.Name)
-
-		if b.Sources.Token != "" {
-			url = fmt.Sprintf("https://gitlab-ci-token:%s@gitlab.com/%s/%s", b.Sources.Token, b.Sources.Owner, b.Sources.Name)
-		}
-	}
-
-	job.Repo = url
-	job.Branch = b.Sources.Branch
-
-	return job
-}
-
-type BuildCreateOptions struct {
-	Tag    *string `json:"tag"`
-	TarUri *string `json:"tar"`
-}
-
-func (s *BuildCreateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
-
-	log.V(logLevel).Debug("Request: Build: decode and validate data for creating")
-
-	body, err := ioutil.ReadAll(reader)
-	if err != nil {
-		log.V(logLevel).Errorf("Request: Build: decode and validate data for creating err: %s", err)
-		return errors.New("build").Unknown(err)
-	}
-
-	err = json.Unmarshal(body, s)
-	if err != nil {
-		log.V(logLevel).Errorf("Request: Build: convert struct from json err: %s", err)
-		return errors.New("build").IncorrectJSON(err)
-	}
-
-	switch true {
-	case s.Tag == nil:
-		log.V(logLevel).Errorf("Request: Repo: parameter tag can not be empty")
-		return errors.New("build").BadParameter("tag")
-	}
-
-	return nil
-}
-
 func (b *Build) MarkAsFetching(step, message string) {
-	b.State.Step = step
-	b.State.Message = message
-	b.State.Status = BuildStatusFetching
-	b.State.Processing = true
-	b.State.Done = false
-	b.State.Error = false
-	b.State.Canceled = false
+	b.Status.Step = step
+	b.Status.Message = message
+	b.Status.Status = BuildStatusFetching
+	b.Status.Processing = true
+	b.Status.Done = false
+	b.Status.Error = false
+	b.Status.Canceled = false
 }
 
 func (b *Build) MarkAsBuilding(step, message string) {
-	b.State.Step = step
-	b.State.Message = message
-	b.State.Status = BuildStatusBuilding
-	b.State.Processing = true
-	b.State.Done = false
-	b.State.Error = false
-	b.State.Canceled = false
+	b.Status.Step = step
+	b.Status.Message = message
+	b.Status.Status = BuildStatusBuilding
+	b.Status.Processing = true
+	b.Status.Done = false
+	b.Status.Error = false
+	b.Status.Canceled = false
 }
 
 func (b *Build) MarkAsUploading(step, message string) {
-	b.State.Step = step
-	b.State.Message = message
-	b.State.Status = BuildStatusUploading
-	b.State.Processing = true
-	b.State.Done = false
-	b.State.Error = false
-	b.State.Canceled = false
+	b.Status.Step = step
+	b.Status.Message = message
+	b.Status.Status = BuildStatusUploading
+	b.Status.Processing = true
+	b.Status.Done = false
+	b.Status.Error = false
+	b.Status.Canceled = false
 }
 
 func (b *Build) MarkAsDone(step, message string) {
-	b.State.Step = step
-	b.State.Message = message
-	b.State.Status = BuildStatusSuccess
-	b.State.Processing = false
-	b.State.Done = true
-	b.State.Error = false
-	b.State.Canceled = false
+	b.Status.Step = step
+	b.Status.Message = message
+	b.Status.Status = BuildStatusSuccess
+	b.Status.Processing = false
+	b.Status.Done = true
+	b.Status.Error = false
+	b.Status.Canceled = false
 }
 
 func (b *Build) MarkAsError(step, message string) {
-	b.State.Step = step
-	b.State.Message = message
-	b.State.Status = BuildStatusFailed
-	b.State.Processing = false
-	b.State.Done = false
-	b.State.Error = true
-	b.State.Canceled = false
+	b.Status.Step = step
+	b.Status.Message = message
+	b.Status.Status = BuildStatusFailed
+	b.Status.Processing = false
+	b.Status.Done = false
+	b.Status.Error = true
+	b.Status.Canceled = false
 }
 
 func (b *Build) MarkAsCanceled(step, message string) {
-	b.State.Step = step
-	b.State.Message = message
-	b.State.Status = BuildStatusCanceled
-	b.State.Processing = false
-	b.State.Done = false
-	b.State.Error = false
-	b.State.Canceled = true
+	b.Status.Step = step
+	b.Status.Message = message
+	b.Status.Status = BuildStatusCanceled
+	b.Status.Processing = false
+	b.Status.Done = false
+	b.Status.Error = false
+	b.Status.Canceled = true
+}
+
+func (b Build) NewBuildManifest() *BuildManifest {
+
+	manifest := new(BuildManifest)
+
+	manifest.Image.Host = viper.GetString("domain")
+	manifest.Image.Name = b.Spec.Image.Name
+	manifest.Image.Owner = b.Spec.Image.Owner
+	manifest.Image.Tag = b.Spec.Image.Tag
+	manifest.Image.Auth = b.Spec.Image.Auth
+
+	manifest.Source.Branch = b.Spec.Source.Branch
+
+	if b.Spec.Source.Hub == GithubHost {
+		manifest.Source.Url = fmt.Sprintf("https://github.com/%s/%s", b.Spec.Source.Owner, b.Spec.Source.Name)
+
+		if b.Spec.Source.Token != "" {
+			manifest.Source.Url = fmt.Sprintf("https://%s@github.com/%s/%s", b.Spec.Source.Token, b.Spec.Source.Owner, b.Spec.Source.Name)
+		}
+	}
+
+	if b.Spec.Source.Hub == BitbucketHost {
+		manifest.Source.Url = fmt.Sprintf("https://bitbucket.org/%s/%s", b.Spec.Source.Owner, b.Spec.Source.Name)
+
+		if b.Spec.Source.Token != "" {
+			manifest.Source.Url = fmt.Sprintf("https://x-token-auth:%s@bitbucket.org/%s/%s", b.Spec.Source.Token, b.Spec.Source.Owner, b.Spec.Source.Name)
+		}
+	}
+
+	if b.Spec.Source.Hub == GitlabHost {
+		manifest.Source.Url = fmt.Sprintf("https://gitlab.com/%s/%s", b.Spec.Source.Owner, b.Spec.Source.Name)
+
+		if b.Spec.Source.Token != "" {
+			manifest.Source.Url = fmt.Sprintf("https://gitlab-ci-token:%s@gitlab.com/%s/%s", b.Spec.Source.Token, b.Spec.Source.Owner, b.Spec.Source.Name)
+		}
+	}
+
+	manifest.Config.Dockerfile = b.Spec.Config.Dockerfile
+	manifest.Config.EnvVars = b.Spec.Config.EnvVars
+	manifest.Config.Workdir = b.Spec.Config.Workdir
+	manifest.Config.Command = b.Spec.Config.Command
+
+	return manifest
+}
+
+// Distribution options
+
+type BuildCreateOptions struct {
+	Source Source `json:"source"`
+	Image  struct {
+		ID    string `json:"id"`
+		Owner string `json:"owner"`
+		Name  string `json:"name"`
+		Tag   string `json:"tag"`
+		Auth  string `json:"auth"`
+	} `json:"source"`
+	Spec struct {
+		DockerFile string   `json:"dockerfile"`
+		Command    string   `json:"command"`
+		Workdir    string   `json:"workdir"`
+		EnvVars    []string `json:"environments"`
+	}
+}
+
+type BuildUpdateStatusOptions struct {
+	Step     string `json:"step"`
+	Message  string `json:"message"`
+	Error    bool   `json:"error"`
+	Canceled bool   `json:"canceled"`
+}
+
+type BuildUpdateInfoOptions struct {
+	Size int64  `json:"size"`
+	Hash string `json:"hash"`
+}
+
+type BuildUpdateTaskOptions struct {
+	TaskID string `json:"task"`
 }

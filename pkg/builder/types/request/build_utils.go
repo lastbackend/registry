@@ -19,10 +19,10 @@
 package request
 
 import (
-	"io"
-	"io/ioutil"
 	"encoding/json"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
+	"io"
+	"io/ioutil"
 )
 
 type BuildRequest struct{}

@@ -25,11 +25,11 @@ import (
 	"strings"
 
 	"github.com/lastbackend/registry/pkg/api"
+	"github.com/lastbackend/registry/pkg/builder"
 	"github.com/lastbackend/registry/pkg/controller"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/lastbackend/registry/pkg/builder"
 )
 
 var (

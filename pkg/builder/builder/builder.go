@@ -20,64 +20,70 @@ package builder
 
 import (
 	"context"
-	"fmt"
-	"io"
-	"os"
-	"time"
-
-	"github.com/lastbackend/registry/pkg/runtime/cri"
+	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
-	"github.com/lastbackend/registry/pkg/util/stream"
+	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/spf13/viper"
+	"io"
+	"os"
+	"sync"
 
 	lbt "github.com/lastbackend/registry/pkg/distribution/types"
+	"time"
+)
+
+const (
+	logBuilderPrefix = "builder"
 )
 
 // The main entity that is responsible for
 // the environment and existence of workers
 type Builder struct {
-	ctx        context.Context
-	cancel     context.CancelFunc
-	dockerHost string
-	id         string
-	cri        cri.CRI
-	limit      int
-	extraHosts []string
-	logdir     string
+	sync.RWMutex
 
-	tasks   chan *task
-	workers chan chan *task
+	ctx      context.Context
+	cancel   context.CancelFunc
+	id       string
+	hostname string
+	cri      cri.CRI
+	limit    int
+
 	respawn chan *worker
 	done    chan bool
 
-	activeTask map[string]*task
+	workers map[string]*worker
 }
 
 // Preparing the builder environment for workers
 func New(cri cri.CRI, id, dockerHost string, extraHosts []string, limit int, logdir string) *Builder {
 
-	log.Info("Build: New: create builder")
+	log.Infof("%s:new:> create builder", logBuilderPrefix)
 
 	var (
 		b   = new(Builder)
 		ctx = context.Background()
 	)
 
-	b.ctx, b.cancel = context.WithCancel(ctx)
 	b.limit = limit
-	b.logdir = logdir
 	b.id = id
-	b.dockerHost = dockerHost
-	b.extraHosts = extraHosts
 	b.cri = cri
 
-	b.tasks = make(chan *task, limit)
-	b.workers = make(chan chan *task, limit)
 	b.respawn = make(chan *worker, limit)
 	b.done = make(chan bool)
 
-	b.activeTask = make(map[string]*task, 0)
+	b.workers = make(map[string]*worker, 0)
+
+	ctx = context.WithValue(ctx, "builder", id)
+	ctx = context.WithValue(ctx, "dockerHost", dockerHost)
+	ctx = context.WithValue(ctx, "extraHosts", extraHosts)
+	ctx = context.WithValue(ctx, "logdir", logdir)
+	ctx = context.WithValue(ctx, "blob-storage", types.AzureBlobStorage{
+		AccountName: viper.GetString("storage.azure.account"),
+		AccountKey:  viper.GetString("storage.azure.key"),
+	})
+
+	b.ctx, b.cancel = context.WithCancel(ctx)
 
 	return b
 }
@@ -85,14 +91,130 @@ func New(cri cri.CRI, id, dockerHost string, extraHosts []string, limit int, log
 // Initializing the builder and preparing the necessary resources for correct operation
 func (b *Builder) Start() error {
 
-	log.Info("Build: Start: start builder")
+	log.Infof("%s:start:> start builder", logWorkerPrefix)
 
+	if err := b.configure(); err != nil {
+		log.Errorf("%s:start:> configure builder err: %v", logWorkerPrefix, err)
+		return err
+	}
+
+	go b.spawn(b.ctx, b.limit)
+
+	go func() {
+		<-b.ctx.Done()
+	}()
+
+	if err := envs.Get().GetClient().V1().Builder().Connect(b.ctx, envs.Get().GetHostname()); err != nil {
+		log.Errorf("%s:start:> send event connect builder err: %v", logWorkerPrefix, err)
+		return err
+	}
+
+	return nil
+}
+
+// Proxy logs stream from task
+func (b *Builder) BuildLogs(ctx context.Context, id, endpoint string) error {
+	log.Infof("%s:new_build:> get task logs for stream: %s", logWorkerPrefix, id)
+	w, ok := b.workers[id]
+	if ok {
+		go w.Logs()
+	}
+	return nil
+}
+
+// Interrupting the build process
+func (b *Builder) BuildCancel(ctx context.Context, id string) error {
+
+	log.Infof("%s:cancel:> cancel build: %s", logWorkerPrefix, id)
+
+	worker, ok := b.workers[id]
+	if ok {
+		worker.destroy()
+		b.Lock()
+		delete(b.workers, id)
+		b.Unlock()
+
+	}
+	return nil
+}
+
+// Spawn - finished or failed workers will be restarted until context is closed
+// If worker failed - then wait some time until respawn
+func (b *Builder) spawn(ctx context.Context, workers int) {
+
+	log.Info("%s:spawn:> run spawn workers")
+
+	run := func(w *worker) {
+
+		if err := w.Run(); err != nil {
+			log.Errorf("%s:spawn:> start worker for provision err: %v", logWorkerPrefix, err)
+			select {
+			// error delay
+			case <-time.After(5 * time.Second):
+			case <-ctx.Done():
+			}
+		}
+
+		// respawn delay
+		<-time.After(5 * time.Second)
+
+		b.respawn <- w
+	}
+
+	log.Debugf("%s:spawn:> create %d workers", logWorkerPrefix, workers)
+
+	for i := 0; i < workers; i++ {
+		w := newWorker(ctx, b.cri)
+		b.Lock()
+		b.workers[w.id] = w
+		b.Unlock()
+		go run(w)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Debugf("%s:spawn:> stop respawn", logWorkerPrefix)
+			return
+		case w := <-b.respawn:
+			log.Debugf("%s:spawn:> restarted worker", logWorkerPrefix)
+			go run(w)
+		}
+	}
+}
+
+// Await checks that all workers finished
+// then closes channel for registering new workers and respawns
+func (b *Builder) await() {
+
+	log.Infof("%s:await:> run graceful shutdown for workers", logWorkerPrefix)
+
+	alive := cap(b.respawn)
+
+	log.Infof("%s:await:> graceful shutdown await [%d/%d]", logWorkerPrefix, len(b.respawn), alive)
+
+	if len(b.respawn) == 0 {
+		close(b.respawn)
+		return
+	}
+
+	for range b.respawn {
+		alive--
+		if alive == 0 {
+			close(b.respawn)
+		}
+	}
+}
+
+// Configure builder
+func (b *Builder) configure() error {
 	// Check image exists
 	imageExists := func(name string) bool {
 		images, err := b.cri.ImageList(b.ctx)
 		if err != nil {
 			return false
 		}
+
 		for _, image := range images {
 			for _, tag := range image.RepoTags {
 				if tag == name+":latest" || tag == name {
@@ -101,7 +223,7 @@ func (b *Builder) Start() error {
 			}
 		}
 
-		log.Warnf("Build: Start: image %s not found", name)
+		log.Warnf("%s:configure:> image %s not found", logWorkerPrefix, name)
 
 		return false
 	}
@@ -120,169 +242,31 @@ func (b *Builder) Start() error {
 			Name: img,
 		})
 		if err != nil {
-			log.Errorf("Build: Start: pull image err: %s", err)
+			log.Errorf("%s:configure:> pull image err: %v", logWorkerPrefix, err)
 			return err
 		}
 		// TODO handle output in more beautiful way
 		if _, err := io.Copy(os.Stdout, req); err != nil {
-			log.Errorf("Build: Start: copy stream to stdout err: %s", err)
+			log.Errorf("%s:configure:> copy stream to stdout err: %v", logWorkerPrefix, err)
 		}
 
 		if err := req.Close(); err != nil {
-			log.Errorf("Build: Start: close stream err: %s", err)
+			log.Errorf("%s:configure:> close stream err: %v", logWorkerPrefix, err)
 			return err
 		}
 	}
 
-	go b.spawn(b.ctx, b.limit)
-
-	go func() {
-		<-b.ctx.Done()
-		close(b.tasks)
-	}()
-
-	go b.dispatch()
-
-	// TODO: send event online
-	//events.BuildOnlineEventRequest(envs.Get().GetRPC(), b.id)
-
 	return nil
-}
-
-// Add new task for build to queue
-func (b *Builder) NewTask(ctx context.Context, job *types.BuildJob) error {
-
-	log.Infof("Build: NewBuild: create new build for job: %s", job.ID)
-
-	ctx = context.WithValue(ctx, "logdir", b.logdir)
-	ctx = context.WithValue(ctx, "blob-storage", types.AzureBlobStorage{
-		AccountName: viper.GetString("storage.azure.account"),
-		AccountKey:  viper.GetString("storage.azure.key"),
-	})
-
-	task, err := newTask(ctx, b.id, b.dockerHost, b.extraHosts, b.cri, job)
-	if err != nil {
-		log.Errorf("Build: NewBuild: create build err: %s", err)
-		return err
-	}
-
-	b.activeTask[task.id] = task
-
-	b.tasks <- task
-
-	return nil
-}
-
-// Proxy logs stream from task
-func (b *Builder) LogsTask(ctx context.Context, id, endpoint string) error {
-
-	log.Infof("Build: NewBuild: get task logs for stream: %s", id)
-
-	if task, ok := b.activeTask[id]; ok {
-		go task.logger.Stream(stream.NewStream().AddSocketBackend(endpoint))
-	}
-
-	return nil
-}
-
-// Interrupting the build process
-func (b *Builder) CancelTask(ctx context.Context, id string) error {
-
-	log.Infof("Build: CancelBuild: cancel build: %s", id)
-
-	if _, ok := b.activeTask[id]; !ok {
-		err := fmt.Errorf("task %s is not active or was already finished", id)
-		log.Warnf("Build: NewBuild:cancel build task err: %s", err)
-		return err
-	}
-
-	b.activeTask[id].stop()
-	delete(b.activeTask, id)
-
-	return nil
-}
-
-// Dispatching of incoming tasks between workers
-func (b *Builder) dispatch() {
-
-	log.Info("Build: Dispatch: run dispatching tasks to workers")
-
-	for task := range b.tasks {
-		worker := <-b.workers
-		worker <- task
-	}
-}
-
-// Spawn - finished or failed workers will be restarted until context is closed
-// If worker failed - then wait some time until respawn
-func (b *Builder) spawn(ctx context.Context, workers int) {
-
-	log.Info("Build: Spawn: run spawn workers")
-
-	run := func(w *worker) {
-		if err := w.Run(b.workers); err != nil {
-			log.Errorf("Build: Spawn: start worker for provision err: %s", err)
-			// TODO separate task fails and init fails
-			select {
-			// error delay
-			case <-time.After(5 * time.Second):
-			case <-ctx.Done():
-			}
-		}
-
-		b.respawn <- w
-	}
-
-	log.Debugf("Build: Spawn: create %d workers", workers)
-
-	for i := 0; i < workers; i++ {
-		w := newWorker(ctx, b.cri)
-		go run(w)
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			log.Debug("Build: Spawn: stop respawn")
-			return
-		case w := <-b.respawn:
-			log.Debug("Build: Spawn: restarted worker")
-			go run(w)
-		}
-	}
-}
-
-// Await checks that all workers finished
-// then closes channel for registering new workers and respawns
-func (b *Builder) await() {
-
-	log.Info("Build: Await: run graceful shutdown for workers")
-
-	alive := cap(b.respawn)
-
-	log.Infof("Build: Await: graceful shutdown await [%d/%d]", len(b.respawn), alive)
-
-	if len(b.respawn) == 0 {
-		close(b.respawn)
-		return
-	}
-
-	for range b.respawn {
-		alive--
-		if alive == 0 {
-			close(b.workers)
-			close(b.respawn)
-		}
-	}
 }
 
 // Shutdown builder process
 func (b *Builder) Shutdown() {
 
-	log.Info("Build: Shutdown: Shutdown builder")
+	log.Infof("%s:shutdown:> shutdown builder process", logWorkerPrefix)
 
-	// TODO: send event offline
-	//events.BuildOfflineEventRequest(envs.Get().GetRPC(), b.id)
+	if err := envs.Get().GetClient().V1().Builder().Disconnect(b.ctx, envs.Get().GetHostname()); err != nil {
+		log.Errorf("%s:shutdown:> send event offline err: %v", logWorkerPrefix, err)
+	}
 
 	b.await()
 

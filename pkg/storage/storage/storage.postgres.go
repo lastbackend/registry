@@ -22,22 +22,32 @@ import (
 	"context"
 
 	"github.com/lastbackend/registry/pkg/distribution/types"
+	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )
 
 type Build interface {
 	Get(ctx context.Context, id string) (*types.Build, error)
-	List(ctx context.Context, repo string) (map[string]*types.Build, error)
+	GetByTask(ctx context.Context, id string) (*types.Build, error)
+	List(ctx context.Context, image string) ([]*types.Build, error)
 	Insert(ctx context.Context, build *types.Build) error
 	Update(ctx context.Context, build *types.Build) error
+
+	Attach(ctx context.Context, builder *types.Builder) (*types.Build, error)
+	Unfreeze(ctx context.Context) error
 }
 
-type Repo interface {
-	Get(ctx context.Context, owner, name string) (*types.Repo, error)
-	List(ctx context.Context) (map[string]*types.Repo, error)
-	Insert(ctx context.Context, repo *types.Repo) error
-	Update(ctx context.Context, repo *types.Repo) error
-	Remove(ctx context.Context, id string) error
+type Builder interface {
+	Get(ctx context.Context, hostname string) (*types.Builder, error)
+	Insert(ctx context.Context, builder *types.Builder) error
+	Update(ctx context.Context, builder *types.Builder) error
 
-	InsertTag(ctx context.Context, tag *types.RepoTag) error
-	UpdateTag(ctx context.Context, repo, tag string) error
+	MarkOffline(ctx context.Context) error
+}
+
+type Image interface {
+	Get(ctx context.Context, owner, name string) (*types.Image, error)
+	List(ctx context.Context, f *filter.ImageFilter) ([]*types.Image, error)
+	Insert(ctx context.Context, image *types.Image) error
+	Update(ctx context.Context, image *types.Image) error
+	Remove(ctx context.Context, image *types.Image) error
 }

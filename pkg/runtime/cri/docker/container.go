@@ -19,14 +19,14 @@
 package docker
 
 import (
-	docker "github.com/docker/docker/api/types"
-
 	"context"
-	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"io"
 	"strings"
 	"time"
+
+	"github.com/lastbackend/registry/pkg/distribution/types"
+	"github.com/lastbackend/registry/pkg/log"
+	docker "github.com/docker/docker/api/types"
 )
 
 func (r *Runtime) ContainerList(ctx context.Context, all bool) ([]*types.Container, error) {
@@ -43,7 +43,7 @@ func (r *Runtime) ContainerList(ctx context.Context, all bool) ([]*types.Contain
 
 		c, err := r.ContainerInspect(ctx, item.ID)
 		if err != nil {
-			log.Errorf("Can-not inspect container", err.Error())
+			log.Errorf("%s:container_list:>can-not inspect container err: %v", logPrefix, err)
 			continue
 		}
 
@@ -112,11 +112,11 @@ func (r *Runtime) ContainerLogs(ctx context.Context, ID string, stdout, stderr, 
 
 func (r *Runtime) ContainerInspect(ctx context.Context, ID string) (*types.Container, error) {
 
-	log.Debug("Docker: Container Inspect")
+	log.Debugf("%s:container_inspect:> container inspect", logPrefix)
 
 	info, err := r.client.ContainerInspect(ctx, ID)
 	if err != nil {
-		log.Errorf("Docker: Container Inspect error: %s", err)
+		log.Errorf("%s:container_inspect:> try container inspect error: %v", logPrefix, err)
 		return nil, err
 	}
 
@@ -163,7 +163,7 @@ func (r *Runtime) ContainerInspect(ctx context.Context, ID string) (*types.Conta
 
 	meta, ok := info.Config.Labels["LB"]
 	if !ok {
-		log.Debug("Docker: Container Meta not found")
+		log.Debugf("%s:container_inspect:> container meta not found", logPrefix)
 		return nil, nil
 	}
 

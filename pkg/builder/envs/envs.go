@@ -19,10 +19,10 @@
 package envs
 
 import (
-	"github.com/lastbackend/registry/pkg/runtime/cri"
+	"github.com/lastbackend/registry/pkg/api/client"
 	"github.com/lastbackend/registry/pkg/builder/types"
+	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/lastbackend/registry/pkg/storage"
-	"github.com/lastbackend/registry/pkg/builder/client"
 )
 
 var e Env
@@ -32,10 +32,11 @@ func Get() *Env {
 }
 
 type Env struct {
-	builder types.IBuilder
-	client  client.IClient
-	storage storage.Storage
-	cri     cri.CRI
+	hostname string
+	builder  types.IBuilder
+	client   client.IClient
+	storage  storage.Storage
+	cri      cri.CRI
 }
 
 func (env *Env) SetCri(cri cri.CRI) {
@@ -60,4 +61,12 @@ func (env *Env) SetBuilder(b types.IBuilder) {
 
 func (env Env) GetBuilder() types.IBuilder {
 	return env.builder
+}
+
+func (env *Env) SetHostname(h string) {
+	env.hostname = h
+}
+
+func (env Env) GetHostname() string {
+	return env.hostname
 }

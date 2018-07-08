@@ -18,47 +18,26 @@
 
 package request
 
+const (
+	DEFAULT_DESCRIPTION_LIMIT = 512
+)
+
 type IRequest interface {
-	Cluster() *ClusterRequest
-	Deployment() *DeploymentRequest
-	Namespace() *NamespaceRequest
-	Node() *NodeRequest
-	Service() *ServiceRequest
-	Route() *RouteRequest
-	//Secret() *SecretRequest
-	Trigger() *TriggerRequest
-	Volume() *VolumeRequest
+	Image() *ImageRequest
+	Build() *BuildRequest
+	Builder() *BuilderRequest
 }
 
-//
 type Request struct{}
 
-func (Request) Cluster() *ClusterRequest {
-	return new(ClusterRequest)
-}
-func (Request) Deployment() *DeploymentRequest {
-	return new(DeploymentRequest)
-}
-func (Request) Namespace() *NamespaceRequest {
-	return new(NamespaceRequest)
-}
-func (Request) Node() *NodeRequest {
-	return new(NodeRequest)
+func (Request) Image() *ImageRequest {
+	return new(ImageRequest)
 }
 
-func (Request) Service() *ServiceRequest {
-	return new(ServiceRequest)
-}
-func (Request) Route() *RouteRequest {
-	return new(RouteRequest)
+func (Request) Build() *BuildRequest {
+	return new(BuildRequest)
 }
 
-//func (Request) Secret() *SecretRequest {
-//	return new(SecretRequest)
-//}
-func (Request) Trigger() *TriggerRequest {
-	return new(TriggerRequest)
-}
-func (Request) Volume() *VolumeRequest {
-	return new(VolumeRequest)
+func (Request) Builder() *BuilderRequest {
+	return new(BuilderRequest)
 }

@@ -20,12 +20,10 @@ package types
 
 import (
 	"context"
-	"github.com/lastbackend/registry/pkg/distribution/types"
 )
 
 type IBuilder interface {
 	Start() error
-	NewTask(ctx context.Context, job *types.BuildJob) error
-	LogsTask(ctx context.Context, id, endpoint string) error
-	CancelTask(ctx context.Context, id string) error
+	BuildLogs(ctx context.Context, id, endpoint string) error
+	BuildCancel(ctx context.Context, id string) error
 }

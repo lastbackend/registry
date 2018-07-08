@@ -22,6 +22,7 @@ import (
 	"errors"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type sources struct {
@@ -39,7 +40,7 @@ func IntToString(i int) string {
 
 // Parse incoming string git url in sources type
 // Ex:
-// 	* https://github.com/lastbackend/enterprise.git
+// 	* https://github.com/lastbackend/lastbackend.git
 // 	* git@github.com:lastbackend/enterprise.git
 func GitUrlParse(url string) (*sources, error) {
 
@@ -58,4 +59,18 @@ func GitUrlParse(url string) (*sources, error) {
 		Branch:   "master",
 	}, nil
 
+}
+
+func DockerNamespaceMake(hub, owner, repo, tag string) string {
+	var ns = repo
+	if tag != "" {
+		ns = strings.Join([]string{ns, tag}, ":")
+	}
+	if owner != "" {
+		ns = strings.Join([]string{owner, ns}, "/")
+	}
+	if hub != "" {
+		ns = strings.Join([]string{hub, ns}, "/")
+	}
+	return ns
 }

@@ -26,17 +26,17 @@ const EmptyString = ""
 const EmptyStringSlice = "[]"
 
 type Meta struct {
-	ID string `json:"id"`
+	ID string `json:"id,omitempty"`
 	// Meta name
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 	// Meta description
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 	// Meta labels
-	Labels map[string]string `json:"labels"`
+	Labels map[string]string `json:"labels,omitempty"`
 	// Meta created time
-	Created time.Time `json:"created"`
+	Created time.Time `json:"created,omitempty"`
 	// Meta updated time
-	Updated time.Time `json:"updated"`
+	Updated time.Time `json:"updated,omitempty"`
 }
 
 func (m *Meta) SetDefault() {

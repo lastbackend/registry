@@ -18,14 +18,38 @@
 
 package runtime
 
+import (
+	"context"
+	"github.com/lastbackend/registry/pkg/controller/runtime/build"
+	"github.com/lastbackend/registry/pkg/controller/runtime/builder"
+	"github.com/lastbackend/registry/pkg/log"
+)
+
 const (
 	logLevel  = 3
 	logPrefix = "controller:runtime"
 )
 
-func NewRuntime() {
-
+type Runtime struct {
+	done chan bool
+	ctx  context.Context
 }
 
-func Loop() {
+func NewRuntime() *Runtime {
+	r := new(Runtime)
+	r.done = make(chan bool)
+	r.ctx = context.Background()
+	return r
+}
+
+func (r Runtime) Inspector() {
+	log.V(logLevel).Infof("%s:> run runtime inspector", logPrefix)
+	go builder.Inspector(r.ctx)
+	go build.Inspector(r.ctx)
+	<-r.done
+}
+
+func (r Runtime) Stop() {
+	log.V(logLevel).Infof("%s:> stop runtime process", logPrefix)
+	r.done <- true
 }

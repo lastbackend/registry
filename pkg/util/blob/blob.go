@@ -118,7 +118,7 @@ func (b *blob) ReadToStream(containerName, blockBlobName string, stream *stream.
 
 // Creates a container, and performs operations with page blobs, append blobs and block blobs.
 func (b *blob) Write(containerName, blobName string, reader io.Reader) error {
-	fmt.Println("Create container with private access type...")
+	fmt.Println("create container with private access type...")
 
 	cnt := b.client.GetContainerReference(containerName)
 	options := storage.CreateContainerOptions{}
@@ -127,7 +127,7 @@ func (b *blob) Write(containerName, blobName string, reader io.Reader) error {
 		return fmt.Errorf("create container err: %s", err)
 	}
 
-	fmt.Println("Create an empty append blob...")
+	fmt.Println("create an empty append blob...")
 
 	bl := cnt.GetBlobReference(blobName)
 	bl.Properties.ContentType = "text/plain"
@@ -135,7 +135,7 @@ func (b *blob) Write(containerName, blobName string, reader io.Reader) error {
 	opts := &storage.PutBlobOptions{}
 	err = bl.CreateBlockBlobFromReader(reader, opts)
 	if err != nil {
-		log.Errorf("Can not create blob from reader: %s", err)
+		log.Errorf("can not create blob from reader: %s", err)
 		return err
 	}
 

@@ -21,14 +21,15 @@ package http
 import (
 	"github.com/gorilla/mux"
 	"github.com/lastbackend/registry/pkg/api/http/build"
-	"github.com/lastbackend/registry/pkg/api/http/repo"
+	"github.com/lastbackend/registry/pkg/api/http/builder"
+	"github.com/lastbackend/registry/pkg/api/http/image"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/http"
 	"github.com/lastbackend/registry/pkg/util/http/cors"
 )
 
 const (
-	logLevel = 2
+	logLevel  = 2
 	logPrefix = "api:http"
 )
 
@@ -49,11 +50,9 @@ func AddRoutes(r ...[]http.Route) {
 }
 
 func init() {
-
-	// Registry
-	AddRoutes(repo.Routes)
+	AddRoutes(image.Routes)
 	AddRoutes(build.Routes)
-
+	AddRoutes(builder.Routes)
 }
 
 func Listen(host string, port int, opts *HttpOpts) error {
@@ -83,8 +82,6 @@ func Listen(host string, port int, opts *HttpOpts) error {
 		return http.Listen(host, port, r)
 	}
 
-
 	log.V(logLevel).Debugf("%s:> run http server  with tls", logPrefix)
 	return http.ListenWithTLS(host, port, opts.CertFile, opts.KeyFile, r)
 }
-

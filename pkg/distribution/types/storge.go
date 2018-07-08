@@ -26,4 +26,3 @@ type AzureBlobStorage struct {
 	UseHTTPS       bool
 	Emulator       bool
 }
-

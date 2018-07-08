@@ -59,7 +59,7 @@ func Daemon() bool {
 	}()
 
 	// Handle SIGINT and SIGTERM.
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		for {

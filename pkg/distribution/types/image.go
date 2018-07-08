@@ -18,17 +18,99 @@
 
 package types
 
+import "time"
+
+const (
+	ImageDefaultTag            = "latest"
+	ImageDefaultDockerfilePath = "./DockerFile"
+)
+
+type Image struct {
+	Meta   ImageMeta   `json:"meta"`
+	Status ImageStatus `json:"status"`
+	Spec   ImageSpec   `json:"spec"`
+}
+
+type ImageMeta struct {
+	Meta
+	Owner string `json:"owner"`
+}
+
+type ImageStatus struct {
+	Stats ImageStats `json:"stats"`
+}
+
 type ImageSpec struct {
-	// Image full name
-	Name string `json:"name"`
-	// Image pull provision flag
-	Pull bool `json:"image-pull"`
-	// Image Auth base64 encoded string
-	Auth string `json:"auth"`
+	Private bool                 `json:"private"`
+	TagList map[string]*ImageTag `json:"tags"`
+}
+
+type ImageSource struct {
+	Hub   string `json:"hub"`
+	Owner string `json:"owner"`
+	Name  string `json:"name"`
+}
+
+type ImageStats struct {
+	// Image stats pulls quantity
+	PullsQuantity int64 `json:"pulls_quantity"`
+	// Image stats builds quantity
+	BuildsQuantity int64 `json:"builds_quantity"`
+	// Image stats stars quantity
+	StarsQuantity int64 `json:"stars_quantity"`
+	// Image stats views quantity
+	ViewsQuantity int64 `json:"views_quantity"`
+}
+
+type ImageTag struct {
+	ID       string       `json:"id"`
+	ImageID  string       `json:"image"`
+	Name     string       `json:"name"`
+	Tag      string       `json:"tag"`
+	Disabled bool         `json:"disable"`
+	Private  bool         `json:"private"`
+	Spec     ImageTagSpec `json:"spec"`
+	Created  time.Time    `json:"created"`
+	Updated  time.Time    `json:"updated"`
+}
+
+type ImageTagSpec struct {
+	DockerFile string   `json:"dockerfile"`
+	Command    string   `json:"command"`
+	Workdir    string   `json:"workdir"`
+	EnvVars    []string `json:"environments"`
 }
 
 type ImageInfo struct {
 	ID          string `json:"id"`
 	Size        int64  `json:"size"`
 	VirtualSize int64  `json:"virtual_size"`
+}
+
+// *********************************************
+// Image distribution options
+// *********************************************
+
+type ImageCreateOptions struct {
+	Name        string `json:"name"`
+	Owner       string `json:"owner"`
+	Description string `json:"description"`
+	Private     bool   `json:"tag"`
+}
+
+type ImageUpdateOptions struct {
+	Description *string `json:"description"`
+	Private     *bool   `json:"private"`
+}
+
+type ImageRemoveOptions struct {
+	Force *bool `json:"force"`
+}
+
+type ImageTagCreateOptions struct {
+	Name string `json:"name"`
+}
+
+type ImageListOptions struct {
+	Owner string `json:"owner"`
 }

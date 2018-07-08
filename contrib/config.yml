@@ -4,6 +4,7 @@
 verbose: 7
 token: lstbknd
 ssl: true
+domain: "hub.lstbknd.net"
 
 # Database and Messages broker
 psql: "host=127.0.0.1 port=5431 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"
@@ -22,7 +23,7 @@ git:
 api:
   host: 0.0.0.0
   port: 2955
-  uri: "api.lstbknd.net"
+  uri: "172.17.0.1"
   tls:
     insecure: true
     cert: "/opt/ssl/cert.pem"

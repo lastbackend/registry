@@ -50,9 +50,9 @@ type SpecTemplate struct {
 // SpecTemplateNetwork is a map of spec template for network
 // swagger:model types_spec_template_network
 type SpecTemplateNetwork struct {
-	IP       string               `json:"ip"`
-	Ports    map[uint16]string    `json:"ports"`
-	Policy   string               `json:"policy"`
+	IP     string            `json:"ip"`
+	Ports  map[uint16]string `json:"ports"`
+	Policy string            `json:"policy"`
 }
 
 // swagger:ignore
@@ -280,7 +280,7 @@ type SpecTemplateContainerNetwork struct {
 	Hostname string `json:"hostname"`
 	// Container host domain
 	Domain string `json:"domain"`
-	// Network ID to use
+	// Network Hash to use
 	Network string `json:"network"`
 	// Network Mode to use
 	Mode string `json:"mode"`

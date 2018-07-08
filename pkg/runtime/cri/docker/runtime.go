@@ -29,6 +29,10 @@ import (
 	"path/filepath"
 )
 
+const (
+	logPrefix = "runtime:cri:docker"
+)
+
 type Runtime struct {
 	client *client.Client
 }
@@ -41,11 +45,11 @@ func New() (*Runtime, error) {
 		r   = new(Runtime)
 	)
 
-	log.Debug("Use docker CRI")
+	log.Debugf("%s:new:> use docker CRI", logPrefix)
 
 	if viper.GetString("runtime.docker.certs") != "" {
 
-		log.Debugf("Create Docker secure client: %s", viper.GetString("runtime.docker.certs"))
+		log.Debugf("%s:new:> create Docker secure client: %s", logPrefix, viper.GetString("runtime.docker.certs"))
 
 		options := tlsconfig.Options{
 			CAFile:             filepath.Join(viper.GetString("runtime.docker.certs"), "ca.pem"),
@@ -92,11 +96,11 @@ func NewWithHost(host string) (*Runtime, error) {
 		r   = new(Runtime)
 	)
 
-	log.Debugf("Use docker CRI with host %s", host)
+	log.Debugf("%s:new_with_host:> use docker CRI with host %s", logPrefix, host)
 
 	if viper.GetString("runtime.docker.certs") != "" {
 
-		log.Debugf("Create Docker secure client: %s", viper.GetString("runtime.docker.certs"))
+		log.Debugf("%s:new_with_host:> create Docker secure client: %s", logPrefix, viper.GetString("runtime.docker.certs"))
 
 		options := tlsconfig.Options{
 			CAFile:             filepath.Join(viper.GetString("runtime.docker.certs"), "ca.pem"),

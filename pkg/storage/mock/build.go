@@ -41,7 +41,12 @@ func (s *BuildStorage) Get(ctx context.Context, id string) (*types.Build, error)
 	return nil, nil
 }
 
-func (s *BuildStorage) List(ctx context.Context, repo string) (map[string]*types.Build, error) {
+func (s *BuildStorage) GetByTask(ctx context.Context, id string) (*types.Build, error) {
+	log.V(logLevel).Debugf("%s:build:get_by_task> get build by task: %s", logPrefix, id)
+	return nil, nil
+}
+
+func (s *BuildStorage) List(ctx context.Context, image string) ([]*types.Build, error) {
 	log.V(logLevel).Debugf("%s:build:list> get builds list", logPrefix)
 	return nil, nil
 }

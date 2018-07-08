@@ -16,7 +16,7 @@
 // from Last.Backend LLC.
 //
 
-package cluster
+package build
 
 import (
 	"github.com/lastbackend/registry/pkg/util/http"
@@ -25,7 +25,6 @@ import (
 
 var Routes = []http.Route{
 	// Build handlers
-	{Path: "/build/execute", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildExecuteH},
-	{Path: "/build/cancel", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildCancelH},
-	{Path: "/build/logs", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildLogsH},
+	{Path: "/build/cancel", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Context}, Handler: BuildCancelH},
+	{Path: "/build/logs", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Context}, Handler: BuildLogsH},
 }

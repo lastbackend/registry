@@ -26,22 +26,30 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lastbackend/registry/pkg/runtime/cri"
-	"github.com/lastbackend/registry/pkg/runtime/cri/docker"
+	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/builder/logger"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
+	"github.com/lastbackend/registry/pkg/runtime/cri"
+	"github.com/lastbackend/registry/pkg/runtime/cri/docker"
 	"github.com/lastbackend/registry/pkg/util/blob"
-	"github.com/lastbackend/registry/pkg/util/generator"
 	"github.com/lastbackend/registry/pkg/util/validator"
-	"github.com/lastbackend/registry/pkg/builder/envs"
 
+	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 	lbt "github.com/lastbackend/registry/pkg/distribution/types"
+)
+
+const (
+	logTaskPrefix = "builder:task"
 )
 
 const (
 	errorBuildFailed  = "build process failed"
 	errorUploadFailed = "push process failed"
+)
+
+const (
+	defaultDockerHost = "172.17.0.1"
 )
 
 // The task is responsible for the process
@@ -59,9 +67,9 @@ type task struct {
 
 	canceled bool
 
-	logger *logger.Logger
-	cri    cri.CRI
-	job    *types.BuildJob
+	logger   *logger.Logger
+	cri      cri.CRI
+	manifest *types.BuildManifest
 }
 
 type taskEvent struct {
@@ -70,12 +78,50 @@ type taskEvent struct {
 	error   bool
 }
 
-// Creating a new task for incoming job and prepare the environment for build process
+// Creating a new task for incoming manifest and configure the environment for build process
 // Here the running docker:dind for isolated storage of the image on the host
 // until it is sent to the registry.
-func newTask(ctx context.Context, builder, dockerHost string, extraHosts []string, cri cri.CRI, job *types.BuildJob) (*task, error) {
+func NewTask(ctx context.Context, id string, cri cri.CRI) (*task, error) {
 
-	log.Infof("Task: New: create new task for job %s", job.ID)
+	log.Infof("%s:new:> create new task", logTaskPrefix)
+
+	var (
+		builder = ctx.Value("builder").(string)
+	)
+
+	ct, cn := context.WithCancel(ctx)
+
+	return &task{
+		ctx:     ct,
+		cancel:  cn,
+		id:      id,
+		builder: builder,
+		cri:     cri,
+		logger:  logger.NewLogger(ctx),
+	}, nil
+}
+
+func (t *task) Canceled() bool {
+	return t.canceled
+}
+
+// Running build process
+func (t *task) Start(manifest *types.BuildManifest) error {
+
+	var (
+		extraHosts = make([]string, 0)
+		dockerHost = defaultDockerHost
+	)
+
+	if t.ctx.Value("extraHosts") != nil {
+		extraHosts = t.ctx.Value("extraHosts").([]string)
+	}
+
+	if t.ctx.Value("dockerHost") != nil {
+		dockerHost = t.ctx.Value("dockerHost").(string)
+	}
+
+	t.manifest = manifest
 
 	spec := lbt.SpecTemplateContainer{
 		Image: lbt.SpecTemplateContainerImage{
@@ -93,31 +139,31 @@ func newTask(ctx context.Context, builder, dockerHost string, extraHosts []strin
 		PublishAllPorts: true,
 	}
 
-	dcid, err := cri.ContainerCreate(ctx, &spec)
+	dcid, err := t.cri.ContainerCreate(t.ctx, &spec)
 	if err != nil {
-		log.Errorf("Task: New: create container with docker:dind err: %s", err)
-		return nil, err
+		log.Errorf("%s:start:> create container with docker:dind err: %v", logTaskPrefix, err)
+		return err
 	}
 
-	if err := cri.ContainerStart(ctx, dcid); err != nil {
-		log.Errorf("Task: New: start container with docker:dind err: %s", err)
-		return nil, err
+	if err := t.cri.ContainerStart(t.ctx, dcid); err != nil {
+		log.Errorf("%s:start:> start container with docker:dind err: %v", logTaskPrefix, err)
+		return err
 	}
 
-	inspect, err := cri.ContainerInspect(ctx, dcid)
+	inspect, err := t.cri.ContainerInspect(t.ctx, dcid)
 	if err != nil {
-		log.Errorf("Task: New: Inspect docker:dind container err: %s", err)
-		return nil, err
+		log.Errorf("%s:start:> Inspect docker:dind container err: %v", logTaskPrefix, err)
+		return err
 	}
 	if inspect == nil {
 		err := fmt.Errorf("docker:dind does not exists")
-		log.Errorf("Task: New: container inspect err: %s", err)
-		return nil, err
+		log.Errorf("%s:start:> container inspect err: %v", logTaskPrefix, err)
+		return err
 	}
 	if inspect.ExitCode != 0 {
 		err := fmt.Errorf("docker:dind exit with status code %d", inspect.ExitCode)
-		log.Errorf("Task: New: container exit with err: %s", err)
-		return nil, err
+		log.Errorf("%s:start:> container exit with err: %v", logTaskPrefix, err)
+		return err
 	}
 
 	var port = ""
@@ -130,8 +176,8 @@ func newTask(ctx context.Context, builder, dockerHost string, extraHosts []strin
 
 		if len(binds) == 0 {
 			err := fmt.Errorf("there are no ports available")
-			log.Errorf("Task: New: cannot receive docker daemon connection port: %s", err)
-			return nil, err
+			log.Errorf("%s:start:> cannot receive docker daemon connection port: %v", logTaskPrefix, err)
+			return err
 		}
 
 		for _, bind := range binds {
@@ -144,27 +190,34 @@ func newTask(ctx context.Context, builder, dockerHost string, extraHosts []strin
 		}
 	}
 
-	ct, cn := context.WithCancel(ctx)
+	t.endpoint = fmt.Sprintf("tcp://%s:%s", dockerHost, port)
+	t.dcid = dcid
 
-	if len(dockerHost) == 0 {
-		dockerHost = "172.17.0.1"
+	defer func() {
+		if err := t.finish(); err != nil && err != context.Canceled {
+			log.Errorf("%s:start:> finish task %s err:  %s", logWorkerPrefix, t.id, err)
+		}
+	}()
+
+	err = t.build()
+	if err == nil && t.Canceled() {
+		return nil
+	}
+	if err != nil && err != context.Canceled {
+		log.Errorf("%s:start:> build t %s err:  %s", logWorkerPrefix, t.id, err)
+		return err
 	}
 
-	return &task{
-		ctx:      ct,
-		cancel:   cn,
-		id:       generator.GetUUIDV4(),
-		builder:  builder,
-		endpoint: fmt.Sprintf("tcp://%s:%s", dockerHost, port),
-		dcid:     dcid,
-		cri:      cri,
-		job:      job,
-		logger:   logger.NewLogger(ctx),
-	}, nil
-}
+	err = t.push()
+	if err == nil && t.Canceled() {
+		return nil
+	}
+	if err != nil && err != context.Canceled {
+		log.Errorf("%s:start:> push t %s err:  %s", logWorkerPrefix, t.id, err)
+		return err
+	}
 
-func (t *task) Canceled() bool {
-	return t.canceled
+	return nil
 }
 
 // Running build process
@@ -174,15 +227,15 @@ func (t *task) build() error {
 	t.sendEvent(taskEvent{step: types.BuildStepBuild})
 
 	var (
-		image      = fmt.Sprintf("%s/%s/%s:%s", t.job.Image.Host, t.job.Image.Owner, t.job.Image.Name, t.job.Image.Tag)
-		dockerfile = t.job.Config.Dockerfile
-		gituri     = fmt.Sprintf("%s.git#%s", t.job.Repo, strings.ToLower(t.job.Branch))
+		image      = fmt.Sprintf("%s/%s/%s:%s", t.manifest.Image.Host, t.manifest.Image.Owner, t.manifest.Image.Name, t.manifest.Image.Tag)
+		dockerfile = t.manifest.Config.Dockerfile
+		gituri     = fmt.Sprintf("%s.git#%s", t.manifest.Source.Url, strings.ToLower(t.manifest.Source.Branch))
 	)
 
-	log.Infof("Task: Build: running build image %s process for job %s", image, t.job.ID)
+	log.Infof("%s:build:> running build image %s process for manifest %s", logTaskPrefix, image, t.id)
 
-	if validator.IsValueInList(dockerfile, []string{"", " ", "/", "./", "../", "Dockerfile", "/Dockerfile"}) {
-		dockerfile = "./Dockerfile"
+	if validator.IsValueInList(dockerfile, []string{"", " ", "/", "./", "../", "DockerFile", "/DockerFile"}) {
+		dockerfile = "./DockerFile"
 	}
 
 	// TODO: change this logic to docker client [cli.ImageBuild]
@@ -202,12 +255,12 @@ func (t *task) build() error {
 	switch err {
 	case nil:
 	case context.Canceled:
-		log.Debugf("Task: Build: process canceled")
+		log.Debugf("%s:build:> process canceled", logTaskPrefix)
 		t.canceled = true
 		t.sendEvent(taskEvent{step: types.BuildStepBuild})
 		return nil
 	default:
-		log.Errorf("Task: Build: create container err: %s", err)
+		log.Errorf("%s:build:> create container err: %v", logTaskPrefix, err)
 		t.error = errorBuildFailed
 		t.sendEvent(taskEvent{step: types.BuildStepBuild})
 		return err
@@ -217,12 +270,12 @@ func (t *task) build() error {
 	switch err {
 	case nil:
 	case context.Canceled:
-		log.Debugf("Task: Build: process canceled")
+		log.Debugf("%s:build:> process canceled", logTaskPrefix)
 		t.canceled = true
 		t.sendEvent(taskEvent{step: types.BuildStepBuild})
 		return nil
 	default:
-		log.Errorf("Task: Build: start container err: %s", err)
+		log.Errorf("%s:build:> start container err: %v", logTaskPrefix, err)
 		t.error = errorBuildFailed
 		t.sendEvent(taskEvent{step: types.BuildStepBuild})
 		return err
@@ -232,13 +285,13 @@ func (t *task) build() error {
 	switch err {
 	case nil:
 	case context.Canceled:
-		log.Debugf("Task: Build: process canceled")
+		log.Debugf("%s:build:> process canceled", logTaskPrefix)
 		t.canceled = true
 		t.sendEvent(taskEvent{step: types.BuildStepBuild})
 		return nil
 	default:
 		err := fmt.Errorf("running logs stream: %s", err)
-		log.Errorf("Task: Build: logs container err: %s", err)
+		log.Errorf("%s:build:> logs container err: %v", logTaskPrefix, err)
 		t.error = errorBuildFailed
 		t.sendEvent(taskEvent{step: types.BuildStepBuild})
 		return err
@@ -247,7 +300,7 @@ func (t *task) build() error {
 	defer func() {
 		if req != nil {
 			if err := req.Close(); err != nil {
-				log.Errorf("Task: Build: close log stream err: %s", err)
+				log.Errorf("%s:build:> close log stream err: %s", err)
 				return
 			}
 		}
@@ -255,7 +308,7 @@ func (t *task) build() error {
 
 	go func() {
 		if err := t.writeLogFile(); err != nil {
-			log.Warnf("Task: Build: write logs file err: %s", err)
+			log.Warnf("%s:build:> write logs file err: %s", err)
 			return
 		}
 	}()
@@ -264,24 +317,24 @@ func (t *task) build() error {
 	switch err {
 	case nil:
 	case context.Canceled:
-		log.Debugf("Task: Build: process canceled")
+		log.Debugf("%s:build:> process canceled", logTaskPrefix)
 		t.canceled = true
 		t.sendEvent(taskEvent{step: types.BuildStepBuild})
 		return nil
 	default:
-		log.Warnf("Task: Build: write logs to stdout err: %s", err)
+		log.Warnf("%s:build:> write logs to stdout err: %v", logTaskPrefix, err)
 	}
 
 	inspect, err := t.cri.ContainerInspect(t.ctx, cid)
 	switch err {
 	case nil:
 	case context.Canceled:
-		log.Debugf("Task: Build: process canceled")
+		log.Debugf("%s:build:> process canceled", logTaskPrefix)
 		t.canceled = true
 		t.sendEvent(taskEvent{step: types.BuildStepBuild})
 		return nil
 	default:
-		log.Errorf("Task: Build: inspect container %s", err)
+		log.Errorf("%s:build:> inspect container %v", logTaskPrefix, err)
 		t.error = errorBuildFailed
 		t.sendEvent(taskEvent{step: types.BuildStepBuild})
 		return err
@@ -290,14 +343,14 @@ func (t *task) build() error {
 	// todo check canceled context
 	if inspect == nil {
 		err := fmt.Errorf("docker:container daes not exists")
-		log.Errorf("Task: New: container inspect err: %s", err)
+		log.Errorf("%s:build:> container inspect err: %v", logTaskPrefix, err)
 		t.error = errorBuildFailed
 		t.sendEvent(taskEvent{step: types.BuildStepBuild})
 		return err
 	}
 	if err == nil && inspect.ExitCode != 0 {
 		err := fmt.Errorf("container exited with %d code", inspect.ExitCode)
-		log.Errorf("Task: Build: container exit with err %s", err)
+		log.Errorf("%s:build:> container exit with err %v", logTaskPrefix, err)
 		t.error = errorBuildFailed
 		t.sendEvent(taskEvent{step: types.BuildStepBuild})
 		return err
@@ -313,24 +366,24 @@ func (t *task) push() error {
 	t.sendEvent(taskEvent{step: types.BuildStepUpload})
 
 	var (
-		registry  = t.job.Image.Host
-		image     = fmt.Sprintf("%s/%s/%s", registry, t.job.Image.Owner, t.job.Image.Name)
-		namespace = fmt.Sprintf("%s:%s", image, t.job.Image.Tag)
-		auth      = t.job.Image.Token
+		registry  = t.manifest.Image.Host
+		image     = fmt.Sprintf("%s/%s/%s", registry, t.manifest.Image.Owner, t.manifest.Image.Name)
+		namespace = fmt.Sprintf("%s:%s", image, t.manifest.Image.Tag)
+		auth      = t.manifest.Image.Auth
 	)
 
-	log.Infof("Task: Push: running push image %s process for job %s to registry %s", image, t.job.ID, registry)
+	log.Infof("%s:push:> running push image %s process for manifest %s to registry %s", logTaskPrefix, image, t.id, registry)
 
 	cli, err := docker.NewWithHost(t.endpoint)
 	switch err {
 	case nil:
 	case context.Canceled:
-		log.Debugf("Task: Build: process canceled")
+		log.Debugf("%s:build:> process canceled", logTaskPrefix)
 		t.canceled = true
 		t.sendEvent(taskEvent{step: types.BuildStepUpload})
 		return nil
 	default:
-		log.Errorf("Task: Push: create docker client %s", err)
+		log.Errorf("%s:push:> create docker client %v", logTaskPrefix, err)
 		t.error = errorUploadFailed
 		t.sendEvent(taskEvent{step: types.BuildStepUpload})
 		return err
@@ -340,12 +393,12 @@ func (t *task) push() error {
 	switch err {
 	case nil:
 	case context.Canceled:
-		log.Debugf("Task: Build: process canceled")
+		log.Debugf("%s:build:> process canceled", logTaskPrefix)
 		t.canceled = true
 		t.sendEvent(taskEvent{step: types.BuildStepUpload})
 		return nil
 	default:
-		log.Errorf("Task: Push: running push process err: %s", err)
+		log.Errorf("%s:push:> running push process err: %v", logTaskPrefix, err)
 		t.error = errorUploadFailed
 		t.sendEvent(taskEvent{step: types.BuildStepUpload})
 		return err
@@ -354,7 +407,7 @@ func (t *task) push() error {
 	defer func() {
 		if req != nil {
 			if err := req.Close(); err != nil {
-				log.Errorf("Task: Push: close request stream err: %s", err)
+				log.Errorf("%s:push:> close request stream err: %v", logTaskPrefix, err)
 				return
 			}
 		}
@@ -385,11 +438,11 @@ func (t *task) push() error {
 			buffer := make([]byte, DEFAULT_BUFFER_SIZE)
 			readBytes, err := stream.Read(buffer)
 			if err != nil && err != io.EOF {
-				log.Warnf("Read bytes from reader err: %s", err)
+				log.Warnf("%s:push:> read bytes from reader err: %v", logTaskPrefix, err)
 			}
 			if readBytes == 0 {
 				if err := json.Unmarshal(bufferLast[:readBytesLast], &data); err != nil {
-					log.Errorf("Task: Push: Parse result stream err: %s", err)
+					log.Errorf("%s:push:> parse result stream err: %v", logTaskPrefix, err)
 					result = nil
 					break
 				}
@@ -415,12 +468,12 @@ func (t *task) push() error {
 	switch err {
 	case nil:
 	case context.Canceled:
-		log.Debugf("Task: Build: process canceled")
+		log.Debugf("%s:build:> process canceled", logTaskPrefix)
 		t.canceled = true
 		t.sendEvent(taskEvent{step: types.BuildStepUpload})
 		return nil
 	default:
-		log.Errorf("Task: Push: push image err: %s", err)
+		log.Errorf("%s:push:> push image err: %v", logTaskPrefix, err)
 		t.error = errorUploadFailed
 		t.sendEvent(taskEvent{step: types.BuildStepUpload})
 		return err
@@ -430,12 +483,12 @@ func (t *task) push() error {
 	switch err {
 	case nil:
 	case context.Canceled:
-		log.Debugf("Task: Build: process canceled")
+		log.Debugf("%s:build:> process canceled", logTaskPrefix)
 		t.canceled = true
 		t.sendEvent(taskEvent{step: types.BuildStepUpload})
 		return nil
 	default:
-		log.Errorf("Task: Push: get image info err: %s", err)
+		log.Errorf("%s:push:> get image info err: %v", logTaskPrefix, err)
 		t.error = errorUploadFailed
 		t.sendEvent(taskEvent{step: types.BuildStepUpload})
 		return err
@@ -449,11 +502,11 @@ func (t *task) push() error {
 // Handler after task completion
 func (t *task) finish() error {
 
-	log.Infof("Task: Finish: handler after task %s completion", t.job.ID)
+	log.Infof("%s:finish:> handler after task %s completion", logTaskPrefix, t.id)
 
 	defer func() {
 		if err := t.cri.ContainerRemove(context.Background(), t.dcid, true, true); err != nil {
-			log.Errorf("Task: Finish: cleanup err: %s", err)
+			log.Errorf("%s:finish:> cleanup err: %v", logTaskPrefix, err)
 			return
 		}
 	}()
@@ -466,18 +519,18 @@ func (t *task) finish() error {
 	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
 		reader, err := os.Open(filePath)
 		if err != nil {
-			log.Errorf("Task: Finish: can not open log file for reading: %s", err)
+			log.Errorf("%s:finish:> can not open log file for reading: %v", logTaskPrefix, err)
 			return err
 		}
 
 		if bs.AccountName != "" || bs.AccountKey != "" {
 			cli := blob.NewClient(bs.AccountName, bs.AccountKey)
 			if err := cli.Write(blob.CONTAINER_LOGS_NAME, t.id, reader); err != nil {
-				log.Errorf("Task: Finish: write blob err: %s", err)
+				log.Errorf("%s:finish:> write blob err: %v", logTaskPrefix, err)
 			} else {
 				err := os.Remove(filePath)
 				if err != nil {
-					log.Errorf("Task: Finish: remove file [%s] err: %s", filePath, err)
+					log.Errorf("%s:finish:> remove file [%s] err: %v", logTaskPrefix, filePath, err)
 					return err
 				}
 			}
@@ -502,7 +555,7 @@ func (t *task) stop() {
 // Handler write logs to file
 func (t *task) writeLogFile() error {
 
-	log.Infof("Task: WriteLogFile: handler logger to file for task %s", t.job.ID)
+	log.Infof("%s:write_to_file:> handler logger to file for task %s", logTaskPrefix, t.id)
 
 	logdir := t.ctx.Value("logdir").(string)
 
@@ -513,25 +566,25 @@ func (t *task) writeLogFile() error {
 	filePath := fmt.Sprintf("%s%s", logdir, t.id)
 
 	if err := os.MkdirAll(logdir, os.ModePerm); err != nil {
-		log.Errorf("Task: WriteLogFile: create directories [%s] err: %s", logdir, err)
+		log.Errorf("%s:write_to_file:> create directories [%s] err: %v", logTaskPrefix, logdir, err)
 		return err
 	}
 
 	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
-		log.Errorf("Task: WriteLogFile: open file [%s] err: %s", filePath, err)
+		log.Errorf("%s:write_to_file:> open file [%s] err: %v", logTaskPrefix, filePath, err)
 		return err
 	}
 
 	// close fi on exit and check for its returned error
 	defer func() {
 		if err := file.Close(); err != nil {
-			log.Errorf("Task: WriteLogFile: close file [%s] err: %s", filePath, err)
+			log.Errorf("%s:write_to_file:> close file [%s] err: %v", logTaskPrefix, filePath, err)
 		}
 	}()
 
 	if err := t.logger.Pipe(file); err != nil {
-		log.Errorf("Task: WriteLogFile: write to file [%s] err: %s", filePath, err)
+		log.Errorf("%s:write_to_file:> write to file [%s] err: %v", logTaskPrefix, filePath, err)
 		return err
 	}
 
@@ -541,29 +594,25 @@ func (t *task) writeLogFile() error {
 // Send status build event to controller
 func (t *task) sendEvent(event taskEvent) {
 
-	log.Debugf("Task: SendEvent: send task status event %s", t.job.ID)
+	log.Debugf("%s:send_event> send task status event %s", logTaskPrefix, t.id)
 
-	e := new(types.TaskStatusBuilderEvent)
-	e.Build = t.job.ID
-	e.Builder = t.builder
-	e.Task = t.id
-	e.State.Step = event.step
-	e.State.Message = event.message
-	e.State.Error = event.error
-	e.State.Canceled = t.ctx.Err() == context.Canceled
+	e := new(request.BuildUpdateStatusOptions)
+	e.Step = event.step
+	e.Message = event.message
+	e.Error = event.error
+	e.Canceled = t.ctx.Err() == context.Canceled
 
-	envs.Get().GetClient().Event().SendTaskStatus(t.ctx, e)
+	envs.Get().GetClient().V1().Build().SetStatus(t.ctx, t.id, e)
 }
 
 // Send status build event to controller
 func (t *task) sendInfo(info *lbt.ImageInfo) {
-	log.Debugf("Task: SendEvent: send task status event %s", t.job.ID)
+	log.Debugf("%s:send_info> send task status event %s", logTaskPrefix, t.id)
 
-	e := new(types.ImageInfoBuilderEvent)
+	e := new(request.BuildUpdateImageInfoOptions)
 	e.Size = info.Size
-	e.ID = info.ID
+	e.Hash = info.ID
 	e.VirtualSize = info.VirtualSize
-	e.JobID = t.job.ID
 
-	envs.Get().GetClient().Event().SendImageInfo(t.ctx, e)
+	envs.Get().GetClient().V1().Build().SetImageInfo(t.ctx, t.id, e)
 }

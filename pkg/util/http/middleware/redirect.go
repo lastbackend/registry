@@ -19,8 +19,8 @@
 package middleware
 
 import (
-	"net/http"
 	"fmt"
+	"net/http"
 )
 
 func RedirectToHTTPSRouter(next http.Handler) http.Handler {

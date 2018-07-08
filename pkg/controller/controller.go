@@ -30,33 +30,38 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	logPrefix = "controller:daemon"
+)
+
 func Daemon() bool {
 
 	var (
 		env  = envs.Get()
-		sigs = make(chan os.Signal)
+		sigs = make(chan os.Signal, 1)
 		done = make(chan bool, 1)
 	)
 
-	log.Info("Start Status Controller")
+	log.Infof("%s:> start controller", logPrefix)
 
 	stg, err := storage.Get(viper.GetString("psql"))
 	if err != nil {
-		log.Fatalf("Cannot initialize storage: %v", err)
+		log.Fatalf("%s:> cannot initialize storage: %v", logPrefix, err)
 	}
 	env.SetStorage(stg)
 
 	// Initialize Runtime
-	runtime.NewRuntime()
-	runtime.Loop()
+	r := runtime.NewRuntime()
+	r.Inspector()
 
 	// Handle SIGINT and SIGTERM.
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		for {
 			select {
 			case <-sigs:
+				r.Stop()
 				done <- true
 				return
 			}
@@ -65,6 +70,7 @@ func Daemon() bool {
 
 	<-done
 
-	log.Info("Handle SIGINT and SIGTERM.")
+	log.Infof("%s:> handle SIGINT and SIGTERM.", logPrefix)
+
 	return true
 }
