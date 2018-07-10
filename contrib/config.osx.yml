@@ -15,7 +15,7 @@ git:
 api:
   host: 0.0.0.0
   port: 2955
-  uri: "172.16.0.1"
+  uri: "registry.lstbknd.net"
   tls:
     insecure: true
     cert: "/opt/ssl/cert.pem"
