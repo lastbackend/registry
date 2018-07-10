@@ -16,29 +16,25 @@
 // from Last.Backend LLC.
 //
 
-package views
+package types
 
-type IView interface {
-	Build() *BuildView
-	Builder() *BuilderView
-	Image() *ImageView
-	Registry() *RegistryView
+type RegistryList []*Registry
+type RegistryMap map[string]*Registry
+
+type Registry struct {
+	Meta   RegistryMeta   `json:"meta"`
+	Status RegistryStatus `json:"status"`
+	Spec   RegistrySpec   `json:"spec"`
 }
 
-type View struct{}
-
-func (View) Build() *BuildView {
-	return new(BuildView)
+type RegistryMeta struct {
+	Meta
+	Hostname string `json:"hostname"`
 }
 
-func (View) Builder() *BuilderView {
-	return new(BuilderView)
+type RegistryStatus struct {
+	Deleted bool `json:"deleted"`
 }
 
-func (View) Image() *ImageView {
-	return new(ImageView)
-}
-
-func (View) Registry() *RegistryView {
-	return new(RegistryView)
+type RegistrySpec struct {
 }

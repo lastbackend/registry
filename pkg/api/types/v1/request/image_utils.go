@@ -72,6 +72,10 @@ func (i *ImageCreateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 	return nil
 }
 
+func (i *ImageCreateOptions) ToJson() ([]byte, error) {
+	return json.Marshal(i)
+}
+
 func (ImageRequest) UpdateOptions() *ImageUpdateOptions {
 	return new(ImageUpdateOptions)
 }
@@ -106,4 +110,8 @@ func (i *ImageUpdateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 	}
 
 	return nil
+}
+
+func (i *ImageUpdateOptions) ToJson() ([]byte, error) {
+	return json.Marshal(i)
 }

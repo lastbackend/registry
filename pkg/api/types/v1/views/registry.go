@@ -18,27 +18,16 @@
 
 package views
 
-type IView interface {
-	Build() *BuildView
-	Builder() *BuilderView
-	Image() *ImageView
-	Registry() *RegistryView
+type Registry struct {
+	Meta   RegistryMeta   `json:"meta"`
+	Status RegistryStatus `json:"status"`
 }
 
-type View struct{}
-
-func (View) Build() *BuildView {
-	return new(BuildView)
+type RegistryMeta struct {
+	Hostname string `json:"hostname"`
 }
 
-func (View) Builder() *BuilderView {
-	return new(BuilderView)
+type RegistryStatus struct {
 }
 
-func (View) Image() *ImageView {
-	return new(ImageView)
-}
-
-func (View) Registry() *RegistryView {
-	return new(RegistryView)
-}
+type RegistryList []*Registry

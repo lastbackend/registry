@@ -16,29 +16,14 @@
 // from Last.Backend LLC.
 //
 
-package views
+package registry
 
-type IView interface {
-	Build() *BuildView
-	Builder() *BuilderView
-	Image() *ImageView
-	Registry() *RegistryView
-}
+import (
+	"github.com/lastbackend/registry/pkg/util/http"
+	"github.com/lastbackend/registry/pkg/util/http/middleware"
+)
 
-type View struct{}
-
-func (View) Build() *BuildView {
-	return new(BuildView)
-}
-
-func (View) Builder() *BuilderView {
-	return new(BuilderView)
-}
-
-func (View) Image() *ImageView {
-	return new(ImageView)
-}
-
-func (View) Registry() *RegistryView {
-	return new(RegistryView)
+var Routes = []http.Route{
+	// Registry handlers
+	{Path: "/registry", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Context}, Handler: RegistryInfoH},
 }

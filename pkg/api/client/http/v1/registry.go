@@ -19,42 +19,36 @@
 package v1
 
 import (
+	"context"
+
+	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/api/client/http/request"
-	"github.com/lastbackend/registry/pkg/api/client/types"
+	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
 )
 
-type Client struct {
+type RegistryClient struct {
 	client *request.RESTClient
 }
 
-func New(client *request.RESTClient) *Client {
-	return &Client{client: client}
+func (rc RegistryClient) Get(ctx context.Context) (*vv1.Registry, error) {
+
+	var s *vv1.Registry
+	var e *errors.Http
+
+	err := rc.client.Get("/registry").
+		AddHeader("Content-Type", "application/json").
+		JSON(&s, &e)
+
+	if err != nil {
+		return nil, err
+	}
+	if e != nil {
+		return nil, errors.New(e.Message)
+	}
+
+	return s, nil
 }
 
-func (s *Client) Build() types.BuildClientV1 {
-	if s == nil {
-		return nil
-	}
-	return newBuildClient(s.client)
-}
-
-func (s *Client) Builder() types.BuilderClientV1 {
-	if s == nil {
-		return nil
-	}
-	return newBuilderClient(s.client)
-}
-
-func (s *Client) Image(owner, name string) types.ImageClientV1 {
-	if s == nil {
-		return nil
-	}
-	return newImageClient(s.client, owner, name)
-}
-
-func (s *Client) Registry() types.RegistryClientV1 {
-	if s == nil {
-		return nil
-	}
-	return newRegistryClient(s.client)
+func newRegistryClient(req *request.RESTClient) RegistryClient {
+	return RegistryClient{client: req}
 }

@@ -53,7 +53,7 @@ func IsPort(port int) bool {
 
 // Check incoming string on git valid utl
 // Ex:
-// 	* https://github.com/lastbackend/lastbackend.git
+// 	* https://github.com/lastbackend/registry.git
 // 	* git@github.com:lastbackend/enterprise.git
 func IsGitUrl(url string) bool {
 	res, err := regexp.MatchString(`^(?:ssh|git|http(?:s)?)(?:@|:\/\/(?:.+@)?)((\w+)\.\w+)(?:\/|:)(.+)(?:\/)(.+)(?:\..+)$`, url)

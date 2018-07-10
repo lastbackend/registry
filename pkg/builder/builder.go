@@ -73,12 +73,7 @@ func Daemon() bool {
 		viper.GetString("builder.logs"),
 	)
 
-	hostname, err := os.Hostname()
-	if err != nil {
-		fmt.Errorf("get hostname err: %v", err)
-	}
-
-	envs.Get().SetHostname(hostname)
+	envs.Get().SetHostname(viper.GetString("domain"))
 	envs.Get().SetBuilder(b)
 	envs.Get().SetClient(c)
 

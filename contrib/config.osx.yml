@@ -4,18 +4,10 @@
 verbose: 7
 token: lstbknd
 ssl: true
-domain: "hub.lstbknd.net"
+domain: "registry.lstbknd.net"
 
 # Database and Messages broker
 psql: "host=127.0.0.1 port=5431 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"
-amqp: "amqp://guest:guest@127.0.0.1:5672"
-
-# Storage
-storage:
-  azure:
-    endpoint: "devcnrcustoragestandard.blob.core.windows.net"
-    account: "devcnrcustoragestandard"
-    key: "rGAinAq7+L+GRz2b65Zob+5VOmQeq2m6+CMkemzMMkHdNliycSqzI3Ggp17tTKGbJTi/+oz4iedV0uxW/y0AAA=="
 
 git:
   uri: "git.lstbknd.net"

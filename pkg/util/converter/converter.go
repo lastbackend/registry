@@ -40,7 +40,7 @@ func IntToString(i int) string {
 
 // Parse incoming string git url in sources type
 // Ex:
-// 	* https://github.com/lastbackend/lastbackend.git
+// 	* https://github.com/lastbackend/registry.git
 // 	* git@github.com:lastbackend/enterprise.git
 func GitUrlParse(url string) (*sources, error) {
 

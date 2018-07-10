@@ -523,6 +523,7 @@ func (t *task) finish() error {
 			return err
 		}
 
+		// TODO: change to the storage module from vendors
 		if bs.AccountName != "" || bs.AccountKey != "" {
 			cli := blob.NewClient(bs.AccountName, bs.AccountKey)
 			if err := cli.Write(blob.CONTAINER_LOGS_NAME, t.id, reader); err != nil {

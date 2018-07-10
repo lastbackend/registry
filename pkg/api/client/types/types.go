@@ -21,22 +21,37 @@ package types
 import (
 	"context"
 
-	"github.com/lastbackend/registry/pkg/api/types/v1/request"
-	"github.com/lastbackend/registry/pkg/api/types/v1/views"
+	rv1 "github.com/lastbackend/registry/pkg/api/types/v1/request"
+	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
 )
 
 type ClientV1 interface {
 	Build() BuildClientV1
 	Builder() BuilderClientV1
+	Registry() RegistryClientV1
+	Image(owner, name string) ImageClientV1
 }
 
 type BuildClientV1 interface {
-	SetStatus(ctx context.Context, task string, opts *request.BuildUpdateStatusOptions) error
-	SetImageInfo(ctx context.Context, task string, opts *request.BuildUpdateImageInfoOptions) error
+	SetStatus(ctx context.Context, task string, opts *rv1.BuildUpdateStatusOptions) error
+	SetImageInfo(ctx context.Context, task string, opts *rv1.BuildUpdateImageInfoOptions) error
 }
 
 type BuilderClientV1 interface {
 	Connect(ctx context.Context, hostname string) error
 	Disconnect(ctx context.Context, hostname string) error
-	GetManifest(ctx context.Context, hostname string, opts *request.BuilderCreateManifestOptions) (*views.BuildManifest, error)
+	GetManifest(ctx context.Context, hostname string, opts *rv1.BuilderCreateManifestOptions) (*vv1.BuildManifest, error)
+}
+
+type ImageClientV1 interface {
+	Create(ctx context.Context, opts *rv1.ImageCreateOptions) (*vv1.Image, error)
+	List(ctx context.Context) (*vv1.ImageList, error)
+	Get(ctx context.Context) (*vv1.Image, error)
+	Update(ctx context.Context, opts *rv1.ImageUpdateOptions) (*vv1.Image, error)
+	Remove(ctx context.Context, opts *rv1.ImageRemoveOptions) error
+	BuildList(ctx context.Context) (*vv1.BuildList, error)
+}
+
+type RegistryClientV1 interface {
+	Get(ctx context.Context) (*vv1.Registry, error)
 }

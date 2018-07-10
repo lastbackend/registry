@@ -31,7 +31,7 @@ type ImageUpdateOptions struct {
 }
 
 type ImageRemoveOptions struct {
-	Force *bool `json:"force"`
+	Force bool `json:"force"`
 }
 
 type ImageSource struct {

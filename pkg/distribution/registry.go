@@ -17,3 +17,38 @@
 //
 
 package distribution
+
+import (
+	"context"
+	"github.com/lastbackend/registry/pkg/distribution/types"
+	"github.com/lastbackend/registry/pkg/log"
+	"github.com/lastbackend/registry/pkg/storage"
+
+		"github.com/spf13/viper"
+)
+
+const (
+	logRegistryPrefix = "distribution:registry"
+)
+
+// Registry - distribution model
+type Registry struct {
+	context context.Context
+	storage storage.Storage
+}
+
+// Info - get registry info
+func (c *Registry) Get() (*types.Registry, error) {
+
+	log.V(logLevel).Debugf("%s:get:> get info", logRegistryPrefix)
+
+	registry := new(types.Registry)
+	registry.Meta.Hostname = viper.GetString("domain")
+
+	return registry, nil
+}
+
+// NewRegistryModel - return new registry model
+func NewRegistryModel(ctx context.Context, stg storage.Storage) *Registry {
+	return &Registry{ctx, stg}
+}
