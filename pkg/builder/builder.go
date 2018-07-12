@@ -23,7 +23,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"fmt"
 	"github.com/lastbackend/registry/pkg/api/client"
 	"github.com/lastbackend/registry/pkg/builder/builder"
 	"github.com/lastbackend/registry/pkg/builder/envs"
@@ -52,12 +51,7 @@ func Daemon() bool {
 	cfg.TLS.CertFile = viper.GetString("api.tls.cert")
 	cfg.TLS.KeyFile = viper.GetString("api.tls.key")
 
-	endpoint := viper.GetString("domain")
-	port := viper.GetInt("api.port")
-
-	if port != 0 {
-		endpoint = fmt.Sprintf("%s:%d", endpoint, port)
-	}
+	endpoint := viper.GetString("api.endpoint")
 
 	c, err := client.New(client.ClientHTTP, endpoint, cfg)
 	if err != nil {
