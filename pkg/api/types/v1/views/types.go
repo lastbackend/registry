@@ -18,14 +18,11 @@
 
 package views
 
-type IView interface {
-	Build() *BuildView
-	Builder() *BuilderView
-	Image() *ImageView
-	Registry() *RegistryView
-}
-
 type View struct{}
+
+func New() *View {
+	return new(View)
+}
 
 func (View) Build() *BuildView {
 	return new(BuildView)

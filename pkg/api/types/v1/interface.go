@@ -16,26 +16,22 @@
 // from Last.Backend LLC.
 //
 
-package request
+package v1
 
-const (
-	DEFAULT_DESCRIPTION_LIMIT = 512
+import (
+	"github.com/lastbackend/registry/pkg/api/types/v1/request"
+	"github.com/lastbackend/registry/pkg/api/types/v1/views"
 )
 
-type Request struct{}
-
-func New() *Request {
-	return new(Request)
+type IRequest interface {
+	Image() *request.ImageRequest
+	Build() *request.BuildRequest
+	Builder() *request.BuilderRequest
 }
 
-func (Request) Image() *ImageRequest {
-	return new(ImageRequest)
-}
-
-func (Request) Build() *BuildRequest {
-	return new(BuildRequest)
-}
-
-func (Request) Builder() *BuilderRequest {
-	return new(BuilderRequest)
+type IView interface {
+	Build() *views.BuildView
+	Builder() *views.BuilderView
+	Image() *views.ImageView
+	Registry() *views.RegistryView
 }

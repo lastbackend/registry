@@ -52,7 +52,7 @@ func Daemon() bool {
 	cfg.TLS.CertFile = viper.GetString("api.tls.cert")
 	cfg.TLS.KeyFile = viper.GetString("api.tls.key")
 
-	endpoint := viper.GetString("api.uri")
+	endpoint := viper.GetString("domain")
 	port := viper.GetInt("api.port")
 
 	if port != 0 {

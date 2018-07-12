@@ -23,10 +23,10 @@ import (
 	"github.com/lastbackend/registry/pkg/api/types/v1/views"
 )
 
-func View() views.IView {
-	return &views.View{}
+func View() IView {
+	return views.New()
 }
 
-func Request() request.IRequest {
-	return &request.Request{}
+func Request() IRequest {
+	return request.New()
 }

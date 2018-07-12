@@ -105,7 +105,7 @@ func Decode(url string) *types.Sources {
 	src.Name = parts[3]
 	src.Branch = parts[4]
 
-	if src.Hub == viper.GetString("registry.uri") {
+	if src.Hub == viper.GetString("domain") {
 		src.Type = types.TypeSourceRegistry
 	} else if src.Hub == types.GithubHost || src.Hub == types.BitbucketHost || src.Hub == types.GitlabHost {
 		src.Type = types.TypeSourceGit

@@ -88,7 +88,7 @@ CREATE TABLE images_tags (
 CREATE TABLE images_builds (
   id               UUID PRIMARY KEY             NOT NULL    DEFAULT uuid_generate_v4(),
   image_id         UUID                         NOT NULL,
-  builder          UUID                                     DEFAULT NULL,
+  builder_id       UUID                                     DEFAULT NULL,
   task_id          UUID                                     DEFAULT NULL,
   number           INTEGER                                  DEFAULT 0,
   size             INTEGER                                  DEFAULT 0,
@@ -115,6 +115,36 @@ CREATE TABLE images_builds (
 ----------------------------------------- STORE PROCEDURE -----------------------------------------
 
 ----------------------------------------- TRIGGER PROCEDURE ----------------------------------------
+
+CREATE OR REPLACE FUNCTION lb_after_builders_function()
+  RETURNS TRIGGER AS
+$$
+BEGIN
+  IF TG_OP = 'UPDATE'
+  THEN
+
+    IF NOT OLD.online IS TRUE AND NEW.online IS FALSE
+    THEN
+
+      UPDATE images_builds
+      SET builder_id       = NULL,
+          task_id          = NULL,
+          state_step       = '',
+          state_status     = 'queued',
+          state_processing = FALSE,
+          state_started    = NULL,
+          updated          = now() at time zone 'utc'
+      WHERE builder_id = NEW.ID;
+
+    END IF;
+
+    RETURN NEW;
+  ELSE
+    RETURN NEW;
+  END IF;
+END;
+$$
+LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION lb_after_images_builds_function()
   RETURNS TRIGGER AS
@@ -143,6 +173,12 @@ LANGUAGE plpgsql;
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------- Creates triggers -----------------------------------------
 ---------------------------------------------------------------------------------------------------
+
+CREATE CONSTRAINT TRIGGER lb_after_images_builds_change
+  AFTER UPDATE
+  ON builders
+  DEFERRABLE
+  FOR EACH ROW EXECUTE PROCEDURE lb_after_builders_function();
 
 CREATE CONSTRAINT TRIGGER lb_after_images_builds_change
   AFTER INSERT OR UPDATE

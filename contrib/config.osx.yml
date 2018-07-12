@@ -3,8 +3,7 @@
 # Runtime
 verbose: 7
 token: lstbknd
-ssl: true
-domain: "registry.lstbknd.net"
+domain: "hub.lstbknd.net"
 
 # Database and Messages broker
 psql: "host=127.0.0.1 port=5431 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"
@@ -15,7 +14,6 @@ git:
 api:
   host: 0.0.0.0
   port: 2955
-  uri: "registry.lstbknd.net"
   tls:
     insecure: true
     cert: "/opt/ssl/cert.pem"
@@ -31,8 +29,8 @@ builder:
   docker:
     host: "172.16.0.1"
   extra_hosts:
-   - "hub.lstbknd.net:172.16.0.1"
-   - "api.lstbknd.net:172.16.0.1"
+  - "hub.lstbknd.net:172.16.0.1"
+  - "api.lstbknd.net:172.16.0.1"
   cri:
     type: "docker"
   host: 0.0.0.0
@@ -47,10 +45,3 @@ runtime:
   type: "docker"
 #  docker:
 #    certs: "/opt/ssl/"
-
-# Registry
-registry:
-  uri: "hub.lstbknd.net"
-  key: "/opt/ssl/lstbknd.net.key"
-  issuer: "api.lstbknd.net"
-  service: "hub.lstbknd.net"

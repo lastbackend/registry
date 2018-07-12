@@ -41,7 +41,7 @@ func (s *BuildStorage) Get(ctx context.Context, id string) (*types.Build, error)
 		 json_build_object(
 		   'meta', json_build_object(
 		     'id', ib.id,
-		     'builder', ib.builder,
+		     'builder', ib.builder_id,
 		     'task', ib.task_id,
 		     'number', ib.number,
 		     'created', ib.created,
@@ -99,7 +99,7 @@ func (s *BuildStorage) GetByTask(ctx context.Context, id string) (*types.Build, 
 		 json_build_object(
 		   'meta', json_build_object(
 		     'id', ib.id,
-		     'builder', ib.builder,
+		     'builder', ib.builder_id,
 		     'task', ib.task_id,
 		     'number', ib.number,
 		     'created', ib.created,
@@ -159,7 +159,7 @@ func (s *BuildStorage) List(ctx context.Context, image string) ([]*types.Build, 
 		   ib.id,
 		   json_build_object(
 		       'id', ib.id,
-		       'builder', ib.builder,
+		       'builder', ib.builder_id,
 		       'task', ib.task_id,
 		       'number', ib.number,
 		       'created', ib.created,
@@ -292,7 +292,7 @@ func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
 				'tag', image ->> 'tag',
 				'hash', $10 :: TEXT
 			),
-			builder = CASE WHEN $11 <> '' THEN $11 :: UUID ELSE NULL END,
+			builder_id = CASE WHEN $11 <> '' THEN $11 :: UUID ELSE NULL END,
 			task_id = CASE WHEN $12 <> '' THEN $12 :: UUID ELSE NULL END,
 			updated = now() at time zone 'utc'
 		WHERE id = $1
@@ -338,7 +338,7 @@ func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*typ
 
 	const query = `
 		UPDATE images_builds
-		SET builder          = $1,
+		SET builder_id       = $1,
 		    state_status     = 'processing',
 		    state_processing = TRUE
 		WHERE images_builds.id = (
@@ -361,7 +361,7 @@ func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*typ
 					EXISTS(
 						SELECT TRUE
 						FROM images_builds AS ib3
-							INNER JOIN builders AS b ON ib3.builder = b.id
+							INNER JOIN builders AS b ON ib3.builder_id = b.id
 						WHERE b.online IS FALSE AND ib1.state_processing)
 				)
 			)
@@ -400,7 +400,7 @@ func (s *BuildStorage) Unfreeze(ctx context.Context) error {
 	const query = `
 		UPDATE images_builds
 		SET
-		  builder          = NULL,
+		  builder_id       = NULL,
 		  task_id          = NULL,
 		  state_step       = '',
 		  state_status     = 'queued',

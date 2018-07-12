@@ -213,7 +213,7 @@ func (b Build) NewBuildManifest() *BuildManifest {
 
 	manifest := new(BuildManifest)
 
-	manifest.Image.Host = viper.GetString("registry.uri")
+	manifest.Image.Host = viper.GetString("domain")
 	manifest.Image.Name = b.Spec.Image.Name
 	manifest.Image.Owner = b.Spec.Image.Owner
 	manifest.Image.Tag = b.Spec.Image.Tag
