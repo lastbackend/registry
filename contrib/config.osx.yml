@@ -15,7 +15,7 @@ api:
   host: 0.0.0.0
   port: 2955
   tls:
-    insecure: true
+    insecure: false
     cert: "/opt/ssl/cert.pem"
     key: "/opt/ssl/key.pem"
 
