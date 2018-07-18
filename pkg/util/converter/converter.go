@@ -25,7 +25,7 @@ import (
 	"strings"
 )
 
-type sources struct {
+type source struct {
 	Resource string
 	Hub      string
 	Name     string
@@ -38,11 +38,11 @@ func IntToString(i int) string {
 	return strconv.Itoa(i)
 }
 
-// Parse incoming string git url in sources type
+// Parse incoming string git url in source type
 // Ex:
 // 	* https://github.com/lastbackend/registry.git
 // 	* git@github.com:lastbackend/enterprise.git
-func GitUrlParse(url string) (*sources, error) {
+func GitUrlParse(url string) (*source, error) {
 
 	var match []string = regexp.MustCompile(`^(?:ssh|git|http(?:s)?)(?:@|:\/\/(?:.+@)?)((\w+)\.\w+)(?:\/|:)(.+)(?:\/)(.+)(?:\..+)$`).FindStringSubmatch(url)
 
@@ -50,7 +50,7 @@ func GitUrlParse(url string) (*sources, error) {
 		return nil, errors.New("can't parse url")
 	}
 
-	return &sources{
+	return &source{
 		Resource: match[0],
 		Hub:      match[1],
 		Vendor:   match[2],

@@ -25,5 +25,5 @@ import (
 
 var Routes = []http.Route{
 	// Registry handlers
-	{Path: "/registry", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Context}, Handler: RegistryInfoH},
+	{Path: "/registry", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: RegistryInfoH},
 }

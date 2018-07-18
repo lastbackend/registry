@@ -18,7 +18,7 @@
 
 package request
 
-type BuildImageBuildOptions struct {
+type BuildCreateOptions struct {
 	Owner      string      `json:"owner"`
 	Name       string      `json:"name"`
 	Tag        string      `json:"tag"`

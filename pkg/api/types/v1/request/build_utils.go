@@ -27,25 +27,25 @@ import (
 
 type BuildRequest struct{}
 
-func (BuildRequest) BuildExecuteOptions() *BuildImageBuildOptions {
-	return new(BuildImageBuildOptions)
+func (BuildRequest) BuildExecuteOptions() *BuildCreateOptions {
+	return new(BuildCreateOptions)
 }
 
-func (i *BuildImageBuildOptions) Validate() *errors.Err {
+func (b *BuildCreateOptions) Validate() *errors.Err {
 	switch true {
-	case len(i.Tag) == 0:
+	case len(b.Tag) == 0:
 		return errors.New("image").BadParameter("tag")
-	case len(i.Source.Hub) == 0:
+	case len(b.Source.Hub) == 0:
 		return errors.New("source").BadParameter("hub")
-	case len(i.Source.Owner) == 0:
+	case len(b.Source.Owner) == 0:
 		return errors.New("source").BadParameter("owner")
-	case len(i.Source.Name) == 0:
+	case len(b.Source.Name) == 0:
 		return errors.New("source").BadParameter("name")
 	}
 	return nil
 }
 
-func (i *BuildImageBuildOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
+func (b *BuildCreateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 
 	if reader == nil {
 		err := errors.New("data body can not be null")
@@ -57,27 +57,31 @@ func (i *BuildImageBuildOptions) DecodeAndValidate(reader io.Reader) *errors.Err
 		return errors.New("image").Unknown(err)
 	}
 
-	err = json.Unmarshal(body, i)
+	err = json.Unmarshal(body, b)
 	if err != nil {
 		return errors.New("image").IncorrectJSON(err)
 	}
 
-	if err := i.Validate(); err != nil {
+	if err := b.Validate(); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (b *BuildCreateOptions) ToJson() ([]byte, error) {
+	return json.Marshal(b)
 }
 
 func (BuildRequest) BuildStatusOptions() *BuildUpdateStatusOptions {
 	return new(BuildUpdateStatusOptions)
 }
 
-func (i *BuildUpdateStatusOptions) Validate() *errors.Err {
+func (b *BuildUpdateStatusOptions) Validate() *errors.Err {
 	return nil
 }
 
-func (i *BuildUpdateStatusOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
+func (b *BuildUpdateStatusOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 
 	if reader == nil {
 		err := errors.New("data body can not be null")
@@ -89,31 +93,31 @@ func (i *BuildUpdateStatusOptions) DecodeAndValidate(reader io.Reader) *errors.E
 		return errors.New("image").Unknown(err)
 	}
 
-	err = json.Unmarshal(body, i)
+	err = json.Unmarshal(body, b)
 	if err != nil {
 		return errors.New("image").IncorrectJSON(err)
 	}
 
-	if err := i.Validate(); err != nil {
+	if err := b.Validate(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *BuildUpdateStatusOptions) ToJson() ([]byte, error) {
-	return json.Marshal(i)
+func (b *BuildUpdateStatusOptions) ToJson() ([]byte, error) {
+	return json.Marshal(b)
 }
 
 func (BuildRequest) BuildInfoOptions() *BuildUpdateImageInfoOptions {
 	return new(BuildUpdateImageInfoOptions)
 }
 
-func (i *BuildUpdateImageInfoOptions) Validate() *errors.Err {
+func (b *BuildUpdateImageInfoOptions) Validate() *errors.Err {
 	return nil
 }
 
-func (i *BuildUpdateImageInfoOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
+func (b *BuildUpdateImageInfoOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 
 	if reader == nil {
 		err := errors.New("data body can not be null")
@@ -125,18 +129,18 @@ func (i *BuildUpdateImageInfoOptions) DecodeAndValidate(reader io.Reader) *error
 		return errors.New("image").Unknown(err)
 	}
 
-	err = json.Unmarshal(body, i)
+	err = json.Unmarshal(body, b)
 	if err != nil {
 		return errors.New("image").IncorrectJSON(err)
 	}
 
-	if err := i.Validate(); err != nil {
+	if err := b.Validate(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *BuildUpdateImageInfoOptions) ToJson() ([]byte, error) {
-	return json.Marshal(i)
+func (b *BuildUpdateImageInfoOptions) ToJson() ([]byte, error) {
+	return json.Marshal(b)
 }

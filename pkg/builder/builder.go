@@ -45,7 +45,7 @@ func Daemon() bool {
 	}
 
 	cfg := client.NewConfig()
-	cfg.BearerToken = viper.GetString("token")
+	cfg.BearerToken = viper.GetString("security.token")
 	cfg.TLS.Insecure = viper.GetBool("api.tls.insecure")
 	cfg.TLS.CAFile = viper.GetString("api.tls.ca")
 	cfg.TLS.CertFile = viper.GetString("api.tls.cert")

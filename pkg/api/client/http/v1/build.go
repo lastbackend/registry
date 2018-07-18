@@ -20,11 +20,13 @@ package v1
 
 import (
 	"context"
-
 	"fmt"
+
 	"github.com/lastbackend/registry/pkg/api/client/http/request"
-	rv1 "github.com/lastbackend/registry/pkg/api/types/v1/request"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
+
+	rv1 "github.com/lastbackend/registry/pkg/api/types/v1/request"
+	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
 )
 
 type BuildClient struct {
@@ -77,6 +79,31 @@ func (bc BuildClient) SetImageInfo(ctx context.Context, task string, opts *rv1.B
 	}
 
 	return nil
+}
+
+func (bc BuildClient) Create(ctx context.Context, opts *rv1.BuildCreateOptions) (*vv1.Build, error) {
+
+	body, err := opts.ToJson()
+	if err != nil {
+		return nil, err
+	}
+
+	var s *vv1.Build
+	var e *errors.Http
+
+	err = bc.client.Post("/build").
+		AddHeader("Content-Type", "application/json").
+		Body(body).
+		JSON(&s, &e)
+
+	if err != nil {
+		return nil, err
+	}
+	if e != nil {
+		return nil, errors.New(e.Message)
+	}
+
+	return s, nil
 }
 
 func newBuildClient(req *request.RESTClient) BuildClient {

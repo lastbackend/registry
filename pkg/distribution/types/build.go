@@ -145,7 +145,7 @@ type SourceJobConfig struct {
 	Branch string `json:"branch"`
 	// Link to source code in tar
 	TarUri string `json:"tar_uri"`
-	// Directory where sources are unpacked (Ex: github => ./owner/repo/ref)
+	// Directory where source are unpacked (Ex: github => ./owner/repo/ref)
 	WorkDir string `json:"dir"`
 }
 

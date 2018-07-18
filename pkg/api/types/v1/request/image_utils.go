@@ -80,15 +80,15 @@ func (ImageRequest) UpdateOptions() *ImageUpdateOptions {
 	return new(ImageUpdateOptions)
 }
 
-func (i *ImageUpdateOptions) Validate() *errors.Err {
+func (b *ImageUpdateOptions) Validate() *errors.Err {
 	switch true {
-	case i.Description != nil && len(*i.Description) > DEFAULT_DESCRIPTION_LIMIT:
+	case b.Description != nil && len(*b.Description) > DEFAULT_DESCRIPTION_LIMIT:
 		return errors.New("image").BadParameter("description")
 	}
 	return nil
 }
 
-func (i *ImageUpdateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
+func (b *ImageUpdateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 
 	if reader == nil {
 		err := errors.New("data body can not be null")
@@ -100,18 +100,18 @@ func (i *ImageUpdateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 		return errors.New("image").Unknown(err)
 	}
 
-	err = json.Unmarshal(body, i)
+	err = json.Unmarshal(body, b)
 	if err != nil {
 		return errors.New("image").IncorrectJSON(err)
 	}
 
-	if err := i.Validate(); err != nil {
+	if err := b.Validate(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *ImageUpdateOptions) ToJson() ([]byte, error) {
-	return json.Marshal(i)
+func (b *ImageUpdateOptions) ToJson() ([]byte, error) {
+	return json.Marshal(b)
 }

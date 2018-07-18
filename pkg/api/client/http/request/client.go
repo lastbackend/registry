@@ -49,6 +49,7 @@ func NewRESTClient(uri string, cfg *config.Config) (*RESTClient, error) {
 
 	c.Client.Timeout = time.Second * cfg.Timeout
 	c.Client.Transport = new(http.Transport)
+	c.BearerToken = cfg.BearerToken
 
 	if err := withTLSClientConfig(cfg)(c.Client); err != nil {
 		return nil, err

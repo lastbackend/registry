@@ -35,6 +35,7 @@ type ClientV1 interface {
 type BuildClientV1 interface {
 	SetStatus(ctx context.Context, task string, opts *rv1.BuildUpdateStatusOptions) error
 	SetImageInfo(ctx context.Context, task string, opts *rv1.BuildUpdateImageInfoOptions) error
+	Create(ctx context.Context, opts *rv1.BuildCreateOptions) (*vv1.Build, error)
 }
 
 type BuilderClientV1 interface {

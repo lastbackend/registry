@@ -20,6 +20,12 @@ package types
 
 const SourceDefaultBranch = "master"
 
+const (
+	TypeSourceGit      = "git"
+	TypeSourceRegistry = "registry"
+	TypeSourceImage    = "image"
+)
+
 type Source struct {
 	Hub    string `json:"hub"`
 	Owner  string `json:"owner"`

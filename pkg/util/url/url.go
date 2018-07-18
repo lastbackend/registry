@@ -24,9 +24,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/spf13/viper"
-)
+		)
 
 var (
 	// RFC 1035.
@@ -73,62 +71,4 @@ func check(host string) error {
 	}
 
 	return errors.New("invalid host")
-}
-
-func Decode(url string) *types.Sources {
-	var src = new(types.Sources)
-	var auth, namespace string
-
-	s := strings.Split(url, "@")
-
-	if len(s) == 0 {
-		return src
-	}
-
-	if len(s) == 1 {
-		namespace = s[0]
-	}
-
-	if len(s) == 2 {
-		auth = s[0]
-		namespace = s[1]
-	}
-
-	parts := urlRegexp.FindStringSubmatch(namespace)
-
-	if len(parts) <= 1 {
-		return src
-	}
-
-	src.Hub = parts[1]
-	src.Owner = parts[2]
-	src.Name = parts[3]
-	src.Branch = parts[4]
-
-	if src.Hub == viper.GetString("domain") {
-		src.Type = types.TypeSourceRegistry
-	} else if src.Hub == types.GithubHost || src.Hub == types.BitbucketHost || src.Hub == types.GitlabHost {
-		src.Type = types.TypeSourceGit
-	} else if src.Hub == types.DockerHost {
-		src.Type = types.TypeSourceImage
-	} else {
-		src.Type = types.TypeSourceGit
-	}
-
-	as := strings.Split(auth, ":")
-
-	switch len(as) {
-	case 0:
-		return src
-	case 1:
-		src.Auth.Username = as[0]
-		return src
-		break
-	case 2:
-		src.Auth.Username = as[0]
-		src.Auth.Password = as[1]
-		break
-	}
-
-	return src
 }

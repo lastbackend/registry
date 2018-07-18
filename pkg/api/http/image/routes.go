@@ -25,10 +25,10 @@ import (
 
 var Routes = []http.Route{
 	// Image handlers
-	{Path: "/image", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Context}, Handler: ImageCreateH},
-	{Path: "/image/{owner}", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Context}, Handler: ImageListH},
-	{Path: "/image/{owner}/{name}", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Context}, Handler: ImageInfoH},
-	{Path: "/image/{owner}/{name}", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Context}, Handler: ImageUpdateH},
-	{Path: "/image/{owner}/{name}", Method: http.MethodDelete, Middleware: []http.Middleware{middleware.Context}, Handler: ImageRemoveH},
-	{Path: "/image/{owner}/{name}/build", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Context}, Handler: ImageBuildListH},
+	{Path: "/image", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Authenticate}, Handler: ImageCreateH},
+	{Path: "/image/{owner}", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: ImageListH},
+	{Path: "/image/{owner}/{name}", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: ImageInfoH},
+	{Path: "/image/{owner}/{name}", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Authenticate}, Handler: ImageUpdateH},
+	{Path: "/image/{owner}/{name}", Method: http.MethodDelete, Middleware: []http.Middleware{middleware.Authenticate}, Handler: ImageRemoveH},
+	{Path: "/image/{owner}/{name}/build", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: ImageBuildListH},
 }

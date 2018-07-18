@@ -25,6 +25,6 @@ import (
 
 var Routes = []http.Route{
 	// Builder handlers
-	{Path: "/builder/{builder}/connect", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Context}, Handler: BuilderConnectH},
-	{Path: "/builder/{builder}/manifest", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Context}, Handler: BuilderCreateManifestH},
+	{Path: "/builder/{builder}/connect", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuilderConnectH},
+	{Path: "/builder/{builder}/manifest", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuilderCreateManifestH},
 }

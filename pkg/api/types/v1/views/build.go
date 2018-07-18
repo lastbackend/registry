@@ -49,11 +49,11 @@ type BuildStatus struct {
 }
 
 type BuildSpec struct {
-	Source BuildSources `json:"source"`
-	Config BuildConfig  `json:"config"`
+	Source BuildSource `json:"source"`
+	Config BuildConfig `json:"config"`
 }
 
-type BuildSources struct {
+type BuildSource struct {
 	Hub    string       `json:"hub"`
 	Owner  string       `json:"owner"`
 	Name   string       `json:"name"`

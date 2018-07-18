@@ -25,10 +25,10 @@ import (
 
 var Routes = []http.Route{
 	// Build handlers
-	{Path: "/build", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Context}, Handler: BuildCreateH},
-	{Path: "/build/{build}/logs", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Context}, Handler: BuildLogsH},
-	{Path: "/build/{build}/cancel", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Context}, Handler: BuildCancelH},
+	{Path: "/build", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildCreateH},
+	{Path: "/build/{build}/logs", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildLogsH},
+	{Path: "/build/{build}/cancel", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildCancelH},
 
-	{Path: "/build/task/{task}/info", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Context}, Handler: BuildTaskInfoUpdateH},
-	{Path: "/build/task/{task}/status", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Context}, Handler: BuildTaskStatusUpdateH},
+	{Path: "/build/task/{task}/info", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildTaskInfoUpdateH},
+	{Path: "/build/task/{task}/status", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildTaskStatusUpdateH},
 }

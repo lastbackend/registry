@@ -27,28 +27,28 @@ import (
 
 type BuildView struct{}
 
-func (rv *BuildView) New(obj *types.Build) *Build {
+func (bv *BuildView) New(obj *types.Build) *Build {
 	if obj == nil {
 		return nil
 	}
-	i := new(Build)
-	i.Meta = rv.ToBuildMeta(&obj.Meta)
-	i.Spec = rv.ToBuildSpec(&obj.Spec)
-	i.Status = rv.ToBuildStatus(&obj.Status)
-	return i
+	b := new(Build)
+	b.Meta = bv.ToBuildMeta(&obj.Meta)
+	b.Spec = bv.ToBuildSpec(&obj.Spec)
+	b.Status = bv.ToBuildStatus(&obj.Status)
+	return b
 }
 
 func (obj *Build) ToJson() ([]byte, error) {
 	return json.Marshal(obj)
 }
 
-func (rv *BuildView) NewList(list []*types.Build) *BuildList {
+func (bv *BuildView) NewList(list []*types.Build) *BuildList {
 	if list == nil {
 		return nil
 	}
 	il := make(BuildList, 0)
 	for _, item := range list {
-		il = append(il, rv.New(item))
+		il = append(il, bv.New(item))
 	}
 	return &il
 }
@@ -60,16 +60,16 @@ func (obj *BuildList) ToJson() ([]byte, error) {
 	return json.Marshal(obj)
 }
 
-func (rv *BuildView) ToBuildMeta(obj *types.BuildMeta) *BuildMeta {
+func (bv *BuildView) ToBuildMeta(obj *types.BuildMeta) *BuildMeta {
 	return &BuildMeta{
 		ID:     obj.ID,
 		Number: obj.Number,
 	}
 }
 
-func (rv *BuildView) ToBuildSpec(obj *types.BuildSpec) *BuildSpec {
+func (bv *BuildView) ToBuildSpec(obj *types.BuildSpec) *BuildSpec {
 	return &BuildSpec{
-		Source: BuildSources{
+		Source: BuildSource{
 			Hub:    obj.Source.Hub,
 			Owner:  obj.Source.Owner,
 			Name:   obj.Source.Name,
@@ -84,7 +84,7 @@ func (rv *BuildView) ToBuildSpec(obj *types.BuildSpec) *BuildSpec {
 	}
 }
 
-func (rv *BuildView) ToBuildStatus(obj *types.BuildStatus) *BuildStatus {
+func (bv *BuildView) ToBuildStatus(obj *types.BuildStatus) *BuildStatus {
 	started := &time.Time{}
 	if obj.Started.IsZero() {
 		started = nil

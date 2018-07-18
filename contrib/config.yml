@@ -2,8 +2,6 @@
 
 # Runtime
 verbose: 7
-token: lstbknd
-ssl: true
 domain: "hub.lstbknd.net"
 
 # Database and Messages broker
@@ -47,3 +45,6 @@ runtime:
   type: "docker"
 #  docker:
 #    certs: "/opt/ssl/"
+
+security:
+  token: "token"
