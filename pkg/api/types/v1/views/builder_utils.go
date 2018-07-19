@@ -41,6 +41,7 @@ func (bv *BuilderView) NewManifest(obj *types.BuildManifest) *BuildManifest {
 	manifest.Source.Branch = obj.Source.Branch
 
 	manifest.Config.Dockerfile = obj.Config.Dockerfile
+	manifest.Config.Context = obj.Config.Context
 	manifest.Config.Command = obj.Config.Command
 	manifest.Config.Workdir = obj.Config.Workdir
 	manifest.Config.EnvVars = obj.Config.EnvVars

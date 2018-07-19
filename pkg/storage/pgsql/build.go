@@ -259,7 +259,7 @@ func (s *BuildStorage) Insert(ctx context.Context, build *types.Build) error {
 		string(image),
 	).
 		Scan(&build.Meta.ID, &build.Meta.Number, &build.Meta.Created, &build.Meta.Updated,
-		&build.Status.Created, &build.Status.Updated)
+		&build.Meta.Created, &build.Meta.Updated)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:build:insert:> insert build err: %v", logPrefix, err)
 		return err
@@ -286,7 +286,6 @@ func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
   		state_finished = CASE WHEN ($6 = TRUE OR $7 = TRUE OR $8 = TRUE) THEN now() at time zone 'utc' ELSE state_finished END,
 			size = $9,
 			image = json_build_object(
-				'hub', image ->> 'hub',
 				'name', image ->> 'name',
 				'owner', image ->> 'owner',
 				'tag', image ->> 'tag',
@@ -339,7 +338,7 @@ func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*typ
 	const query = `
 		UPDATE images_builds
 		SET builder_id       = $1,
-		    state_status     = 'processing',
+		    state_status     = 'queued',
 		    state_processing = TRUE
 		WHERE images_builds.id = (
 			SELECT ib1.id
@@ -398,20 +397,21 @@ func (s *BuildStorage) Unfreeze(ctx context.Context) error {
 	log.V(logLevel).Debugf("%s:build:unfreeze:> unfreeze builds", logPrefix)
 
 	const query = `
-		UPDATE images_builds
-		SET
-		  builder_id       = NULL,
-		  task_id          = NULL,
-		  state_step       = '',
-		  state_status     = 'queued',
-		  state_processing = FALSE,
-		  state_started    = NULL,
-		  updated          = now() at time zone 'utc'
-		WHERE NOT (state_done IS TRUE OR state_error IS TRUE OR state_canceled IS TRUE)
-		      AND (updated <= (CURRENT_DATE :: timestamp - '1 day' :: interval)
-		           OR EXISTS(SELECT TRUE
-		                     FROM builders
-		                     WHERE online = FALSE AND id = images_builds.id));`
+   UPDATE images_builds
+   SET builder_id     = NULL,
+     task_id          = NULL,
+     state_step       = '',
+     state_status     = 'queued',
+     state_processing = FALSE,
+     state_started    = NULL,
+     updated          = now() at time zone 'utc'
+   WHERE (updated <= (CURRENT_DATE :: timestamp - '1 day' :: interval)
+      OR (
+        (EXISTS(SELECT TRUE
+                FROM builders
+                WHERE online = FALSE
+                  AND id = images_builds.builder_id))
+        AND state_processing IS TRUE));`
 
 	result, err := getClient(ctx).ExecContext(ctx, query)
 	if err != nil {

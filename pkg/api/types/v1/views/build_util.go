@@ -64,6 +64,8 @@ func (bv *BuildView) ToBuildMeta(obj *types.BuildMeta) *BuildMeta {
 	return &BuildMeta{
 		ID:     obj.ID,
 		Number: obj.Number,
+		Updated: obj.Updated,
+		Created: obj.Created,
 	}
 }
 
@@ -77,6 +79,7 @@ func (bv *BuildView) ToBuildSpec(obj *types.BuildSpec) *BuildSpec {
 		},
 		Config: BuildConfig{
 			Dockerfile: obj.Config.Dockerfile,
+			Context:    obj.Config.Context,
 			Workdir:    obj.Config.Workdir,
 			EnvVars:    obj.Config.EnvVars,
 			Command:    obj.Config.Command,
@@ -108,8 +111,6 @@ func (bv *BuildView) ToBuildStatus(obj *types.BuildStatus) *BuildStatus {
 		Processing: obj.Processing,
 		Canceled:   obj.Canceled,
 		Error:      obj.Error,
-		Created:    obj.Created,
-		Updated:    obj.Updated,
 		Finished:   finished,
 		Started:    started,
 	}

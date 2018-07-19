@@ -24,7 +24,7 @@ import (
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage"
-)
+		)
 
 type IBuild interface {
 	Get(id string) (*types.Build, error)
@@ -121,6 +121,7 @@ func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {
 	bld.Spec.Image.Auth = opts.Image.Auth
 
 	bld.Spec.Config.Dockerfile = opts.Spec.DockerFile
+	bld.Spec.Config.Context = opts.Spec.Context
 	bld.Spec.Config.EnvVars = opts.Spec.EnvVars
 
 	bld.Spec.Config.EnvVars = opts.Spec.EnvVars
@@ -130,8 +131,6 @@ func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {
 
 	bld.Spec.Config.Workdir = opts.Spec.Workdir
 	bld.Spec.Config.Command = opts.Spec.Command
-
-	// TODO: get commiter info from vcs
 
 	if err := b.storage.Build().Insert(b.context, bld); err != nil {
 		log.V(logLevel).Errorf("%s:build:create> create new build err: %v", logPrefix, err)

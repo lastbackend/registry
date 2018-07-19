@@ -34,9 +34,9 @@ import (
 	"github.com/lastbackend/registry/pkg/runtime/cri/docker"
 	"github.com/lastbackend/registry/pkg/util/blob"
 	"github.com/lastbackend/registry/pkg/util/validator"
-
 	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 	lbt "github.com/lastbackend/registry/pkg/distribution/types"
+	"github.com/lastbackend/registry/pkg/util/generator"
 )
 
 const (
@@ -81,7 +81,7 @@ type taskEvent struct {
 // Creating a new task for incoming manifest and configure the environment for build process
 // Here the running docker:dind for isolated storage of the image on the host
 // until it is sent to the registry.
-func NewTask(ctx context.Context, id string, cri cri.CRI) (*task, error) {
+func NewTask(ctx context.Context, cri cri.CRI) (*task, error) {
 
 	log.Infof("%s:new:> create new task", logTaskPrefix)
 
@@ -94,7 +94,7 @@ func NewTask(ctx context.Context, id string, cri cri.CRI) (*task, error) {
 	return &task{
 		ctx:     ct,
 		cancel:  cn,
-		id:      id,
+		id:      generator.GetUUIDV4(),
 		builder: builder,
 		cri:     cri,
 		logger:  logger.NewLogger(ctx),
@@ -213,7 +213,7 @@ func (t *task) Start(manifest *types.BuildManifest) error {
 		return nil
 	}
 	if err != nil && err != context.Canceled {
-		log.Errorf("%s:start:> push t %s err:  %s", logWorkerPrefix, t.id, err)
+		log.Errorf("%s:start:> push %s err:  %s", logWorkerPrefix, t.id, err)
 		return err
 	}
 
@@ -231,6 +231,10 @@ func (t *task) build() error {
 		dockerfile = t.manifest.Config.Dockerfile
 		gituri     = fmt.Sprintf("%s.git#%s", t.manifest.Source.Url, strings.ToLower(t.manifest.Source.Branch))
 	)
+
+	if len(t.manifest.Config.Context) != 0 && t.manifest.Config.Context != "/" {
+		gituri = fmt.Sprintf("%s:%s", gituri, t.manifest.Config.Context)
+	}
 
 	log.Infof("%s:build:> running build image %s process for manifest %s", logTaskPrefix, image, t.id)
 
@@ -340,7 +344,6 @@ func (t *task) build() error {
 		return err
 	}
 
-	// todo check canceled context
 	if inspect == nil {
 		err := fmt.Errorf("docker:container daes not exists")
 		log.Errorf("%s:build:> container inspect err: %v", logTaskPrefix, err)

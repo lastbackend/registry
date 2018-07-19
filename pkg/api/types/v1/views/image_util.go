@@ -81,6 +81,7 @@ func (rv *ImageView) ToImageSpec(obj *types.ImageSpec) *ImageSpec {
 		it := new(ImageTag)
 		it.Meta.Name = tag.Name
 		it.Spec.DockerFile = tag.Spec.DockerFile
+		it.Spec.Context = tag.Spec.Context
 		it.Spec.Command = tag.Spec.Command
 		it.Spec.EnvVars = tag.Spec.EnvVars
 		it.Status.Disabled = tag.Disabled

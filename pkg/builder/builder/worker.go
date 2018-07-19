@@ -30,7 +30,7 @@ import (
 	"github.com/lastbackend/registry/pkg/util/stream"
 	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/api/types/v1/request"
-)
+	)
 
 const (
 	logWorkerPrefix = "builder:worker"
@@ -58,9 +58,9 @@ func newWorker(ctx context.Context, cri cri.CRI) *worker {
 // Start worker process
 func (w *worker) Run() error {
 
-	log.Infof("%s:run:> run worker with id %s", logWorkerPrefix, w.id)
+	log.Infof("%s:run:> run worker with id %#v", logWorkerPrefix, w.id)
 
-	task, err := NewTask(w.ctx, w.id, w.cri)
+	task, err := NewTask(w.ctx, w.cri)
 	if err != nil {
 		log.Errorf("%s:run:> create new task err:  %v", logWorkerPrefix, w.id, task.id, err)
 		return err
@@ -91,6 +91,7 @@ func (w *worker) Run() error {
 	m.Image.Auth = manifest.Image.Auth
 
 	m.Config.Dockerfile = manifest.Config.Dockerfile
+	m.Config.Context = manifest.Config.Context
 	m.Config.Workdir = manifest.Config.Workdir
 	m.Config.EnvVars = manifest.Config.EnvVars
 	m.Config.Command = manifest.Config.Command

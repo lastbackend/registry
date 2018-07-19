@@ -108,6 +108,16 @@ CREATE TABLE images_builds (
   updated          TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc')
 );
 
+
+---------------------------------------------------------------------------------------------------
+-------------------------------------- Creates foreign keys ---------------------------------------
+---------------------------------------------------------------------------------------------------
+
+ALTER TABLE images_builds
+  ADD FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE;
+ALTER TABLE images_tags
+  ADD FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE;
+
 ---------------------------------------------------------------------------------------------------
 --------------------------------------- Creates procedures ----------------------------------------
 ---------------------------------------------------------------------------------------------------
@@ -116,35 +126,6 @@ CREATE TABLE images_builds (
 
 ----------------------------------------- TRIGGER PROCEDURE ----------------------------------------
 
-CREATE OR REPLACE FUNCTION lb_after_builders_function()
-  RETURNS TRIGGER AS
-$$
-BEGIN
-  IF TG_OP = 'UPDATE'
-  THEN
-
-    IF NOT OLD.online IS TRUE AND NEW.online IS FALSE
-    THEN
-
-      UPDATE images_builds
-      SET builder_id       = NULL,
-          task_id          = NULL,
-          state_step       = '',
-          state_status     = 'queued',
-          state_processing = FALSE,
-          state_started    = NULL,
-          updated          = now() at time zone 'utc'
-      WHERE builder_id = NEW.ID;
-
-    END IF;
-
-    RETURN NEW;
-  ELSE
-    RETURN NEW;
-  END IF;
-END;
-$$
-LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION lb_after_images_builds_function()
   RETURNS TRIGGER AS
@@ -173,12 +154,6 @@ LANGUAGE plpgsql;
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------- Creates triggers -----------------------------------------
 ---------------------------------------------------------------------------------------------------
-
-CREATE CONSTRAINT TRIGGER lb_after_images_builds_change
-  AFTER UPDATE
-  ON builders
-  DEFERRABLE
-  FOR EACH ROW EXECUTE PROCEDURE lb_after_builders_function();
 
 CREATE CONSTRAINT TRIGGER lb_after_images_builds_change
   AFTER INSERT OR UPDATE

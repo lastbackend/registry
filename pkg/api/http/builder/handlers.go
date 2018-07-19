@@ -27,7 +27,7 @@ import (
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/http/utils"
 	"net/http"
-)
+	)
 
 const (
 	logLevel  = 2
@@ -116,6 +116,16 @@ func BuilderCreateManifestH(w http.ResponseWriter, r *http.Request) {
 	if builder == nil {
 		log.V(logLevel).Warnf("%s:create_manifest:> builder `%s` not found", logPrefix, bid)
 		errors.New("builder").NotFound().Http(w)
+		return
+	}
+
+	builder_opts := new(types.BuilderUpdateOptions)
+	online := true
+	builder_opts.Online = &online
+
+	if err := bdm.Update(builder, builder_opts); err != nil {
+		log.V(logLevel).Errorf("%s:create_manifest:> update builder info err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
 		return
 	}
 

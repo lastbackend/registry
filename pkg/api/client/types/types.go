@@ -19,6 +19,7 @@
 package types
 
 import (
+	"io"
 	"context"
 
 	rv1 "github.com/lastbackend/registry/pkg/api/types/v1/request"
@@ -36,11 +37,12 @@ type BuildClientV1 interface {
 	SetStatus(ctx context.Context, task string, opts *rv1.BuildUpdateStatusOptions) error
 	SetImageInfo(ctx context.Context, task string, opts *rv1.BuildUpdateImageInfoOptions) error
 	Create(ctx context.Context, opts *rv1.BuildCreateOptions) (*vv1.Build, error)
+	Logs(ctx context.Context, id string, opts *rv1.BuildLogsOptions) (io.ReadCloser, error)
+	Cancel(ctx context.Context, id string) error
 }
 
 type BuilderClientV1 interface {
 	Connect(ctx context.Context, hostname string) error
-	Disconnect(ctx context.Context, hostname string) error
 	GetManifest(ctx context.Context, hostname string, opts *rv1.BuilderCreateManifestOptions) (*vv1.BuildManifest, error)
 }
 

@@ -209,9 +209,6 @@ func (s *ImageStorage) Update(ctx context.Context, image *types.Image) error {
 		WHERE id = $1
 		RETURNING updated;`
 
-	buf, _ := json.Marshal(image)
-	fmt.Println(string(buf))
-
 	err := getClient(ctx).QueryRowContext(ctx, query,
 		image.Meta.ID,
 		image.Meta.Description,

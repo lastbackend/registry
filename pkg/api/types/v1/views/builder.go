@@ -39,6 +39,7 @@ type BuildManifestImage struct {
 
 type BuildManifestConfig struct {
 	Dockerfile string   `json:"dockerfile"`
+	Context    string   `json:"context"`
 	Workdir    string   `json:"workdir"`
 	EnvVars    []string `json:"env"`
 	Command    string   `json:"command"`

@@ -43,6 +43,7 @@ type BuildJobImage struct {
 
 type BuildJobConfig struct {
 	Dockerfile string   `json:"dockerfile"`
+	Context    string   `json:"context"`
 	Workdir    string   `json:"workdir"`
 	EnvVars    []string `json:"env"`
 }

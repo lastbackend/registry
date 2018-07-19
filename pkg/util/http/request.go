@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	_url "github.com/lastbackend/registry/pkg/util/url"
 	"io"
 	"net/http"
 	"net/url"
@@ -62,7 +61,7 @@ func New(host string, opts *ReqOpts) (*RawReq, error) {
 		raw.tls = opts.TLS
 	}
 
-	u, err := _url.Parse(raw.host)
+	u, err := url.Parse(raw.host)
 	if err != nil {
 		fmt.Println(err.Error())
 		return nil, err

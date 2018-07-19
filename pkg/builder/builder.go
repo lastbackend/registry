@@ -30,7 +30,7 @@ import (
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/runtime/cri/cri"
 	"github.com/spf13/viper"
-)
+	)
 
 // Daemon - run builder daemon
 func Daemon() bool {

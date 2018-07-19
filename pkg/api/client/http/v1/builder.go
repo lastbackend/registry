@@ -50,23 +50,6 @@ func (bc BuilderClient) Connect(ctx context.Context, hostname string) error {
 	return nil
 }
 
-func (bc BuilderClient) Disconnect(ctx context.Context, hostname string) error {
-	var e *errors.Http
-
-	err := bc.client.Put(fmt.Sprintf("/builder/%s/disconnect", hostname)).
-		AddHeader("Content-Type", "application/json").
-		JSON(nil, &e)
-
-	if err != nil {
-		return err
-	}
-	if e != nil {
-		return errors.New(e.Message)
-	}
-
-	return nil
-}
-
 func (bc BuilderClient) GetManifest(ctx context.Context, hostname string, opts *rv1.BuilderCreateManifestOptions) (*vv1.BuildManifest, error) {
 
 	body, err := opts.ToJson()

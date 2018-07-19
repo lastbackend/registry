@@ -58,6 +58,7 @@ type ImageTagStatus struct {
 type ImageTagSpec struct {
 	Branch     string   `json:"branch"`
 	DockerFile string   `json:"dockerfile"`
+	Context    string   `json:"context"`
 	Command    string   `json:"command"`
 	EnvVars    []string `json:"environments"`
 	Workdir    string   `json:"workdir"`

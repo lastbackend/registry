@@ -31,18 +31,23 @@ type BuilderStorage struct {
 	storage.Builder
 }
 
-func (s *BuilderStorage) Insert(ctx context.Context, builder *types.Builder) error {
-	log.V(logLevel).Debugf("%s:builder:insert> insert new builder: %#v", logPrefix, builder)
-	return nil
-}
-
 func (s *BuilderStorage) Get(ctx context.Context, id string) (*types.Builder, error) {
 	log.V(logLevel).Debugf("%s:builder:get> get builder: %s", logPrefix, id)
 	return nil, nil
 }
 
+func (s *BuilderStorage) Insert(ctx context.Context, builder *types.Builder) error {
+	log.V(logLevel).Debugf("%s:builder:insert> insert new builder: %#v", logPrefix, builder)
+	return nil
+}
+
 func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) error {
 	log.V(logLevel).Debugf("%s:builder:update> update builder data", logPrefix)
+	return nil
+}
+
+func (s *BuilderStorage) MarkOffline(ctx context.Context) error {
+	log.V(logLevel).Debugf("%s:builder:mark_offline> mark builders as offline", logPrefix)
 	return nil
 }
 

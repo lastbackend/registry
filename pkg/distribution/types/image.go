@@ -21,8 +21,9 @@ package types
 import "time"
 
 const (
-	ImageDefaultTag            = "latest"
-	ImageDefaultDockerfilePath = "./DockerFile"
+	ImageDefaultTag             = "latest"
+	ImageDefaultDockerfilePath  = "./DockerFile"
+	ImageDefaultContextLocation = "/"
 )
 
 type Image struct {
@@ -76,6 +77,7 @@ type ImageTag struct {
 
 type ImageTagSpec struct {
 	DockerFile string   `json:"dockerfile"`
+	Context    string   `json:"context"`
 	Command    string   `json:"command"`
 	Workdir    string   `json:"workdir"`
 	EnvVars    []string `json:"environments"`

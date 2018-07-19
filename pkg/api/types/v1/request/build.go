@@ -24,6 +24,7 @@ type BuildCreateOptions struct {
 	Tag        string      `json:"tag"`
 	Auth       string      `json:"auth"`
 	DockerFile string      `json:"dockerfile"`
+	Context    string      `json:"context"`
 	EnvVars    []string    `json:"environments"`
 	Command    string      `json:"command"`
 	Workdir    string      `json:"workdir"`
@@ -41,4 +42,8 @@ type BuildUpdateImageInfoOptions struct {
 	Hash        string `json:"id"`
 	Size        int64  `json:"size"`
 	VirtualSize int64  `json:"virtual_size"`
+}
+
+type BuildLogsOptions struct {
+	Follow bool `json:"follow"`
 }

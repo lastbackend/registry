@@ -84,7 +84,7 @@ func ImageCreateH(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	if _, err = w.Write(response); err != nil {
+	if _, err := w.Write(response); err != nil {
 		log.V(logLevel).Errorf("%s:create:> write response err: %v", logPrefix, err)
 		return
 	}

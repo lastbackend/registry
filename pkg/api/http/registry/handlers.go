@@ -19,12 +19,16 @@
 package registry
 
 import (
+	"net/http"
+
 	"github.com/lastbackend/registry/pkg/api/envs"
 	"github.com/lastbackend/registry/pkg/api/types/v1"
 	"github.com/lastbackend/registry/pkg/distribution"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/log"
-	"net/http"
+	"io"
+		"github.com/spf13/viper"
+	"github.com/lastbackend/registry/pkg/util/url"
 )
 
 const (
@@ -53,8 +57,50 @@ func RegistryInfoH(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	if _, err = w.Write(response); err != nil {
+	if _, err := w.Write(response); err != nil {
 		log.V(logLevel).Errorf("%s:info:> write response err: %v", logPrefix)
+		return
+	}
+}
+
+func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
+
+	log.V(logLevel).Debugf("%s:auth:> authentication registry", logPrefix)
+
+	u, err := url.Parse(viper.GetString("auth_server"))
+	if err != nil {
+		log.V(logLevel).Errorf("%s:info:> auth server url incorrect: %v", logPrefix)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), r.Body)
+	if err != nil {
+		log.V(logLevel).Errorf("%s:auth:> create http request err: %v", logPrefix, err)
+		return
+	}
+
+	q := req.URL.Query()
+	for name, value := range r.URL.Query() {
+		q.Add(name, value[0])
+	}
+	req.URL.RawQuery = q.Encode()
+
+	// Copy incoming request headers
+	for name, value := range r.Header {
+		req.Header.Set(name, value[0])
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.V(logLevel).Errorf("%s:auth:> calling http query err: %v", logPrefix, err)
+		return
+	}
+	defer resp.Body.Close()
+
+	w.WriteHeader(resp.StatusCode)
+	if _, err := io.Copy(w, resp.Body); err != nil {
+		log.V(logLevel).Errorf("%s:auth:> write response err: %v", logPrefix, err)
 		return
 	}
 }

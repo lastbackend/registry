@@ -29,8 +29,10 @@ type Build struct {
 type BuildList []*Build
 
 type BuildMeta struct {
-	ID     string `json:"id"`
-	Number int64  `json:"number"`
+	ID      string    `json:"id"`
+	Number  int64     `json:"number"`
+	Updated time.Time `json:"updated"`
+	Created time.Time `json:"created"`
 }
 
 type BuildStatus struct {
@@ -42,8 +44,6 @@ type BuildStatus struct {
 	Done       bool       `json:"done"`
 	Error      bool       `json:"error"`
 	Canceled   bool       `json:"canceled"`
-	Created    time.Time  `json:"created"`
-	Updated    time.Time  `json:"updated"`
 	Finished   *time.Time `json:"finished"`
 	Started    *time.Time `json:"started"`
 }
@@ -71,6 +71,7 @@ type BuildCommit struct {
 
 type BuildConfig struct {
 	Dockerfile string   `json:"dockerfile"`
+	Context    string   `json:"context"`
 	Workdir    string   `json:"workdir"`
 	EnvVars    []string `json:"env"`
 	Command    string   `json:"command"`

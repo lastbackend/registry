@@ -67,8 +67,6 @@ type BuildStatus struct {
 	Done       bool      `json:"done"`
 	Error      bool      `json:"error"`
 	Canceled   bool      `json:"canceled"`
-	Created    time.Time `json:"created"`
-	Updated    time.Time `json:"updated"`
 	Finished   time.Time `json:"finished"`
 	Started    time.Time `json:"started"`
 }
@@ -108,6 +106,7 @@ type BuildCommit struct {
 
 type BuildConfig struct {
 	Dockerfile string   `json:"dockerfile"`
+	Context    string   `json:"context"`
 	Workdir    string   `json:"workdir"`
 	EnvVars    []string `json:"env"`
 	Command    string   `json:"command"`
@@ -246,6 +245,7 @@ func (b Build) NewBuildManifest() *BuildManifest {
 	}
 
 	manifest.Config.Dockerfile = b.Spec.Config.Dockerfile
+	manifest.Config.Context = b.Spec.Config.Context
 	manifest.Config.EnvVars = b.Spec.Config.EnvVars
 	manifest.Config.Workdir = b.Spec.Config.Workdir
 	manifest.Config.Command = b.Spec.Config.Command
@@ -266,6 +266,7 @@ type BuildCreateOptions struct {
 	} `json:"source"`
 	Spec struct {
 		DockerFile string   `json:"dockerfile"`
+		Context    string   `json:"context"`
 		Command    string   `json:"command"`
 		Workdir    string   `json:"workdir"`
 		EnvVars    []string `json:"environments"`

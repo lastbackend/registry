@@ -31,11 +31,6 @@ type BuildStorage struct {
 	storage.Build
 }
 
-func (s *BuildStorage) Insert(ctx context.Context, build *types.Build) error {
-	log.V(logLevel).Debugf("%s:build:insert> insert new build: %#v", logPrefix, build)
-	return nil
-}
-
 func (s *BuildStorage) Get(ctx context.Context, id string) (*types.Build, error) {
 	log.V(logLevel).Debugf("%s:build:get> get build: %s", logPrefix, id)
 	return nil, nil
@@ -51,8 +46,28 @@ func (s *BuildStorage) List(ctx context.Context, image string) ([]*types.Build, 
 	return nil, nil
 }
 
+func (s *BuildStorage) Insert(ctx context.Context, build *types.Build) error {
+	log.V(logLevel).Debugf("%s:build:insert> insert new build: %#v", logPrefix, build)
+	return nil
+}
+
 func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
 	log.V(logLevel).Debugf("%s:build:update> update build data", logPrefix)
+	return nil
+}
+
+func (s *BuildStorage) Remove(ctx context.Context, build *types.Build) error {
+	log.V(logLevel).Debugf("%s:build:remove:> remove build %s", logPrefix, build.Meta.ID)
+	return nil
+}
+
+func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*types.Build, error) {
+	log.V(logLevel).Debugf("%s:build:attach:> attach build", logPrefix)
+	return nil, nil
+}
+
+func (s *BuildStorage) Unfreeze(ctx context.Context) error {
+	log.V(logLevel).Debugf("%s:build:unfreeze:> unfreeze builds", logPrefix)
 	return nil
 }
 

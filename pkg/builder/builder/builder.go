@@ -20,17 +20,17 @@ package builder
 
 import (
 	"context"
+	"time"
+	"io"
+	"os"
+	"sync"
+
 	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/spf13/viper"
-	"io"
-	"os"
-	"sync"
-
 	lbt "github.com/lastbackend/registry/pkg/distribution/types"
-	"time"
 )
 
 const (
@@ -263,10 +263,6 @@ func (b *Builder) configure() error {
 func (b *Builder) Shutdown() {
 
 	log.Infof("%s:shutdown:> shutdown builder process", logWorkerPrefix)
-
-	if err := envs.Get().GetClient().V1().Builder().Disconnect(b.ctx, envs.Get().GetHostname()); err != nil {
-		log.Errorf("%s:shutdown:> send event offline err: %v", logWorkerPrefix, err)
-	}
 
 	b.await()
 
