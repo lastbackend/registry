@@ -180,6 +180,52 @@ func BuildListH(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func BuildInfoH(w http.ResponseWriter, r *http.Request) {
+
+	log.V(logLevel).Debugf("%s:info:> get builds list", logPrefix)
+
+	var (
+		im = distribution.NewImageModel(r.Context(), envs.Get().GetStorage())
+		bm = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
+
+		owner = utils.Vars(r)[`owner`]
+		name  = utils.Vars(r)[`name`]
+		bid   = utils.Vars(r)[`build`]
+	)
+
+	img, err := im.Get(owner, name)
+	if err != nil {
+		log.V(logLevel).Errorf("%s:info:> get image %s/%s err: %v", logPrefix, owner, name, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+	if img == nil {
+		log.V(logLevel).Warnf("%s:info:> image `%s/%s` not found", logPrefix, owner, name)
+		errors.New("image").NotFound().Http(w)
+		return
+	}
+
+	build, err := bm.Get(bid)
+	if err != nil {
+		log.V(logLevel).Errorf("%s:info:> get build err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	response, err := v1.View().Build().New(build).ToJson()
+	if err != nil {
+		log.V(logLevel).Errorf("%s:info:> convert struct to json err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(response); err != nil {
+		log.V(logLevel).Errorf("%s:info:> write response err: %v", logPrefix, err)
+		return
+	}
+}
+
 func BuildCancelH(w http.ResponseWriter, r *http.Request) {
 
 	bid := utils.Vars(r)["build"]

@@ -26,6 +26,7 @@ var Routes = []http.Route{
 	// Build handlers
 	{Path: "/image/{owner}/{name}/build", Method: http.MethodPost, Handler: BuildCreateH},
 	{Path: "/image/{owner}/{name}/build", Method: http.MethodGet, Handler: BuildListH},
+	{Path: "/image/{owner}/{name}/build/{build}", Method: http.MethodGet, Handler: BuildInfoH},
 	{Path: "/image/{owner}/{name}/build/{build}/logs", Method: http.MethodGet, Handler: BuildLogsH},
 	{Path: "/image/{owner}/{name}/build/{build}/cancel", Method: http.MethodPut, Handler: BuildCancelH},
 	{Path: "/image/{owner}/{name}/build/{build}/info", Method: http.MethodPut, Handler: BuildInfoUpdateH},
