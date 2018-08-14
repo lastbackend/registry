@@ -124,10 +124,16 @@ func (s *ImageStorage) List(ctx context.Context, f *filter.ImageFilter) ([]*type
 
 	log.V(logLevel).Debug("%s:image:list:> get images list", logPrefix)
 
-	where := ""
+	where := types.EmptyString
+
 	if f != nil {
-		if len(f.Owner) != 0 {
-			where = fmt.Sprintf(`WHERE owner='%s'`, f.Owner)
+
+		if f.Owner != nil {
+			where += "owner = '%s'"
+		}
+
+		if where != types.EmptyString {
+			where = fmt.Sprintf("WHERE %s", where)
 		}
 	}
 

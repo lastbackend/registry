@@ -1,6 +1,8 @@
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
 ------------------------------------------- LB Migration ------------------------------------------
 ---------------------------------------------------------------------------------------------------
+
+REVOKE usage ON schema public FROM public;
 
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------- Drops all triggers ---------------------------------------
@@ -52,7 +54,7 @@ CREATE SCHEMA public;
 --------------------------------------- Creates extensions ----------------------------------------
 ---------------------------------------------------------------------------------------------------
 
-CREATE EXTENSION "uuid-ossp";
+CREATE EXTENSION "uuid-ossp" WITH SCHEMA public;
 
 ---------------------------------------------------------------------------------------------------
 ----------------------------------------- Creates infrastructure tables ---------------------------
@@ -61,7 +63,11 @@ CREATE EXTENSION "uuid-ossp";
 CREATE TABLE builders (
   id       UUID PRIMARY KEY             NOT NULL    DEFAULT uuid_generate_v4(),
   hostname VARCHAR(512)                 NOT NULL,
+  ip       VARCHAR(512)                 NOT NULL,
+  port     INTEGER                      NOT NULL,
   online   BOOLEAN                                  DEFAULT FALSE,
+  tls      BOOLEAN                                  DEFAULT FALSE,
+  ssl      JSONB                                    DEFAULT NULL,
   created  TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc'),
   updated  TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc')
 );
@@ -89,7 +95,6 @@ CREATE TABLE images_builds (
   id               UUID PRIMARY KEY             NOT NULL    DEFAULT uuid_generate_v4(),
   image_id         UUID                         NOT NULL,
   builder_id       UUID                                     DEFAULT NULL,
-  task_id          UUID                                     DEFAULT NULL,
   number           INTEGER                                  DEFAULT 0,
   size             INTEGER                                  DEFAULT 0,
   source           JSONB                                    DEFAULT '{}',
@@ -107,7 +112,6 @@ CREATE TABLE images_builds (
   created          TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc'),
   updated          TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc')
 );
-
 
 ---------------------------------------------------------------------------------------------------
 -------------------------------------- Creates foreign keys ---------------------------------------
@@ -137,7 +141,7 @@ BEGIN
     IF NOT EXISTS(SELECT FALSE FROM images_tags AS it WHERE it.image_id = NEW.image_id
                                                         AND it.name = NEW.image ->> 'tag')
     THEN
-      INSERT INTO images_tags(image_id, name) VALUES (NEW.image_id, NEW.image ->> 'tag');
+      INSERT INTO images_tags (image_id, name) VALUES (NEW.image_id, NEW.image ->> 'tag');
     END IF;
 
     RETURN NEW;

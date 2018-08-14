@@ -18,10 +18,27 @@
 
 package request
 
-type BuilderInfoOptions struct {
-	Hostname string `json:"hostname"`
+type BuilderUpdateOptions struct {
+	IP   *string `json:"ip"`
+	Port *uint16 `json:"port"`
+}
+
+type BuilderConnectOptions struct {
+	IP   string `json:"ip"`
+	Port uint16 `json:"port"`
+	TLS  bool   `json:"tls"`
+	SSL  *SSL   `json:"ssl"`
+}
+
+type SSL struct {
+	CA   []byte `json:"ca"`
+	Cert []byte `json:"cert"`
+	Key  []byte `json:"key"`
+}
+
+type BuilderStatusUpdateOptions struct {
 }
 
 type BuilderCreateManifestOptions struct {
-	TaskID string `json:"task"`
+	PID string `json:"pid"`
 }

@@ -30,11 +30,27 @@ type BuilderMeta struct {
 }
 
 type BuilderStatus struct {
-	Online bool `json:"online"`
+	Insecure bool   `json:"insecure"`
+	Online   bool   `json:"online"`
+	TLS      bool   `json:"tls"`
+	Error    string `json:"error"`
 }
 
 type BuilderSpec struct {
-	TaskList []*struct{} `json:"tasks"`
+	Network BuilderSpecNetwork `json:"network"`
+}
+
+type BuilderSpecNetwork struct {
+	IP   string `json:"ip"`
+	Port uint16 `json:"port"`
+	TLS  bool   `json:"tls"`
+	SSL  *SSL   `json:"ssl"`
+}
+
+type SSL struct {
+	CA   []byte `json:"ca"`
+	Cert []byte `json:"cert"`
+	Key  []byte `json:"key"`
 }
 
 // *********************************************
@@ -43,10 +59,18 @@ type BuilderSpec struct {
 
 type BuilderCreateOptions struct {
 	Hostname string `json:"hostname"`
+	IP       string `json:"ip"`
+	Port     uint16 `json:"port"`
 	Online   bool   `json:"online"`
+	TLS      bool   `json:"tls"`
+	SSL      *SSL   `json:"ssl"`
 }
 
 type BuilderUpdateOptions struct {
-	Online *bool        `json:"online"`
-	Tasks  *[]*struct{} `json:"tasks"`
+	Hostname *string `json:"hostname"`
+	IP       *string `json:"ip"`
+	Port     *uint16 `json:"port"`
+	Online   *bool   `json:"online"`
+	TLS      *bool   `json:"tls"`
+	SSL      *SSL    `json:"ssl"`
 }

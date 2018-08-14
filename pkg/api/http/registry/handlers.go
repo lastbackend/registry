@@ -26,9 +26,9 @@ import (
 	"github.com/lastbackend/registry/pkg/distribution"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/log"
-	"io"
-		"github.com/spf13/viper"
 	"github.com/lastbackend/registry/pkg/util/url"
+	"github.com/spf13/viper"
+	"io"
 )
 
 const (

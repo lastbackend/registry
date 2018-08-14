@@ -18,7 +18,18 @@
 
 package views
 
+import "time"
+
 type BuildManifest struct {
+	Meta BuildManifestMeta
+	Spec BuildManifestSpec
+}
+
+type BuildManifestMeta struct {
+	ID string `json:"id"`
+}
+
+type BuildManifestSpec struct {
 	Source BuildManifestSource `json:"source"`
 	Image  BuildManifestImage  `json:"image"`
 	Config BuildManifestConfig `json:"config"`
@@ -44,3 +55,40 @@ type BuildManifestConfig struct {
 	EnvVars    []string `json:"env"`
 	Command    string   `json:"command"`
 }
+
+type Builder struct {
+	Meta   BuilderMeta   `json:"meta"`
+	Status BuilderStatus `json:"status"`
+	Spec   BuilderSpec   `json:"spec"`
+}
+
+type BuilderMeta struct {
+	ID       string    `json:"id"`
+	Hostname string    `json:"hostname"`
+	Created  time.Time `json:"created"`
+	Updated  time.Time `json:"updated"`
+}
+
+type BuilderStatus struct {
+	Insecure bool `json:"insecure"`
+	Online   bool `json:"online"`
+	TLS      bool `json:"tls"`
+}
+
+type BuilderSpec struct {
+	Network BuilderSpecNetwork `json:"network"`
+}
+
+type BuilderSpecNetwork struct {
+	Port uint16 `json:"port"`
+	TLS  bool   `json:"tls"`
+	SSL  *SSL   `json:"ssl"`
+}
+
+type SSL struct {
+	CA         []byte `json:"ca"`
+	ClientCert []byte `json:"cert"`
+	ClientKey  []byte `json:"key"`
+}
+
+type BuilderList []*Builder

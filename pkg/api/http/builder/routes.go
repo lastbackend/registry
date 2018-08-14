@@ -20,11 +20,13 @@ package builder
 
 import (
 	"github.com/lastbackend/registry/pkg/util/http"
-	"github.com/lastbackend/registry/pkg/util/http/middleware"
 )
 
 var Routes = []http.Route{
 	// Builder handlers
-	{Path: "/builder/{builder}/connect", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuilderConnectH},
-	{Path: "/builder/{builder}/manifest", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuilderCreateManifestH},
+	{Path: "/builder", Method: http.MethodGet, Handler: BuilderListH},
+	{Path: "/builder/{builder}", Method: http.MethodPut, Handler: BuilderUpdateH},
+	{Path: "/builder/{builder}/connect", Method: http.MethodPut, Handler: BuilderConnectH},
+	{Path: "/builder/{builder}/status", Method: http.MethodPut, Handler: BuilderStatusH},
+	{Path: "/builder/{builder}/manifest", Method: http.MethodPost, Handler: BuilderCreateManifestH},
 }

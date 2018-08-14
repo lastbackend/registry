@@ -20,11 +20,10 @@ package build
 
 import (
 	"github.com/lastbackend/registry/pkg/util/http"
-	"github.com/lastbackend/registry/pkg/util/http/middleware"
 )
 
 var Routes = []http.Route{
 	// Build handlers
-	{Path: "/build/cancel", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Context}, Handler: BuildCancelH},
-	{Path: "/build/logs", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Context}, Handler: BuildLogsH},
+	{Path: "/build/{build}/cancel", Method: http.MethodPut, Handler: BuildCancelH},
+	{Path: "/build/{build}/logs", Method: http.MethodGet, Handler: BuildLogsH},
 }

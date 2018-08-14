@@ -109,15 +109,15 @@ func (b *BuildUpdateStatusOptions) ToJson() ([]byte, error) {
 	return json.Marshal(b)
 }
 
-func (BuildRequest) BuildInfoOptions() *BuildUpdateImageInfoOptions {
-	return new(BuildUpdateImageInfoOptions)
+func (BuildRequest) BuildInfoOptions() *BuildSetImageInfoOptions {
+	return new(BuildSetImageInfoOptions)
 }
 
-func (b *BuildUpdateImageInfoOptions) Validate() *errors.Err {
+func (b *BuildSetImageInfoOptions) Validate() *errors.Err {
 	return nil
 }
 
-func (b *BuildUpdateImageInfoOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
+func (b *BuildSetImageInfoOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 
 	if reader == nil {
 		err := errors.New("data body can not be null")
@@ -141,6 +141,6 @@ func (b *BuildUpdateImageInfoOptions) DecodeAndValidate(reader io.Reader) *error
 	return nil
 }
 
-func (b *BuildUpdateImageInfoOptions) ToJson() ([]byte, error) {
+func (b *BuildSetImageInfoOptions) ToJson() ([]byte, error) {
 	return json.Marshal(b)
 }

@@ -20,16 +20,22 @@ package builder
 
 import (
 	"context"
-	"time"
 	"io"
+	"io/ioutil"
 	"os"
 	"sync"
+	"time"
 
+	"github.com/lastbackend/registry/pkg/api/types/v1"
+	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 	"github.com/lastbackend/registry/pkg/builder/envs"
+	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/spf13/viper"
+
+	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
 	lbt "github.com/lastbackend/registry/pkg/distribution/types"
 )
 
@@ -44,19 +50,28 @@ type Builder struct {
 
 	ctx      context.Context
 	cancel   context.CancelFunc
-	id       string
 	hostname string
 	cri      cri.CRI
 	limit    int
 
-	respawn chan *worker
-	done    chan bool
+	opts BuilderOpts
 
-	workers map[string]*worker
+	tasks chan *types.Task
+	done  chan bool
+
+	workers map[*worker]bool
+}
+
+type BuilderOpts struct {
+	Stdout     bool
+	DockerHost string
+	ExtraHosts []string
+	Limit      int
+	RootCerts  []string
 }
 
 // Preparing the builder environment for workers
-func New(cri cri.CRI, id, dockerHost string, extraHosts []string, limit int, logdir string) *Builder {
+func New(cri cri.CRI, opts *BuilderOpts) *Builder {
 
 	log.Infof("%s:new:> create builder", logBuilderPrefix)
 
@@ -65,19 +80,22 @@ func New(cri cri.CRI, id, dockerHost string, extraHosts []string, limit int, log
 		ctx = context.Background()
 	)
 
-	b.limit = limit
-	b.id = id
+	if opts == nil {
+		opts = new(BuilderOpts)
+	}
+
+	b.limit = opts.Limit
 	b.cri = cri
+	b.opts = *opts
 
-	b.respawn = make(chan *worker, limit)
 	b.done = make(chan bool)
+	b.tasks = make(chan *types.Task)
 
-	b.workers = make(map[string]*worker, 0)
+	b.workers = make(map[*worker]bool, 0)
 
-	ctx = context.WithValue(ctx, "builder", id)
-	ctx = context.WithValue(ctx, "dockerHost", dockerHost)
-	ctx = context.WithValue(ctx, "extraHosts", extraHosts)
-	ctx = context.WithValue(ctx, "logdir", logdir)
+	ctx = context.WithValue(ctx, "dockerHost", opts.DockerHost)
+	ctx = context.WithValue(ctx, "extraHosts", opts.ExtraHosts)
+	ctx = context.WithValue(ctx, "rootCerts", opts.RootCerts)
 	ctx = context.WithValue(ctx, "blob-storage", types.AzureBlobStorage{
 		AccountName: viper.GetString("storage.azure.account"),
 		AccountKey:  viper.GetString("storage.azure.key"),
@@ -97,111 +115,122 @@ func (b *Builder) Start() error {
 		log.Errorf("%s:start:> configure builder err: %v", logWorkerPrefix, err)
 		return err
 	}
-
-	go b.spawn(b.ctx, b.limit)
-
-	go func() {
-		<-b.ctx.Done()
-	}()
-
-	if err := envs.Get().GetClient().V1().Builder().Connect(b.ctx, envs.Get().GetHostname()); err != nil {
-		log.Errorf("%s:start:> send event connect builder err: %v", logWorkerPrefix, err)
+	if err := b.restore(); err != nil {
+		log.Errorf("%s:start:> restore builder err: %v", logWorkerPrefix, err)
 		return err
 	}
 
+	go b.manage()
+	go b.connect()
+	go b.status()
+	// TODO: subscribe to docker
+
 	return nil
 }
 
-// Proxy logs stream from task
-func (b *Builder) BuildLogs(ctx context.Context, id, endpoint string) error {
-	log.Infof("%s:new_build:> get task logs for stream: %s", logWorkerPrefix, id)
-	w, ok := b.workers[id]
-	if ok {
-		go w.Logs()
+// Proxy logs writer from task
+func (b *Builder) BuildLogs(ctx context.Context, pid string, stream io.Writer) error {
+	log.Infof("%s:new_build:> get build logs for writer: %s", logWorkerPrefix, pid)
+
+	var worker *worker
+	for worker = range b.workers {
+		if worker.pid == pid {
+			break
+		}
 	}
-	return nil
+
+	if worker != nil {
+		return worker.logs(stream)
+	}
+
+	return errors.New("process build is not active")
 }
 
 // Interrupting the build process
-func (b *Builder) BuildCancel(ctx context.Context, id string) error {
+func (b *Builder) BuildCancel(ctx context.Context, pid string) error {
 
-	log.Infof("%s:cancel:> cancel build: %s", logWorkerPrefix, id)
+	log.Infof("%s:cancel:> cancel build: %s", logWorkerPrefix, pid)
 
-	worker, ok := b.workers[id]
-	if ok {
-		worker.destroy()
-		b.Lock()
-		delete(b.workers, id)
-		b.Unlock()
-
+	for w := range b.workers {
+		if w.pid == pid {
+			log.Infof("%s:cancel:> worker process was found: %s", logWorkerPrefix, w.pid)
+			w.cleanup()
+			break
+		}
 	}
+
 	return nil
 }
 
 // Spawn - finished or failed workers will be restarted until context is closed
 // If worker failed - then wait some time until respawn
-func (b *Builder) spawn(ctx context.Context, workers int) {
+func (b *Builder) manage() error {
 
-	log.Info("%s:spawn:> run spawn workers")
+	log.Infof("%s:manage:> run manage workers", logWorkerPrefix)
 
-	run := func(w *worker) {
-
-		if err := w.Run(); err != nil {
-			log.Errorf("%s:spawn:> start worker for provision err: %v", logWorkerPrefix, err)
+	go func() {
+		for {
 			select {
-			// error delay
-			case <-time.After(5 * time.Second):
-			case <-ctx.Done():
+			case <-b.ctx.Done():
+				log.Debugf("%s:manage:> stop manage", logWorkerPrefix)
+				return
+			case t := <-b.tasks:
+
+				log.Debugf("%s:manage:> create new worker", logWorkerPrefix)
+				w := newWorker(b.ctx, b.cri)
+
+				b.Lock()
+				b.workers[w] = true
+				b.Unlock()
+
+				go func() {
+					opts := new(workerOpts)
+					opts.Stdout = b.opts.Stdout
+
+					if err := w.run(t, opts); err != nil {
+						log.Errorf("%s:manage:> start worker for provision err: %v", logWorkerPrefix, err)
+					}
+
+					b.Lock()
+					delete(b.workers, w)
+					b.Unlock()
+				}()
 			}
 		}
-
-		// respawn delay
-		<-time.After(5 * time.Second)
-
-		b.respawn <- w
-	}
-
-	log.Debugf("%s:spawn:> create %d workers", logWorkerPrefix, workers)
-
-	for i := 0; i < workers; i++ {
-		w := newWorker(ctx, b.cri)
-		b.Lock()
-		b.workers[w.id] = w
-		b.Unlock()
-		go run(w)
-	}
+	}()
 
 	for {
 		select {
-		case <-ctx.Done():
-			log.Debugf("%s:spawn:> stop respawn", logWorkerPrefix)
-			return
-		case w := <-b.respawn:
-			log.Debugf("%s:spawn:> restarted worker", logWorkerPrefix)
-			go run(w)
-		}
-	}
-}
+		case <-b.ctx.Done():
+			log.Debugf("%s:manage:> stop manage", logWorkerPrefix)
+			return nil
+		default:
+			if len(b.workers) >= b.limit {
+				continue
+			}
 
-// Await checks that all workers finished
-// then closes channel for registering new workers and respawns
-func (b *Builder) await() {
+			log.Debugf("%s:manage:> get new manifest", logWorkerPrefix)
 
-	log.Infof("%s:await:> run graceful shutdown for workers", logWorkerPrefix)
+			manifest, err := envs.Get().GetClient().V1().Builder(envs.Get().GetHostname()).Manifest(b.ctx)
+			if err != nil {
+				if err.Error() != "Manifest not found" {
+					log.Errorf("%s:manage:> get manifest err: %v", logWorkerPrefix, err)
+				}
+				select {
+				// error delay
+				case <-time.After(5 * time.Second):
+				case <-b.ctx.Done():
+					return nil
+				}
+				continue
+			}
 
-	alive := cap(b.respawn)
+			if manifest != nil {
+				log.Debugf("%s:manage:> create new task", logWorkerPrefix)
+				b.tasks <- b.newTask(manifest)
+			}
 
-	log.Infof("%s:await:> graceful shutdown await [%d/%d]", logWorkerPrefix, len(b.respawn), alive)
-
-	if len(b.respawn) == 0 {
-		close(b.respawn)
-		return
-	}
-
-	for range b.respawn {
-		alive--
-		if alive == 0 {
-			close(b.respawn)
+			<-time.After(5 * time.Second)
 		}
 	}
 }
@@ -247,11 +276,117 @@ func (b *Builder) configure() error {
 		}
 		// TODO handle output in more beautiful way
 		if _, err := io.Copy(os.Stdout, req); err != nil {
-			log.Errorf("%s:configure:> copy stream to stdout err: %v", logWorkerPrefix, err)
+			log.Errorf("%s:configure:> copy writer to stdout err: %v", logWorkerPrefix, err)
 		}
 
 		if err := req.Close(); err != nil {
-			log.Errorf("%s:configure:> close stream err: %v", logWorkerPrefix, err)
+			log.Errorf("%s:configure:> close writer err: %v", logWorkerPrefix, err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (b *Builder) restore() error {
+
+	containers, err := b.cri.ContainerList(b.ctx, true)
+	if err != nil {
+		log.Errorf("Pods restore error: %v", err)
+		return err
+	}
+
+	for _, c := range containers {
+
+		info, err := b.cri.ContainerInspect(b.ctx, c.ID)
+		if err != nil {
+			log.Errorf("inspect container err: %v", err)
+			return err
+		}
+
+		// TODO: here you need get builder state and implement the logic of workers recovery
+		if err := b.cri.ContainerRemove(b.ctx, info.ID, true, true); err != nil {
+			log.Errorf("remove container err: %v", err)
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+func (b Builder) newTask(manifest *vv1.BuildManifest) *types.Task {
+	t := new(types.Task)
+
+	t.Meta.ID = manifest.Meta.ID
+
+	t.Spec.Source.Url = manifest.Spec.Source.Url
+	t.Spec.Source.Branch = manifest.Spec.Source.Branch
+
+	t.Spec.Image.Host = manifest.Spec.Image.Host
+	t.Spec.Image.Name = manifest.Spec.Image.Name
+	t.Spec.Image.Owner = manifest.Spec.Image.Owner
+	t.Spec.Image.Tag = manifest.Spec.Image.Tag
+	t.Spec.Image.Auth = manifest.Spec.Image.Auth
+
+	t.Spec.Config.Dockerfile = manifest.Spec.Config.Dockerfile
+	t.Spec.Config.Context = manifest.Spec.Config.Context
+	t.Spec.Config.Workdir = manifest.Spec.Config.Workdir
+	t.Spec.Config.EnvVars = manifest.Spec.Config.EnvVars
+	t.Spec.Config.Command = manifest.Spec.Config.Command
+
+	return t
+}
+
+func (b *Builder) connect() error {
+	opts := v1.Request().Builder().ConnectOptions()
+	opts.IP = envs.Get().GetIP()
+	opts.Port = uint16(viper.GetInt("builder.port"))
+
+	if viper.IsSet("builder.tls") {
+		opts.TLS = !viper.GetBool("builder.tls.insecure")
+
+		caData, err := ioutil.ReadFile(viper.GetString("builder.tls.ca"))
+		if err != nil {
+			log.Errorf("%s:start:> read ca cert file err: %v", logWorkerPrefix, err)
+			return err
+		}
+
+		certData, err := ioutil.ReadFile(viper.GetString("builder.tls.client_cert"))
+		if err != nil {
+			log.Errorf("%s:start:> read client cert file err: %v", logWorkerPrefix, err)
+			return err
+		}
+
+		keyData, err := ioutil.ReadFile(viper.GetString("builder.tls.client_key"))
+		if err != nil {
+			log.Errorf("%s:start:> read client key file err: %v", logWorkerPrefix, err)
+			return err
+		}
+
+		opts.SSL = new(request.SSL)
+		opts.SSL.CA = caData
+		opts.SSL.Key = keyData
+		opts.SSL.Cert = certData
+	}
+
+	if err := envs.Get().GetClient().V1().Builder(envs.Get().GetHostname()).Connect(b.ctx, opts); err != nil {
+		log.Errorf("%s:start:> send event connect builder err: %v", logWorkerPrefix, err)
+		return err
+	}
+
+	return nil
+}
+
+func (b *Builder) status() error {
+
+	opts := v1.Request().Builder().StatusUpdateOptions()
+	// TODO: send data builder info to api
+
+	for {
+		<-time.After(10 * time.Second)
+		if err := envs.Get().GetClient().V1().Builder(envs.Get().GetHostname()).SetStatus(b.ctx, opts); err != nil {
+			log.Errorf("%s:start:> send event status builder err: %v", logWorkerPrefix, err)
 			return err
 		}
 	}
@@ -263,8 +398,6 @@ func (b *Builder) configure() error {
 func (b *Builder) Shutdown() {
 
 	log.Infof("%s:shutdown:> shutdown builder process", logWorkerPrefix)
-
-	b.await()
 
 	b.done <- true
 }

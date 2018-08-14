@@ -56,6 +56,33 @@ type Socket struct {
 	attempt int
 }
 
+func NewSocketBackend(endpoint string) IStreamBackend {
+
+	var s = new(Socket)
+
+	s.ping = make(chan []byte)
+	s.pong = make(chan []byte)
+	s.write = make(chan []byte)
+	s.read = make(chan []byte)
+
+	s.err = make(chan error)
+	s.close = make(chan error)
+
+	s.online = make(chan bool)
+	s.dial = make(chan int)
+
+	s.end = make(chan error)
+	s.attempt = 0
+
+	s.endpoint = endpoint
+
+	go s.manage()
+
+	s.dial <- 0
+
+	return s
+}
+
 func (s *Socket) manage() {
 	for {
 		select {
@@ -234,31 +261,4 @@ func (s *Socket) End() error {
 
 func (s *Socket) Write(chunk []byte) {
 	s.write <- chunk
-}
-
-func NewSocketBackend(endpoint string) StreamBackend {
-
-	var s = new(Socket)
-
-	s.ping = make(chan []byte)
-	s.pong = make(chan []byte)
-	s.write = make(chan []byte)
-	s.read = make(chan []byte)
-
-	s.err = make(chan error)
-	s.close = make(chan error)
-
-	s.online = make(chan bool)
-	s.dial = make(chan int)
-
-	s.end = make(chan error)
-	s.attempt = 0
-
-	s.endpoint = endpoint
-
-	go s.manage()
-
-	s.dial <- 0
-
-	return s
 }

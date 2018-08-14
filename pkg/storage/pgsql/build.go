@@ -24,9 +24,11 @@ import (
 
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage/storage"
+	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )
 
 type BuildStorage struct {
@@ -42,7 +44,6 @@ func (s *BuildStorage) Get(ctx context.Context, id string) (*types.Build, error)
 		   'meta', json_build_object(
 		     'id', ib.id,
 		     'builder', ib.builder_id,
-		     'task', ib.task_id,
 		     'number', ib.number,
 		     'created', ib.created,
 		     'updated', ib.updated
@@ -91,68 +92,27 @@ func (s *BuildStorage) Get(ctx context.Context, id string) (*types.Build, error)
 
 }
 
-func (s *BuildStorage) GetByTask(ctx context.Context, id string) (*types.Build, error) {
-	log.V(logLevel).Debugf("%s:build:get_by_task:> get build by task `%s`", logPrefix, id)
-
-	const query = `
-		SELECT to_json(
-		 json_build_object(
-		   'meta', json_build_object(
-		     'id', ib.id,
-		     'builder', ib.builder_id,
-		     'task', ib.task_id,
-		     'number', ib.number,
-		     'created', ib.created,
-		     'updated', ib.updated
-		   ),
-		   'status', json_build_object(
-		     'size', ib.size,
-		     'step', ib.state_step,
-		     'status', ib.state_status,
-		     'message', ib.state_message,
-		     'processing', ib.state_processing,
-		     'done', ib.state_done,
-		     'error', ib.state_error,
-		     'canceled', ib.state_canceled,
-		     'started', ib.state_started,
-		     'finished', ib.state_finished
-		   ),
-		   'spec', json_build_object(
-		     'image', ib.image,
-		     'source', ib.source,
-		     'config', ib.config
-		   )
-		  )
-		 )
-		FROM images_builds AS ib
-		WHERE ib.task_id::text = $1;`
-
-	var buf string
-
-	err := getClient(ctx).QueryRow(query, id).Scan(&buf)
-	switch err {
-	case nil:
-	case sql.ErrNoRows:
-		return nil, nil
-	default:
-		log.V(logLevel).Errorf("%s:build:get_by_task:> get build by task %s query err: %v", logPrefix, id, err)
-		return nil, err
-	}
-
-	b := new(types.Build)
-
-	if err := json.Unmarshal([]byte(buf), &b); err != nil {
-		return nil, err
-	}
-
-	return b, nil
-
-}
-
-func (s *BuildStorage) List(ctx context.Context, image string) ([]*types.Build, error) {
+func (s *BuildStorage) List(ctx context.Context, image string, f *filter.BuildFilter) ([]*types.Build, error) {
 	log.V(logLevel).Debug("%s:build:list:> get builds list by image", logPrefix)
 
-	const query = `
+	where := "WHERE ib.image_id = $1"
+
+	if f != nil {
+
+		if f.Active != nil {
+			if *f.Active {
+				where += "AND ib.state_processing IS TRUE"
+			} else {
+				where += "AND ib.state_processing IS FALSE"
+			}
+		}
+
+		if where != types.EmptyString {
+			where = fmt.Sprintf(" %s", where)
+		}
+	}
+
+	var query = fmt.Sprintf(`
 		SELECT COALESCE(to_json(json_agg(builds)), '[]')
 		FROM (
 		 SELECT
@@ -160,7 +120,6 @@ func (s *BuildStorage) List(ctx context.Context, image string) ([]*types.Build, 
 		   json_build_object(
 		       'id', ib.id,
 		       'builder', ib.builder_id,
-		       'task', ib.task_id,
 		       'number', ib.number,
 		       'created', ib.created,
 		       'updated', ib.updated
@@ -183,8 +142,8 @@ func (s *BuildStorage) List(ctx context.Context, image string) ([]*types.Build, 
 		       'config', ib.config
 		   ) AS spec
 		 FROM images_builds AS ib
-		 WHERE ib.image_id = $1
-		 ORDER BY ib.created DESC) builds;`
+		 %s
+		 ORDER BY ib.created DESC) builds;`, where)
 
 	var buf string
 
@@ -259,7 +218,7 @@ func (s *BuildStorage) Insert(ctx context.Context, build *types.Build) error {
 		string(image),
 	).
 		Scan(&build.Meta.ID, &build.Meta.Number, &build.Meta.Created, &build.Meta.Updated,
-		&build.Meta.Created, &build.Meta.Updated)
+			&build.Meta.Created, &build.Meta.Updated)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:build:insert:> insert build err: %v", logPrefix, err)
 		return err
@@ -292,7 +251,6 @@ func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
 				'hash', $10 :: TEXT
 			),
 			builder_id = CASE WHEN $11 <> '' THEN $11 :: UUID ELSE NULL END,
-			task_id = CASE WHEN $12 <> '' THEN $12 :: UUID ELSE NULL END,
 			updated = now() at time zone 'utc'
 		WHERE id = $1
 		RETURNING updated;`
@@ -300,7 +258,7 @@ func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
 	err := getClient(ctx).QueryRowContext(ctx, query, build.Meta.ID,
 		build.Status.Step, build.Status.Status, build.Status.Message, build.Status.Processing,
 		build.Status.Done, build.Status.Error, build.Status.Canceled, build.Status.Size, build.Spec.Image.Hash,
-		build.Meta.Builder, build.Meta.TaskID).Scan(&build.Meta.Updated)
+		build.Meta.Builder).Scan(&build.Meta.Updated)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:build:update:> exec query err: %v", logPrefix, err)
 		return err
@@ -399,7 +357,6 @@ func (s *BuildStorage) Unfreeze(ctx context.Context) error {
 	const query = `
    UPDATE images_builds
    SET builder_id     = NULL,
-     task_id          = NULL,
      state_step       = '',
      state_status     = 'queued',
      state_processing = FALSE,

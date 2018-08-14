@@ -51,7 +51,5 @@ func (rv *RegistryView) ToRegistryMeta(meta types.RegistryMeta) RegistryMeta {
 }
 
 func (rv *RegistryView) ToRegistryStatus(status types.RegistryStatus) RegistryStatus {
-	return RegistryStatus{
-
-	}
+	return RegistryStatus{}
 }

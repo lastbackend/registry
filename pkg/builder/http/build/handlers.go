@@ -22,57 +22,55 @@ import (
 	"net/http"
 
 	"github.com/lastbackend/registry/pkg/builder/envs"
-	"github.com/lastbackend/registry/pkg/builder/types/request"
 	"github.com/lastbackend/registry/pkg/log"
-)
+	"github.com/lastbackend/registry/pkg/util/http/utils"
+	"github.com/lastbackend/registry/pkg/util/stream"
+	)
 
 const (
 	logLevel  = 2
 	logPrefix = "api:handler:build"
 )
 
-// BuildCancelH - handler called build task cancel
+// BuildCancelH - handler called build cancel
 func BuildCancelH(w http.ResponseWriter, r *http.Request) {
 
-	log.Infof("%s:cancel:> cancel execute task", logPrefix)
+	build := utils.Vars(r)["build"]
 
-	// request body struct
-	rq := request.Request().Build().CancelOptions()
-	if e := rq.DecodeAndValidate(r.Body); e != nil {
-		log.V(logLevel).Errorf("%s:execute:> validation incoming data err: %v", logPrefix, e)
-		e.Http(w)
-		return
-	}
+	log.V(logLevel).Infof("%s:cancel:> cancel execute build with build %s", logPrefix, build)
 
-	log.Debugf("%s:cancel:> cancel task [%s]", rq.Task)
-
-	if err := envs.Get().GetBuilder().BuildCancel(r.Context(), rq.Task); err != nil {
-		log.Errorf("%s:cancel:> cancel task err: %v", logPrefix, err)
+	if err := envs.Get().GetBuilder().BuildCancel(r.Context(), build); err != nil {
+		log.V(logLevel).Errorf("%s:cancel:> cancel build err: %v", logPrefix, err)
 		return
 	}
 
 	return
 }
 
-// BuildLogsCancelH - handler for get logs stream
+// BuildLogsCancelH - handler for get build logs stream
 func BuildLogsH(w http.ResponseWriter, r *http.Request) {
 
-	log.Infof("%s:logs:> get task logs stream", logPrefix)
+	buildid := utils.Vars(r)["build"]
 
-	// request body struct
-	rq := request.Request().Build().LogsOptions()
-	if e := rq.DecodeAndValidate(r.Body); e != nil {
-		log.V(logLevel).Errorf("%s:execute:> validation incoming data err: %v", logPrefix, e)
-		e.Http(w)
+	log.V(logLevel).Infof("%s:logs:> get logs stream for build with buildid %s", logPrefix, buildid)
+
+	notify := w.(http.CloseNotifier).CloseNotify()
+	done := make(chan bool, 1)
+
+	s := stream.NewStream()
+
+	go func() {
+		<-notify
+		log.Debugf("%s:logs:> HTTP connection just closed.", logPrefix)
+		s.Close()
+		done <- true
+	}()
+
+	err := envs.Get().GetBuilder().BuildLogs(r.Context(), buildid, w)
+	if err != nil {
+		log.V(logLevel).Errorf("%s:logs:> get logs build err: %v", logPrefix, err)
 		return
 	}
 
-	log.Debugf("%s:logs:> task [%s] task [%s] log to endpoint [%s] ", rq.Task, rq.URI)
-
-	if err := envs.Get().GetBuilder().BuildLogs(r.Context(), rq.Task, rq.URI); err != nil {
-		log.Errorf("%s:logs:> get logs task err: %v", logPrefix, err)
-		return
-	}
-
-	return
+	<-done
 }

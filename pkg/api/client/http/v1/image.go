@@ -23,8 +23,10 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/lastbackend/registry/pkg/api/client/types"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
-	"github.com/lastbackend/registry/pkg/api/client/http/request"
+	"github.com/lastbackend/registry/pkg/util/http/request"
+
 	rv1 "github.com/lastbackend/registry/pkg/api/types/v1/request"
 	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
 )
@@ -33,6 +35,22 @@ type ImageClient struct {
 	client *request.RESTClient
 	owner  string
 	name   string
+}
+
+// Create build client with args
+func (ic ImageClient) Build(args ...string) types.BuildClientV1 {
+	id := ""
+	// Get any parameters passed to us out of the args variable into "real"
+	// variables we created for them.
+	for i := range args {
+		switch i {
+		case 0: // hostname
+			id = args[0]
+		default:
+			panic("Wrong parameter count: (is allowed from 0 to 1)")
+		}
+	}
+	return newBuildClient(ic.client, ic.owner, ic.name, id)
 }
 
 func (ic ImageClient) List(ctx context.Context) (*vv1.ImageList, error) {
@@ -151,30 +169,6 @@ func (ic ImageClient) Remove(ctx context.Context, opts *rv1.ImageRemoveOptions) 
 	return nil
 }
 
-func (ic ImageClient) BuildList(ctx context.Context) (*vv1.BuildList, error) {
-
-	var s *vv1.BuildList
-	var e *errors.Http
-
-	err := ic.client.Get(fmt.Sprintf("/image/%s/%s/build", ic.owner, ic.name)).
-		AddHeader("Content-Type", "application/json").
-		JSON(&s, &e)
-
-	if err != nil {
-		return nil, err
-	}
-	if e != nil {
-		return nil, errors.New(e.Message)
-	}
-
-	if s == nil {
-		list := make(vv1.BuildList, 0)
-		s = &list
-	}
-
-	return s, nil
-}
-
-func newImageClient(req *request.RESTClient, owner, name string) ImageClient {
+func newImageClient(req *request.RESTClient, owner, name string) types.ImageClientV1 {
 	return ImageClient{client: req, owner: owner, name: name}
 }

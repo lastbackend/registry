@@ -27,23 +27,108 @@ import (
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/http/utils"
 	"net/http"
-	)
+)
 
 const (
 	logLevel  = 2
 	logPrefix = "registry:api:handler:builder"
 )
 
+func BuilderListH(w http.ResponseWriter, r *http.Request) {
+
+	log.V(logLevel).Debugf("%s:list:> get builders list", logPrefix)
+
+	var (
+		bm = distribution.NewBuilderModel(r.Context(), envs.Get().GetStorage())
+	)
+
+	builders, err := bm.List()
+	if err != nil {
+		log.V(logLevel).Errorf("%s:list:> get builder list err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	response, err := v1.View().Builder().NewList(builders).ToJson()
+	if err != nil {
+		log.V(logLevel).Errorf("%s:list:> convert struct to json err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(response); err != nil {
+		log.Errorf("%s:list:> write response err: %v", logPrefix, err)
+		return
+	}
+}
+
+func BuilderUpdateH(w http.ResponseWriter, r *http.Request) {
+
+	log.V(logLevel).Debugf("%s:update:> update builder data", logPrefix)
+
+	// request body struct
+	rq := v1.Request().Builder().UpdateOptions()
+	if e := rq.DecodeAndValidate(r.Body); e != nil {
+		log.V(logLevel).Errorf("%s:update:> validation incoming data err: %v", logPrefix, e)
+		e.Http(w)
+		return
+	}
+
+	var (
+		bm       = distribution.NewBuilderModel(r.Context(), envs.Get().GetStorage())
+		hostname = utils.Vars(r)["builder"]
+	)
+
+	builder, err := bm.Get(hostname)
+	if err != nil {
+		log.V(logLevel).Errorf("%s:update:> get builder info err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	opts := new(types.BuilderUpdateOptions)
+	opts.IP = rq.IP
+	opts.Port = rq.Port
+
+	if err := bm.Update(builder, opts); err != nil {
+		log.V(logLevel).Errorf("%s:update:> update builder info err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	response, err := v1.View().Builder().New(builder).ToJson()
+	if err != nil {
+		log.V(logLevel).Errorf("%s:update:> convert struct to json err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(response); err != nil {
+		log.Errorf("%s:update:> write response err: %v", logPrefix, err)
+		return
+	}
+}
+
 func BuilderConnectH(w http.ResponseWriter, r *http.Request) {
 
 	log.V(logLevel).Debugf("%s:connect:> connect builder to system", logPrefix)
 
 	var (
-		bm  = distribution.NewBuilderModel(r.Context(), envs.Get().GetStorage())
-		bid = utils.Vars(r)["builder"]
+		bm       = distribution.NewBuilderModel(r.Context(), envs.Get().GetStorage())
+		hostname = utils.Vars(r)["builder"]
 	)
 
-	builder, err := bm.Get(bid)
+	// request body struct
+	rq := v1.Request().Builder().ConnectOptions()
+	if e := rq.DecodeAndValidate(r.Body); e != nil {
+		log.V(logLevel).Errorf("%s:connect:> validation incoming data err: %v", logPrefix, e)
+		e.Http(w)
+		return
+	}
+
+	builder, err := bm.Get(hostname)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:connect:> get builder info err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
@@ -53,8 +138,18 @@ func BuilderConnectH(w http.ResponseWriter, r *http.Request) {
 	if builder == nil {
 
 		opts := new(types.BuilderCreateOptions)
-		opts.Hostname = bid
+		opts.Hostname = hostname
+		opts.IP = rq.IP
+		opts.Port = rq.Port
+		opts.TLS = rq.TLS
 		opts.Online = true
+
+		if rq.SSL != nil {
+			opts.SSL = new(types.SSL)
+			opts.SSL.CA = rq.SSL.CA
+			opts.SSL.Cert = rq.SSL.Cert
+			opts.SSL.Key = rq.SSL.Key
+		}
 
 		_, err := bm.Create(opts)
 		if err != nil {
@@ -74,7 +169,18 @@ func BuilderConnectH(w http.ResponseWriter, r *http.Request) {
 
 	opts := new(types.BuilderUpdateOptions)
 	online := true
+	opts.Hostname = &hostname
 	opts.Online = &online
+	opts.IP = &rq.IP
+	opts.TLS = &rq.TLS
+	opts.Port = &rq.Port
+
+	if rq.SSL != nil {
+		opts.SSL = new(types.SSL)
+		opts.SSL.CA = rq.SSL.CA
+		opts.SSL.Cert = rq.SSL.Cert
+		opts.SSL.Key = rq.SSL.Key
+	}
 
 	if err := bm.Update(builder, opts); err != nil {
 		log.V(logLevel).Errorf("%s:connect:> update builder info err: %v", logPrefix, err)
@@ -89,68 +195,78 @@ func BuilderConnectH(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func BuilderCreateManifestH(w http.ResponseWriter, r *http.Request) {
+func BuilderStatusH(w http.ResponseWriter, r *http.Request) {
 
-	log.V(logLevel).Debugf("%s:create_manifest:> create manifest for builder", logPrefix)
+	log.V(logLevel).Debugf("%s:status:> connect builder to system", logPrefix)
 
 	var (
-		bdm = distribution.NewBuilderModel(r.Context(), envs.Get().GetStorage())
-		blm = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
-		bid = utils.Vars(r)["builder"]
+		bm       = distribution.NewBuilderModel(r.Context(), envs.Get().GetStorage())
+		hostname = utils.Vars(r)["builder"]
 	)
 
 	// request body struct
-	rq := v1.Request().Builder().CreateManifestOptions()
+	rq := v1.Request().Builder().StatusUpdateOptions()
 	if e := rq.DecodeAndValidate(r.Body); e != nil {
-		log.V(logLevel).Errorf("%s:create_manifest:> validation incoming data err: %v", logPrefix, e)
+		log.V(logLevel).Errorf("%s:status:> validation incoming data err: %v", logPrefix, e)
 		e.Http(w)
 		return
 	}
 
+	builder, err := bm.Get(hostname)
+	if err != nil {
+		log.V(logLevel).Errorf("%s:status:> get builder info err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	opts := new(types.BuilderUpdateOptions)
+	online := true
+	opts.Hostname = &hostname
+	opts.Online = &online
+
+	if err := bm.Update(builder, opts); err != nil {
+		log.V(logLevel).Errorf("%s:status:> update builder info err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte{}); err != nil {
+		log.Errorf("%s:status:> write response err: %v", logPrefix, err)
+		return
+	}
+}
+
+func BuilderCreateManifestH(w http.ResponseWriter, r *http.Request) {
+
+	log.V(logLevel).Debugf("%s:get_manifest:> create manifest for builder", logPrefix)
+
+	var (
+		bdm = distribution.NewBuilderModel(r.Context(), envs.Get().GetStorage())
+		bid = utils.Vars(r)["builder"]
+	)
+
 	builder, err := bdm.Get(bid)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:create_manifest:> get builder err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:get_manifest:> get builder err: %v", logPrefix, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if builder == nil {
-		log.V(logLevel).Warnf("%s:create_manifest:> builder `%s` not found", logPrefix, bid)
+		log.V(logLevel).Warnf("%s:get_manifest:> builder `%s` not found", logPrefix, bid)
 		errors.New("builder").NotFound().Http(w)
-		return
-	}
-
-	builder_opts := new(types.BuilderUpdateOptions)
-	online := true
-	builder_opts.Online = &online
-
-	if err := bdm.Update(builder, builder_opts); err != nil {
-		log.V(logLevel).Errorf("%s:create_manifest:> update builder info err: %v", logPrefix, err)
-		errors.HTTP.InternalServerError(w)
 		return
 	}
 
 	build, err := bdm.FindBuild(builder)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:create_manifest:> get build for builder %s err: %v", logPrefix, bid, err)
+		log.V(logLevel).Errorf("%s:get_manifest:> get build for builder %s err: %v", logPrefix, bid, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if build == nil {
-		w.WriteHeader(http.StatusNotFound)
-		if _, err := w.Write([]byte{}); err != nil {
-			log.V(logLevel).Errorf("%s:create_manifest:> write response err: %v", logPrefix, err)
-			return
-		}
-		return
-	}
-
-	opts := new(types.BuildUpdateTaskOptions)
-	opts.TaskID = rq.TaskID
-
-	err = blm.UpdateTask(build, opts)
-	if err != nil {
-		log.V(logLevel).Errorf("%s:create_manifest:> update build task err: %v", logPrefix, bid, err)
-		errors.HTTP.InternalServerError(w)
+		log.V(logLevel).Warnf("%s:get_manifest:> manifest `%s` not found", logPrefix, bid)
+		errors.New("manifest").NotFound().Http(w)
 		return
 	}
 

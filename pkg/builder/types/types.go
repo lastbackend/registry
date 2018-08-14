@@ -20,10 +20,13 @@ package types
 
 import (
 	"context"
+	"io"
 )
 
 type IBuilder interface {
 	Start() error
-	BuildLogs(ctx context.Context, id, endpoint string) error
-	BuildCancel(ctx context.Context, id string) error
+	BuildLogs(ctx context.Context, pid string, stream io.Writer) error
+	BuildCancel(ctx context.Context, pid string) error
+	Shutdown()
+	Done() <-chan bool
 }

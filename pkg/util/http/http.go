@@ -19,10 +19,24 @@
 package http
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
-	"net/http"
-
 	"github.com/lastbackend/registry/pkg/util/http/cors"
+	"io/ioutil"
+	"net/http"
+)
+
+const (
+	MethodGet     = http.MethodGet
+	MethodHead    = http.MethodHead
+	MethodPost    = http.MethodPost
+	MethodPut     = http.MethodPut
+	MethodPatch   = http.MethodPatch
+	MethodDelete  = http.MethodDelete
+	MethodConnect = http.MethodConnect
+	MethodOptions = http.MethodOptions
+	MethodTrace   = http.MethodTrace
 )
 
 type NotFoundHandler struct {
@@ -65,7 +79,40 @@ func Listen(host string, port int, router http.Handler) error {
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), router)
 }
 
-func ListenWithTLS(host string, port int, certFile, keyFile string, router http.Handler) error {
-	return http.ListenAndServeTLS(fmt.Sprintf("%s:%d", host, port), certFile, keyFile, router)
+func ListenWithTLS(host string, port int, caFile, certFile, keyFile string, router http.Handler) error {
 
+	server := &http.Server{
+		Addr:    fmt.Sprintf("%s:%d", host, port),
+		Handler: router,
+	}
+
+	server.TLSConfig = configTLS(caFile)
+
+	return server.ListenAndServeTLS(certFile, keyFile)
+}
+
+func configTLS(caFile string) *tls.Config {
+
+	caCert, err := ioutil.ReadFile(caFile)
+	if err != nil {
+		return nil
+	}
+
+	caCertPool := x509.NewCertPool()
+	ok := caCertPool.AppendCertsFromPEM(caCert)
+	if !ok {
+		panic("failed to parse root certificate")
+	}
+
+	TLSConfig := &tls.Config{
+		// Reject any TLS certificate that cannot be validated
+		ClientAuth: tls.RequireAndVerifyClientCert,
+		// Ensure that we only use our "CA" to validate certificates
+		ClientCAs: caCertPool,
+		// Force it server side
+		PreferServerCipherSuites: true,
+		// TLS 1.2 because we can
+		MinVersion: tls.VersionTLS12,
+	}
+	return TLSConfig
 }

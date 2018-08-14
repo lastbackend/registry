@@ -24,7 +24,7 @@ import (
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage"
 
-		"github.com/spf13/viper"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -34,7 +34,7 @@ const (
 // Registry - distribution model
 type Registry struct {
 	context context.Context
-	storage storage.Storage
+	storage storage.IStorage
 }
 
 // Info - get registry info
@@ -49,6 +49,6 @@ func (c *Registry) Get() (*types.Registry, error) {
 }
 
 // NewRegistryModel - return new registry model
-func NewRegistryModel(ctx context.Context, stg storage.Storage) *Registry {
+func NewRegistryModel(ctx context.Context, stg storage.IStorage) *Registry {
 	return &Registry{ctx, stg}
 }

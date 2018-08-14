@@ -23,6 +23,7 @@ import (
 	"github.com/lastbackend/registry/pkg/builder/types"
 	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/lastbackend/registry/pkg/storage"
+	"github.com/lastbackend/registry/pkg/util/blob"
 )
 
 var e Env
@@ -32,11 +33,13 @@ func Get() *Env {
 }
 
 type Env struct {
-	hostname string
-	builder  types.IBuilder
-	client   client.IClient
-	storage  storage.Storage
-	cri      cri.CRI
+	ip          string
+	hostname    string
+	builder     types.IBuilder
+	client      client.IClient
+	storage     storage.IStorage
+	blobStorage blob.IBlobStorage
+	cri         cri.CRI
 }
 
 func (env *Env) SetCri(cri cri.CRI) {
@@ -67,6 +70,22 @@ func (env *Env) SetHostname(h string) {
 	env.hostname = h
 }
 
+func (env *Env) SetBlobStorage(u blob.IBlobStorage) {
+	env.blobStorage = u
+}
+
+func (env Env) GetBlobStorage() blob.IBlobStorage {
+	return env.blobStorage
+}
+
 func (env Env) GetHostname() string {
 	return env.hostname
+}
+
+func (env *Env) SetIP(ip string) {
+	env.ip = ip
+}
+
+func (env Env) GetIP() string {
+	return env.ip
 }

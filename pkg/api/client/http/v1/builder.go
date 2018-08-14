@@ -22,47 +22,27 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/lastbackend/registry/pkg/api/client/types"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
-	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
+	"github.com/lastbackend/registry/pkg/util/http/request"
+
 	rv1 "github.com/lastbackend/registry/pkg/api/types/v1/request"
-	"github.com/lastbackend/registry/pkg/api/client/http/request"
+	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
 )
 
 type BuilderClient struct {
 	client *request.RESTClient
+
+	hostname string
 }
 
-func (bc BuilderClient) Connect(ctx context.Context, hostname string) error {
+func (bc BuilderClient) List(ctx context.Context) (*vv1.BuilderList, error) {
 
+	var s *vv1.BuilderList
 	var e *errors.Http
 
-	err := bc.client.Put(fmt.Sprintf("/builder/%s/connect", hostname)).
+	err := bc.client.Get(fmt.Sprintf("/registry/builder")).
 		AddHeader("Content-Type", "application/json").
-		JSON(nil, &e)
-
-	if err != nil {
-		return err
-	}
-	if e != nil {
-		return errors.New(e.Message)
-	}
-
-	return nil
-}
-
-func (bc BuilderClient) GetManifest(ctx context.Context, hostname string, opts *rv1.BuilderCreateManifestOptions) (*vv1.BuildManifest, error) {
-
-	body, err := opts.ToJson()
-	if err != nil {
-		return nil, err
-	}
-
-	var s *vv1.BuildManifest
-	var e *errors.Http
-
-	err = bc.client.Post(fmt.Sprintf("/builder/%s/manifest", hostname)).
-		AddHeader("Content-Type", "application/json").
-		Body(body).
 		JSON(&s, &e)
 
 	if err != nil {
@@ -75,6 +55,73 @@ func (bc BuilderClient) GetManifest(ctx context.Context, hostname string, opts *
 	return s, nil
 }
 
-func newBuilderClient(req *request.RESTClient) BuilderClient {
-	return BuilderClient{client: req}
+func (bc BuilderClient) Connect(ctx context.Context, opts *rv1.BuilderConnectOptions) error {
+
+	body, err := opts.ToJson()
+	if err != nil {
+		return err
+	}
+
+	var e *errors.Http
+
+	err = bc.client.Put(fmt.Sprintf("/builder/%s/connect", bc.hostname)).
+		AddHeader("Content-Type", "application/json").
+		Body(body).
+		JSON(nil, &e)
+
+	if err != nil {
+		return err
+	}
+	if e != nil {
+		return errors.New(e.Message)
+	}
+
+	return nil
+}
+
+func (bc BuilderClient) SetStatus(ctx context.Context, opts *rv1.BuilderStatusUpdateOptions) error {
+
+	body, err := opts.ToJson()
+	if err != nil {
+		return err
+	}
+
+	var e *errors.Http
+
+	err = bc.client.Put(fmt.Sprintf("/builder/%s/status", bc.hostname)).
+		AddHeader("Content-Type", "application/json").
+		Body(body).
+		JSON(nil, &e)
+
+	if err != nil {
+		return err
+	}
+	if e != nil {
+		return errors.New(e.Message)
+	}
+
+	return nil
+}
+
+func (bc BuilderClient) Manifest(ctx context.Context) (*vv1.BuildManifest, error) {
+
+	var s *vv1.BuildManifest
+	var e *errors.Http
+
+	err := bc.client.Post(fmt.Sprintf("/builder/%s/manifest", bc.hostname)).
+		AddHeader("Content-Type", "application/json").
+		JSON(&s, &e)
+
+	if err != nil {
+		return nil, err
+	}
+	if e != nil {
+		return nil, errors.New(e.Message)
+	}
+
+	return s, nil
+}
+
+func newBuilderClient(req *request.RESTClient, hostname string) types.BuilderClientV1 {
+	return BuilderClient{client: req, hostname: hostname}
 }

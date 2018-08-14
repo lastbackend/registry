@@ -19,9 +19,9 @@
 package types
 
 import (
-	"time"
-	"github.com/spf13/viper"
 	"fmt"
+	"github.com/spf13/viper"
+	"time"
 )
 
 // Statuses
@@ -55,7 +55,6 @@ type BuildMeta struct {
 	Meta
 	Number  int64  `json:"number"`
 	Builder string `json:"builder"`
-	TaskID  string `json:"task"`
 }
 
 type BuildStatus struct {
@@ -114,10 +113,15 @@ type BuildConfig struct {
 
 type BuildStep string
 
-type BuildManifest struct {
-	Source BuildManifestSource `json:"source"`
-	Image  BuildManifestImage  `json:"image"`
-	Config BuildManifestConfig `json:"config"`
+type Task struct {
+	Meta struct {
+		ID string `json:"id"`
+	} `json:"meta"`
+	Spec struct {
+		Source BuildManifestSource `json:"source"`
+		Image  BuildManifestImage  `json:"image"`
+		Config BuildManifestConfig `json:"config"`
+	} `json:"spec"`
 }
 
 type BuildManifestSource struct {
@@ -208,47 +212,49 @@ func (b *Build) MarkAsCanceled(step, message string) {
 	b.Status.Canceled = true
 }
 
-func (b Build) NewBuildManifest() *BuildManifest {
+func (b Build) NewBuildManifest() *Task {
 
-	manifest := new(BuildManifest)
+	manifest := new(Task)
 
-	manifest.Image.Host = viper.GetString("domain")
-	manifest.Image.Name = b.Spec.Image.Name
-	manifest.Image.Owner = b.Spec.Image.Owner
-	manifest.Image.Tag = b.Spec.Image.Tag
-	manifest.Image.Auth = b.Spec.Image.Auth
+	manifest.Meta.ID = b.Meta.ID
 
-	manifest.Source.Branch = b.Spec.Source.Branch
+	manifest.Spec.Image.Host = viper.GetString("domain")
+	manifest.Spec.Image.Name = b.Spec.Image.Name
+	manifest.Spec.Image.Owner = b.Spec.Image.Owner
+	manifest.Spec.Image.Tag = b.Spec.Image.Tag
+	manifest.Spec.Image.Auth = b.Spec.Image.Auth
+
+	manifest.Spec.Source.Branch = b.Spec.Source.Branch
 
 	if b.Spec.Source.Hub == GithubHost {
-		manifest.Source.Url = fmt.Sprintf("https://github.com/%s/%s", b.Spec.Source.Owner, b.Spec.Source.Name)
+		manifest.Spec.Source.Url = fmt.Sprintf("https://github.com/%s/%s", b.Spec.Source.Owner, b.Spec.Source.Name)
 
 		if b.Spec.Source.Token != "" {
-			manifest.Source.Url = fmt.Sprintf("https://%s@github.com/%s/%s", b.Spec.Source.Token, b.Spec.Source.Owner, b.Spec.Source.Name)
+			manifest.Spec.Source.Url = fmt.Sprintf("https://%s@github.com/%s/%s", b.Spec.Source.Token, b.Spec.Source.Owner, b.Spec.Source.Name)
 		}
 	}
 
 	if b.Spec.Source.Hub == BitbucketHost {
-		manifest.Source.Url = fmt.Sprintf("https://bitbucket.org/%s/%s", b.Spec.Source.Owner, b.Spec.Source.Name)
+		manifest.Spec.Source.Url = fmt.Sprintf("https://bitbucket.org/%s/%s", b.Spec.Source.Owner, b.Spec.Source.Name)
 
 		if b.Spec.Source.Token != "" {
-			manifest.Source.Url = fmt.Sprintf("https://x-token-auth:%s@bitbucket.org/%s/%s", b.Spec.Source.Token, b.Spec.Source.Owner, b.Spec.Source.Name)
+			manifest.Spec.Source.Url = fmt.Sprintf("https://x-token-auth:%s@bitbucket.org/%s/%s", b.Spec.Source.Token, b.Spec.Source.Owner, b.Spec.Source.Name)
 		}
 	}
 
 	if b.Spec.Source.Hub == GitlabHost {
-		manifest.Source.Url = fmt.Sprintf("https://gitlab.com/%s/%s", b.Spec.Source.Owner, b.Spec.Source.Name)
+		manifest.Spec.Source.Url = fmt.Sprintf("https://gitlab.com/%s/%s", b.Spec.Source.Owner, b.Spec.Source.Name)
 
 		if b.Spec.Source.Token != "" {
-			manifest.Source.Url = fmt.Sprintf("https://gitlab-ci-token:%s@gitlab.com/%s/%s", b.Spec.Source.Token, b.Spec.Source.Owner, b.Spec.Source.Name)
+			manifest.Spec.Source.Url = fmt.Sprintf("https://gitlab-ci-token:%s@gitlab.com/%s/%s", b.Spec.Source.Token, b.Spec.Source.Owner, b.Spec.Source.Name)
 		}
 	}
 
-	manifest.Config.Dockerfile = b.Spec.Config.Dockerfile
-	manifest.Config.Context = b.Spec.Config.Context
-	manifest.Config.EnvVars = b.Spec.Config.EnvVars
-	manifest.Config.Workdir = b.Spec.Config.Workdir
-	manifest.Config.Command = b.Spec.Config.Command
+	manifest.Spec.Config.Dockerfile = b.Spec.Config.Dockerfile
+	manifest.Spec.Config.Context = b.Spec.Config.Context
+	manifest.Spec.Config.EnvVars = b.Spec.Config.EnvVars
+	manifest.Spec.Config.Workdir = b.Spec.Config.Workdir
+	manifest.Spec.Config.Command = b.Spec.Config.Command
 
 	return manifest
 }
@@ -285,6 +291,6 @@ type BuildUpdateInfoOptions struct {
 	Hash string `json:"hash"`
 }
 
-type BuildUpdateTaskOptions struct {
-	TaskID string `json:"task"`
+type BuildListOptions struct {
+	Active *bool `json:"active"`
 }

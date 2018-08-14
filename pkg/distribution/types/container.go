@@ -31,9 +31,9 @@ const ContainerStatePending = "pending"
 type Container struct {
 	// Container CID
 	ID string `json:"id"`
-	// Container Pod Hash
-	Pod string `json:"pod"`
-	// Container Deployment Hash
+	// Container Label
+	Label string `json:"label"`
+	// Container Deployment ID
 	Deployment string `json:"deployment"`
 	// Container Namespace Hash
 	Namespace string `json:"namespace"`
@@ -315,4 +315,9 @@ func convertSliceToString(slice []string) (string, error) {
 		return EmptyStringSlice, nil
 	}
 	return string(res), nil
+}
+
+type ContainerEventFilter struct {
+	// Regexp query for image filter
+	Image string
 }

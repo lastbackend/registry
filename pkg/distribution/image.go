@@ -40,7 +40,7 @@ type IImage interface {
 
 type Image struct {
 	context context.Context
-	storage storage.Storage
+	storage storage.IStorage
 }
 
 func (i Image) Get(owner, name string) (*types.Image, error) {
@@ -64,7 +64,7 @@ func (i Image) List(opts *types.ImageListOptions) ([]*types.Image, error) {
 
 	filter := storage.Filter().Image()
 	if opts != nil {
-		filter.Owner = opts.Owner
+		filter.Owner = &opts.Owner
 	}
 
 	list, err := i.storage.Image().List(i.context, filter)
@@ -143,6 +143,6 @@ func (i Image) Remove(image *types.Image) error {
 	return nil
 }
 
-func NewImageModel(ctx context.Context, stg storage.Storage) IImage {
+func NewImageModel(ctx context.Context, stg storage.IStorage) IImage {
 	return &Image{ctx, stg}
 }

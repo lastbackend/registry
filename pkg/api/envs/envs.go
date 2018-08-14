@@ -20,32 +20,32 @@ package envs
 
 import (
 	"github.com/lastbackend/registry/pkg/storage"
-	"github.com/lastbackend/registry/pkg/util/http"
+	"github.com/lastbackend/registry/pkg/util/blob"
 )
 
 var e Env
 
 type Env struct {
-	storage              storage.Storage
-	httpTemplateRegistry *http.RawReq
+	storage     storage.IStorage
+	blobStorage blob.IBlobStorage
 }
 
 func Get() *Env {
 	return &e
 }
 
-func (c *Env) SetStorage(storage storage.Storage) {
-	c.storage = storage
+func (env *Env) SetStorage(storage storage.IStorage) {
+	env.storage = storage
 }
 
-func (c *Env) GetStorage() storage.Storage {
-	return c.storage
+func (env *Env) GetStorage() storage.IStorage {
+	return env.storage
 }
 
-func (c *Env) SetHttpTemplateRegistry(http *http.RawReq) {
-	c.httpTemplateRegistry = http
+func (env *Env) SetBlobStorage(u blob.IBlobStorage) {
+	env.blobStorage = u
 }
 
-func (c *Env) GetHttpTemplateRegistry() *http.RawReq {
-	return c.httpTemplateRegistry
+func (env Env) GetBlobStorage() blob.IBlobStorage {
+	return env.blobStorage
 }

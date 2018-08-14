@@ -29,13 +29,15 @@ import (
 	"github.com/lastbackend/registry/pkg/builder/http"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/runtime/cri/cri"
+	"github.com/lastbackend/registry/pkg/util/blob/s3"
+	"github.com/lastbackend/registry/pkg/util/system"
 	"github.com/spf13/viper"
-	)
+	"github.com/lastbackend/registry/pkg/util/blob"
+	"github.com/lastbackend/registry/pkg/util/blob/azure"
+)
 
 // Daemon - run builder daemon
 func Daemon() bool {
-
-	log.Infof("Start builder service")
 
 	sigs := make(chan os.Signal)
 
@@ -45,29 +47,75 @@ func Daemon() bool {
 	}
 
 	cfg := client.NewConfig()
-	cfg.BearerToken = viper.GetString("security.token")
-	cfg.TLS.Insecure = viper.GetBool("api.tls.insecure")
-	cfg.TLS.CAFile = viper.GetString("api.tls.ca")
-	cfg.TLS.CertFile = viper.GetString("api.tls.cert")
-	cfg.TLS.KeyFile = viper.GetString("api.tls.key")
 
-	endpoint := viper.GetString("api.endpoint")
+	if viper.IsSet("registry.tls") && !viper.GetBool("registry.tls.insecure") {
+		cfg.TLS = client.NewTLSConfig()
+		cfg.TLS.CertFile = viper.GetString("registry.tls.cert")
+		cfg.TLS.KeyFile = viper.GetString("registry.tls.key")
+		cfg.TLS.CAFile = viper.GetString("registry.tls.ca")
+	}
 
+	endpoint := viper.GetString("registry.uri")
 	c, err := client.New(client.ClientHTTP, endpoint, cfg)
 	if err != nil {
 		log.Fatalf("Init client err: %s", err)
 	}
 
-	b := builder.New(
-		ri,
-		viper.GetString("builder.uuid"),
-		viper.GetString("builder.docker.host"),
-		viper.GetStringSlice("builder.extra_hosts"),
-		viper.GetInt("builder.workers"),
-		viper.GetString("builder.logs"),
-	)
+	bo := new(builder.BuilderOpts)
+	bo.DockerHost = viper.GetString("builder.docker.host")
+	bo.ExtraHosts = viper.GetStringSlice("builder.extra_hosts")
+	bo.Limit = viper.GetInt("builder.workers")
+	bo.RootCerts = viper.GetStringSlice("builder.cacerts")
 
-	envs.Get().SetHostname(viper.GetString("domain"))
+	if viper.IsSet("builder.logger") {
+		bo.Stdout = viper.GetBool("builder.logger.stdout")
+	}
+
+	if viper.IsSet("builder.blob_storage") {
+		var blobStorage blob.IBlobStorage
+		switch viper.GetString("builder.blob_storage.type") {
+		case "s3":
+			blobStorage = s3.New(
+				viper.GetString("builder.blob_storage.endpoint"),
+				viper.GetString("builder.blob_storage.id"),
+				viper.GetString("builder.blob_storage.secret"),
+				viper.GetString("builder.blob_storage.bucket_name"),
+				viper.GetBool("builder.blob_storage.ssl"),
+			)
+		case "azure":
+			blobStorage = azure.New(
+				viper.GetString("builder.blob_storage.endpoint"),
+				viper.GetString("builder.blob_storage.account"),
+				viper.GetString("builder.blob_storage.key"),
+				viper.GetString("builder.blob_storage.container"),
+				viper.GetBool("builder.blob_storage.ssl"),
+			)
+		default:
+
+		}
+
+		envs.Get().SetBlobStorage(blobStorage)
+	}
+
+	b := builder.New(ri, bo)
+
+	if viper.IsSet("builder.ip") {
+		envs.Get().SetIP(viper.GetString("builder.ip"))
+	} else {
+		ip, err := system.GetNodeIP()
+		if err != nil {
+			log.Errorf("get ip address err: %v", err)
+			log.Fatalf("get ip err: %v", err)
+		}
+		envs.Get().SetIP(ip)
+	}
+
+	hostname, err := system.GetHostname()
+	if err != nil {
+		log.Fatalf("get hostname err: %v", err)
+	}
+
+	envs.Get().SetHostname(hostname)
 	envs.Get().SetBuilder(b)
 	envs.Get().SetClient(c)
 
@@ -78,8 +126,9 @@ func Daemon() bool {
 	go func() {
 		opts := new(http.HttpOpts)
 		opts.Insecure = viper.GetBool("builder.tls.insecure")
-		opts.CertFile = viper.GetString("builder.tls.cert")
-		opts.KeyFile = viper.GetString("builder.tls.key")
+		opts.CertFile = viper.GetString("builder.tls.server_cert")
+		opts.KeyFile = viper.GetString("builder.tls.server_key")
+		opts.CaFile = viper.GetString("builder.tls.ca")
 
 		if err := http.Listen(viper.GetString("builder.host"), viper.GetInt("builder.port"), opts); err != nil {
 			log.Fatalf("Http server start error: %v", err)

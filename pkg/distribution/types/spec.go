@@ -200,11 +200,11 @@ type SpecTemplateContainerVolumes []SpecTemplateContainerVolume
 
 type SpecTemplateContainerVolume struct {
 	// Volume name
-	Name string `json:"name"`
+	HostPath string `json:"name"`
 	// Volume mount mode
 	Mode string `json:"mode"`
 	// Volume mount path
-	Path string `json:"path"`
+	ContainerPath string `json:"path"`
 }
 
 type SpecTemplateContainerProbes struct {
@@ -235,7 +235,7 @@ type SpecTemplateContainerSecurity struct {
 	Privileged bool `json:"privileged"`
 	// Add linux security options
 	LinuxOptions SpecTemplateContainerSecurityLinuxOptions `json:"linux_options"`
-	// Run container as particular user
+	// run container as particular user
 	User int `json:"user"`
 }
 

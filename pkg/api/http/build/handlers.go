@@ -19,18 +19,21 @@
 package build
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/lastbackend/registry/pkg/api/envs"
 	"github.com/lastbackend/registry/pkg/api/types/v1"
+	"github.com/lastbackend/registry/pkg/builder/client"
+	rv1 "github.com/lastbackend/registry/pkg/builder/types/v1/request"
 	"github.com/lastbackend/registry/pkg/distribution"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
+	"github.com/lastbackend/registry/pkg/util/converter"
 	"github.com/lastbackend/registry/pkg/util/http/utils"
-	"github.com/lastbackend/registry/pkg/util/url"
-	"fmt"
-	"context"
+	"io"
 )
 
 const (
@@ -119,6 +122,64 @@ func BuildCreateH(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func BuildListH(w http.ResponseWriter, r *http.Request) {
+
+	log.V(logLevel).Debugf("%s:list:> get builds list", logPrefix)
+
+	var (
+		im = distribution.NewImageModel(r.Context(), envs.Get().GetStorage())
+		bm = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
+
+		owner  = utils.Vars(r)[`owner`]
+		name   = utils.Vars(r)[`name`]
+		active = r.URL.Query().Get("active")
+	)
+
+	img, err := im.Get(owner, name)
+	if err != nil {
+		log.V(logLevel).Errorf("%s:list:> get image %s/%s err: %v", logPrefix, owner, name, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+	if img == nil {
+		log.V(logLevel).Warnf("%s:list:> image `%s/%s` not found", logPrefix, owner, name)
+		errors.New("image").NotFound().Http(w)
+		return
+	}
+
+	opts := new(types.BuildListOptions)
+
+	if len(active) != 0 {
+		a, err := converter.ParseBool(active)
+		if err != nil {
+			log.V(logLevel).Errorf("%s:list:> parse active flag err: %v", logPrefix, err)
+			errors.New("image").BadParameter("active").Http(w)
+			return
+		}
+		opts.Active = &a
+	}
+
+	items, err := bm.List(img, opts)
+	if err != nil {
+		log.V(logLevel).Errorf("%s:list:> get builds list err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	response, err := v1.View().Build().NewList(items).ToJson()
+	if err != nil {
+		log.V(logLevel).Errorf("%s:list:> convert struct to json err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(response); err != nil {
+		log.V(logLevel).Errorf("%s:list:> write response err: %v", logPrefix, err)
+		return
+	}
+}
+
 func BuildCancelH(w http.ResponseWriter, r *http.Request) {
 
 	bid := utils.Vars(r)["build"]
@@ -130,7 +191,7 @@ func BuildCancelH(w http.ResponseWriter, r *http.Request) {
 		bm  = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
 	)
 
-	build, err := bm.GetByTask(bid)
+	build, err := bm.Get(bid)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:cancel:> get build by id err: %v", logPrefix, bid, err)
 		errors.HTTP.InternalServerError(w)
@@ -154,25 +215,45 @@ func BuildCancelH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := url.Parse(builder.Meta.Hostname)
-	if err != nil {
-		log.Errorf("%s:cancel:> parse endpoint: %s", logPrefix, builder.Meta.Hostname)
-		errors.HTTP.InternalServerError(w)
-		return
+	cfg := client.NewConfig()
+	if builder.Spec.Network.SSL != nil {
+		cfg.TLS = client.NewTLSConfig()
+		cfg.TLS.CertData = builder.Spec.Network.SSL.Cert
+		cfg.TLS.KeyData = builder.Spec.Network.SSL.Key
+		cfg.TLS.CAData = builder.Spec.Network.SSL.CA
 	}
 
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/build/cancel", u.String()), nil)
-	if err != nil {
-		log.V(logLevel).Errorf("%s:cancel:> create http client err: %s", logPrefix, err.Error())
-		errors.HTTP.InternalServerError(w)
-		return
-	}
+	endpoint := fmt.Sprintf("%s:%d", builder.Spec.Network.IP, builder.Spec.Network.Port)
 
-	_, err = http.DefaultClient.Do(req)
+	httpcli, err := client.New(client.ClientHTTP, endpoint, cfg)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:cancel:> get build logs err: %s", logPrefix, err.Error())
-		errors.HTTP.InternalServerError(w)
-		return
+		switch {
+		case strings.Contains(err.Error(), "failed to create tls config"):
+			builder.Status.Error = "SSL certificate is failed"
+			errors.New("builder").BadRequest(err).Http(w)
+			return
+		default:
+			log.V(logLevel).Errorf("%s:cancel:> create http client err: %v", logPrefix, err)
+			errors.HTTP.InternalServerError(w)
+			return
+		}
+	} else {
+
+		err = httpcli.V1().Build(build.Meta.ID).Cancel(r.Context())
+		if err != nil {
+			switch {
+			case err.Error() == "Unauthorized":
+				builder.Status.Error = "Unauthorized"
+			case strings.Contains(err.Error(), "x509: certificate signed by unknown authority"):
+				builder.Status.Error = "SSL certificate is failed"
+			case strings.Contains(err.Error(), "net/http: HTTP/1.x transport connection broken"):
+				builder.Status.Error = "Connection broken"
+			default:
+				log.V(logLevel).Errorf("%s:cancel:> get registry info from registry `%s` err: %v", logPrefix, endpoint, err)
+				errors.HTTP.InternalServerError(w)
+				return
+			}
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -193,15 +274,76 @@ func BuildLogsH(w http.ResponseWriter, r *http.Request) {
 		bm  = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
 	)
 
+	notify := w.(http.CloseNotifier).CloseNotify()
+	done := make(chan bool, 1)
+
+	pipe := func(writer io.Writer, reader io.ReadCloser) {
+
+		var buffer = make([]byte, BUFFER_SIZE)
+
+		for {
+			select {
+			case <-done:
+				reader.Close()
+				return
+			default:
+
+				n, err := reader.Read(buffer)
+				if err != nil {
+					log.Errorf("%s:logs:> read bytes from pipe err: %v", logPrefix, err)
+					return
+				}
+
+				_, err = func(p []byte) (n int, err error) {
+
+					n, err = writer.Write(p)
+					if err != nil {
+						log.Errorf("%s:logs:> write bytes to pipe err: %v", logPrefix, err)
+						return n, err
+					}
+
+					if f, ok := writer.(http.Flusher); ok {
+						f.Flush()
+					}
+
+					return n, nil
+				}(buffer[0:n])
+
+				if err != nil {
+					log.Errorf("%s:logs:> written to pipe err: %v", logPrefix, err)
+					return
+				}
+
+				for i := 0; i < n; i++ {
+					buffer[i] = 0
+				}
+			}
+		}
+	}
+
+	go func() {
+		<-notify
+		log.Debugf("%s:logs:> HTTP connection just closed.", logPrefix)
+		done <- true
+	}()
+
 	build, err := bm.Get(bid)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:logs:> get build by id err: %v", logPrefix, bid, err)
+		log.V(logLevel).Errorf("%s:logs:> get build by id %s err: %v", logPrefix, bid, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if build == nil {
 		log.V(logLevel).Warnf("%s:logs:> build `%s` not found", logPrefix, bid)
 		errors.New("build").NotFound().Http(w)
+		return
+	}
+
+	if build.Status.Done || build.Status.Error {
+		read, write := io.Pipe()
+		defer write.Close()
+		go envs.Get().GetBlobStorage().ReadToWriter(build.Meta.ID, write)
+		pipe(w, read)
 		return
 	}
 
@@ -217,92 +359,56 @@ func BuildLogsH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := url.Parse(builder.Meta.Hostname)
-	if err != nil {
-		log.Errorf("%s:logs:> parse endpoint: %s", logPrefix, builder.Meta.Hostname)
-		errors.HTTP.InternalServerError(w)
-		return
+	cfg := client.NewConfig()
+	cfg.Timeout = 0
+	if builder.Spec.Network.SSL != nil {
+		cfg.TLS = client.NewTLSConfig()
+		cfg.TLS.CertData = builder.Spec.Network.SSL.Cert
+		cfg.TLS.KeyData = builder.Spec.Network.SSL.Key
+		cfg.TLS.CAData = builder.Spec.Network.SSL.CA
 	}
 
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/build/logs", u.String()), nil)
+	endpoint := fmt.Sprintf("%s:%d", builder.Spec.Network.IP, builder.Spec.Network.Port)
+	httpcli, err := client.New(client.ClientHTTP, endpoint, cfg)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:logs:> create http client err: %v", logPrefix)
-		errors.HTTP.InternalServerError(w)
-		return
-	}
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.V(logLevel).Errorf("%s:logs:> get build logs err: %v", logPrefix)
-		errors.HTTP.InternalServerError(w)
-		return
-	}
-
-	notify := w.(http.CloseNotifier).CloseNotify()
-	done := make(chan bool, 1)
-
-	go func() {
-		<-notify
-		log.Debugf("%s:logs:> HTTP connection just closed.", logPrefix)
-		done <- true
-	}()
-
-	var buffer = make([]byte, BUFFER_SIZE)
-
-	for {
-		select {
-		case <-done:
-			res.Body.Close()
-			return
+		switch {
+		case strings.Contains(err.Error(), "failed to create tls config"):
+			builder.Status.Error = "SSL certificate is failed"
 		default:
-
-			n, err := res.Body.Read(buffer)
-			if err != nil {
-
-				if err == context.Canceled {
-					log.Debugf("%s:logs:> stream is canceled", logPrefix)
-					return
-				}
-
-				log.Errorf("%s:logs:> read bytes from stream err: %v", logPrefix, err)
+			log.V(logLevel).Errorf("%s:logs:> create http client err: %v", logPrefix, err)
+			errors.HTTP.InternalServerError(w)
+			return
+		}
+	} else {
+		res, err := httpcli.V1().Build(build.Meta.ID).Logs(r.Context(), &rv1.BuildLogsOptions{Follow: true})
+		if err != nil {
+			switch {
+			case err.Error() == "Unauthorized":
+				builder.Status.Error = "Unauthorized"
+			case strings.Contains(err.Error(), "x509: certificate signed by unknown authority"):
+				builder.Status.Error = "SSL certificate is failed"
+			case strings.Contains(err.Error(), "net/http: HTTP/1.x transport connection broken"):
+				builder.Status.Error = "Connection broken"
+			default:
+				log.V(logLevel).Errorf("%s:logs:> get registry info from registry `%s` err: %v", logPrefix, endpoint, err)
+				errors.HTTP.InternalServerError(w)
 				return
-			}
-
-			_, err = func(p []byte) (n int, err error) {
-
-				n, err = w.Write(p)
-				if err != nil {
-					log.Errorf("%s:logs:> write bytes to stream err: %v", logPrefix, err)
-					return n, err
-				}
-
-				if f, ok := w.(http.Flusher); ok {
-					f.Flush()
-				}
-
-				return n, nil
-			}(buffer[0:n])
-
-			if err != nil {
-				log.Errorf("%s:logs:> written to stream err: %v", logPrefix, err)
-				return
-			}
-
-			for i := 0; i < n; i++ {
-				buffer[i] = 0
 			}
 		}
+
+		pipe(w, res)
+
 	}
 
 }
 
-func BuildTaskStatusUpdateH(w http.ResponseWriter, r *http.Request) {
+func BuildStatusUpdateH(w http.ResponseWriter, r *http.Request) {
 
-	log.Debugf("%s:update_status:> set build task status info handler", logPrefix)
+	log.Debugf("%s:update_status:> set build status info handler", logPrefix)
 
 	var (
 		bm  = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
-		tid = utils.Vars(r)[`task`]
+		bid = utils.Vars(r)[`build`]
 	)
 
 	// request body struct
@@ -313,14 +419,14 @@ func BuildTaskStatusUpdateH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	build, err := bm.GetByTask(tid)
+	build, err := bm.Get(bid)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:update_status:> get build by task err: %v", logPrefix, tid, err)
+		log.V(logLevel).Errorf("%s:update_status:> get build by id err: %v", logPrefix, bid, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if build == nil {
-		log.V(logLevel).Warnf("%s:update_status:> build `%s` not found", logPrefix, tid)
+		log.V(logLevel).Warnf("%s:update_status:> build `%s` not found", logPrefix, bid)
 		errors.New("build").NotFound().Http(w)
 		return
 	}
@@ -344,13 +450,13 @@ func BuildTaskStatusUpdateH(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func BuildTaskInfoUpdateH(w http.ResponseWriter, r *http.Request) {
+func BuildInfoUpdateH(w http.ResponseWriter, r *http.Request) {
 
-	log.Debugf("%s:update_info:> set build task info handler", logPrefix)
+	log.Debugf("%s:update_info:> set build info handler", logPrefix)
 
 	var (
 		bm  = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
-		tid = utils.Vars(r)[`task`]
+		bid = utils.Vars(r)[`build`]
 	)
 
 	// request body struct
@@ -361,14 +467,14 @@ func BuildTaskInfoUpdateH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	build, err := bm.GetByTask(tid)
+	build, err := bm.Get(bid)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:update_info:> get build by task %s err: %v", logPrefix, tid, err)
+		log.V(logLevel).Errorf("%s:update_info:> get build by id %s err: %v", logPrefix, bid, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if build == nil {
-		log.V(logLevel).Warnf("%s:update_info:> build `%s` not found", logPrefix, tid)
+		log.V(logLevel).Warnf("%s:update_info:> build `%s` not found", logPrefix, bid)
 		errors.New("build").NotFound().Http(w)
 		return
 	}
@@ -378,7 +484,7 @@ func BuildTaskInfoUpdateH(w http.ResponseWriter, r *http.Request) {
 	opts.Hash = rq.Hash
 
 	if err := bm.UpdateInfo(build, opts); err != nil {
-		log.V(logLevel).Errorf("%s:update_info:> update build err: %v", logPrefix, tid, err)
+		log.V(logLevel).Errorf("%s:update_info:> update build err: %v", logPrefix, bid, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}

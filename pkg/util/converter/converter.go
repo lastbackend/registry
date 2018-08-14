@@ -20,6 +20,7 @@ package converter
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -38,10 +39,22 @@ func IntToString(i int) string {
 	return strconv.Itoa(i)
 }
 
+func ParseBool(str string) (bool, error) {
+	switch str {
+	case "":
+		return false, nil
+	case "1", "t", "T", "true", "TRUE", "True":
+		return true, nil
+	case "0", "f", "F", "false", "FALSE", "False":
+		return false, nil
+	}
+	return false, errors.New(fmt.Sprintf("parse bool string: %s", str))
+}
+
 // Parse incoming string git url in source type
 // Ex:
-// 	* https://github.com/lastbackend/registry.git
-// 	* git@github.com:lastbackend/enterprise.git
+// 	* https://github.com/registry/registry.git
+// 	* git@github.com:lastbackend/registry.git
 func GitUrlParse(url string) (*source, error) {
 
 	var match []string = regexp.MustCompile(`^(?:ssh|git|http(?:s)?)(?:@|:\/\/(?:.+@)?)((\w+)\.\w+)(?:\/|:)(.+)(?:\/)(.+)(?:\..+)$`).FindStringSubmatch(url)

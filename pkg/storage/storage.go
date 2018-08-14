@@ -24,7 +24,7 @@ import (
 	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )
 
-func Get(c string) (Storage, error) {
+func Get(c string) (IStorage, error) {
 	var driver = ""
 	switch driver {
 	case "mock":

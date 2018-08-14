@@ -20,12 +20,10 @@ package registry
 
 import (
 	"github.com/lastbackend/registry/pkg/util/http"
-	"github.com/lastbackend/registry/pkg/util/http/middleware"
 )
 
 var Routes = []http.Route{
 	// Registry handlers
-	{Path: "/registry", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: RegistryInfoH},
+	{Path: "/registry", Method: http.MethodGet, Handler: RegistryInfoH},
 	{Path: "/registry/auth", Method: http.MethodGet, Handler: RegistryAuthH},
 }
-

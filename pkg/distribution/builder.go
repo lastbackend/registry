@@ -32,6 +32,7 @@ const (
 
 type IBuilder interface {
 	Get(hostname string) (*types.Builder, error)
+	List() ([]*types.Builder, error)
 	Create(opts *types.BuilderCreateOptions) (*types.Builder, error)
 	Update(builder *types.Builder, opts *types.BuilderUpdateOptions) error
 	FindBuild(builder *types.Builder) (*types.Build, error)
@@ -40,7 +41,7 @@ type IBuilder interface {
 
 type Builder struct {
 	context context.Context
-	storage storage.Storage
+	storage storage.IStorage
 }
 
 func (b *Builder) Get(hostname string) (*types.Builder, error) {
@@ -50,6 +51,19 @@ func (b *Builder) Get(hostname string) (*types.Builder, error) {
 	builder, err := b.storage.Builder().Get(b.context, hostname)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:get:> get builder %s err: %v", logPrefix, hostname, err)
+		return nil, err
+	}
+
+	return builder, nil
+}
+
+func (b *Builder) List() ([]*types.Builder, error) {
+
+	log.V(logLevel).Debugf("%s:list:> get builders list", logBuilderPrefix)
+
+	builder, err := b.storage.Builder().List(b.context, nil)
+	if err != nil {
+		log.V(logLevel).Errorf("%s:list:> get builders list err: %v", logPrefix, err)
 		return nil, err
 	}
 
@@ -67,6 +81,14 @@ func (b *Builder) Create(opts *types.BuilderCreateOptions) (*types.Builder, erro
 	builder := new(types.Builder)
 	builder.Meta.Hostname = opts.Hostname
 	builder.Status.Online = true
+	builder.Spec.Network.IP = opts.IP
+	builder.Spec.Network.Port = opts.Port
+	builder.Spec.Network.TLS = opts.TLS
+
+	if opts.SSL != nil {
+		builder.Spec.Network.SSL = new(types.SSL)
+		builder.Spec.Network.SSL = opts.SSL
+	}
 
 	if err := b.storage.Builder().Insert(b.context, builder); err != nil {
 		log.V(logLevel).Errorf("%s:create:> insert builder %s err: %v", logPrefix, builder.Meta.Hostname, err)
@@ -88,8 +110,29 @@ func (b *Builder) Update(builder *types.Builder, opts *types.BuilderUpdateOption
 
 	log.V(logLevel).Debugf("%s:update:> update builder %s -> %#v", logBuilderPrefix, builder.Meta.Hostname, opts)
 
+	if opts.Hostname != nil {
+		builder.Meta.Hostname = *opts.Hostname
+	}
+
+	if opts.IP != nil {
+		builder.Spec.Network.IP = *opts.IP
+	}
+
+	if opts.Port != nil {
+		builder.Spec.Network.Port = *opts.Port
+	}
+
 	if opts.Online != nil {
 		builder.Status.Online = *opts.Online
+	}
+
+	if opts.TLS != nil {
+		builder.Spec.Network.TLS = *opts.TLS
+	}
+
+	if opts.SSL != nil {
+		builder.Spec.Network.SSL = new(types.SSL)
+		builder.Spec.Network.SSL = opts.SSL
 	}
 
 	if err := b.storage.Builder().Update(b.context, builder); err != nil {
@@ -125,7 +168,6 @@ func (b *Builder) FindBuild(builder *types.Builder) (*types.Build, error) {
 		return nil, err
 	}
 
-
 	if build == nil {
 		return nil, nil
 	}
@@ -145,7 +187,7 @@ func (b *Builder) MarkOffline() error {
 	return nil
 }
 
-func NewBuilderModel(ctx context.Context, stg storage.Storage) IBuilder {
+func NewBuilderModel(ctx context.Context, stg storage.IStorage) IBuilder {
 	return &Builder{
 		context: ctx,
 		storage: stg,

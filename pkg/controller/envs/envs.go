@@ -25,17 +25,17 @@ import (
 var e Env
 
 type Env struct {
-	storage storage.Storage
+	storage storage.IStorage
 }
 
 func Get() *Env {
 	return &e
 }
 
-func (c *Env) SetStorage(storage storage.Storage) {
+func (c *Env) SetStorage(storage storage.IStorage) {
 	c.storage = storage
 }
 
-func (c *Env) GetStorage() storage.Storage {
+func (c *Env) GetStorage() storage.IStorage {
 	return c.storage
 }

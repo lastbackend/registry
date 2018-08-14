@@ -42,6 +42,7 @@ type HttpOpts struct {
 
 	CertFile string
 	KeyFile  string
+	CaFile   string
 }
 
 func AddRoutes(r ...[]http.Route) {
@@ -85,5 +86,5 @@ func Listen(host string, port int, opts *HttpOpts) error {
 	}
 
 	log.V(logLevel).Debugf("%s:> run http server  with tls", logPrefix)
-	return http.ListenWithTLS(host, port, opts.CertFile, opts.KeyFile, r)
+	return http.ListenWithTLS(host, port, opts.CaFile, opts.CertFile, opts.KeyFile, r)
 }

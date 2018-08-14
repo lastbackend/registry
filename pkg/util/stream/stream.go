@@ -30,6 +30,18 @@ import (
 	"time"
 )
 
+type IStream interface {
+	Write(p []byte) (n int, err error)
+	Pipe()
+	Flush()
+	Close()
+	Done()
+	AddSocketBackend(endpoint string) *Stream
+	AddHttpBackend(w io.Writer) *Stream
+	AddStdoutBackend(w io.Writer) *Stream
+	AddFileBackend(dir, file string) *Stream
+}
+
 type Stream struct {
 	io.Writer
 
@@ -48,7 +60,7 @@ type Stream struct {
 	timer   *time.Time
 	timeout time.Duration
 
-	stream backend.StreamBackend
+	streams map[backend.IStreamBackend]bool
 }
 
 type part struct {
@@ -83,8 +95,6 @@ func (s *Stream) Write(p []byte) (n int, err error) {
 		return 0, fmt.Errorf("attempted write to closed log")
 	}
 
-	//l.timer.Reset(l.timeout)
-
 	s.written += len(p)
 	if s.written > s.limit {
 		s.mutex.Lock()
@@ -107,7 +117,7 @@ func (s *Stream) Flush() {
 		return
 	}
 
-	buf := make([]byte, 1024*1024) // Try to find better chunk size. Start from 1024
+	buf := make([]byte, 1024*10) // Try to find better chunk size. Start from 1024
 
 	for s.buffer.Len() > 0 {
 		s.mutex.Lock()
@@ -132,7 +142,11 @@ func (s *Stream) Flush() {
 		}
 
 		chunk := body
-		s.stream.Write(chunk)
+
+		for stream := range s.streams {
+			stream.Write(chunk)
+		}
+
 	}
 
 }
@@ -142,7 +156,13 @@ func (s *Stream) Close() {
 	if !s.close {
 		log.Debug("connection needs to be closed")
 		s.Flush()
-		s.stream.Disconnect()
+
+		s.mutex.Lock()
+		for stream := range s.streams {
+			stream.Disconnect()
+			delete(s.streams, stream)
+		}
+		s.mutex.Unlock()
 	}
 	s.close = true
 }
@@ -153,15 +173,25 @@ func (s *Stream) Done() {
 
 func (s *Stream) AddSocketBackend(endpoint string) *Stream {
 
-	s.stream = backend.NewSocketBackend(endpoint)
+	stream := backend.NewSocketBackend(endpoint)
 
 	go func() {
-		s.stream.End()
+		stream.End()
 		s.close = true
 		log.Debug("stream closed")
 		s.done <- true
 	}()
 
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.streams[stream] = true
+	return s
+}
+
+func (s *Stream) AddHttpBackend(w io.Writer) *Stream {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.streams[backend.NewHttpBackend(w)] = true
 	return s
 }
 
@@ -174,6 +204,8 @@ func NewStream() *Stream {
 	s.timeout = time.Second
 	s.buffer = new(bytes.Buffer)
 	s.limit = 1024 * 1000
+
+	s.streams = make(map[backend.IStreamBackend]bool, 0)
 
 	return s
 }

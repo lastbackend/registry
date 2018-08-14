@@ -47,3 +47,7 @@ func New(driver string, endpoint string, config *config.Config) (IClient, error)
 func NewConfig() *config.Config {
 	return new(config.Config)
 }
+
+func NewTLSConfig() *config.TLSConfig {
+	return new(config.TLSConfig)
+}

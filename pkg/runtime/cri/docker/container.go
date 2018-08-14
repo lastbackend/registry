@@ -21,12 +21,11 @@ package docker
 import (
 	"context"
 	"io"
-	"strings"
 	"time"
 
+	docker "github.com/docker/docker/api/types"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
-	docker "github.com/docker/docker/api/types"
 )
 
 func (r *Runtime) ContainerList(ctx context.Context, all bool) ([]*types.Container, error) {
@@ -163,15 +162,10 @@ func (r *Runtime) ContainerInspect(ctx context.Context, ID string) (*types.Conta
 
 	meta, ok := info.Config.Labels["LB"]
 	if !ok {
-		log.Debugf("%s:container_inspect:> container meta not found", logPrefix)
+		log.Debug("Docker: Container Meta not found")
 		return nil, nil
 	}
-
-	if len(strings.Split(meta, ":")) < 3 {
-		return container, nil
-	}
-	container.Pod = meta
-
+	container.Label = meta
 	return container, nil
 }
 

@@ -31,6 +31,7 @@ import (
 type CRI interface {
 	ContainerRuntime
 	ImageRuntime
+	Subscribe(ctx context.Context, container chan *types.Container, filter *types.ContainerEventFilter) error
 }
 
 type ContainerRuntime interface {

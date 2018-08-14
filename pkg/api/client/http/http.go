@@ -20,9 +20,9 @@ package http
 
 import (
 	"github.com/lastbackend/registry/pkg/api/client/config"
-	"github.com/lastbackend/registry/pkg/api/client/http/request"
 	"github.com/lastbackend/registry/pkg/api/client/http/v1"
 	"github.com/lastbackend/registry/pkg/api/client/types"
+	"github.com/lastbackend/registry/pkg/util/http/request"
 )
 
 type Client struct {
@@ -31,21 +31,37 @@ type Client struct {
 
 func New(endpoint string, cfg *config.Config) (*Client, error) {
 
-	c := new(Client)
+	cl := new(Client)
 
 	if cfg == nil {
-		c.client = request.DefaultRESTClient(endpoint)
-		return c, nil
+		cl.client = request.DefaultRESTClient(endpoint)
+		return cl, nil
 	}
 
-	client, err := request.NewRESTClient(endpoint, cfg)
+	opts := new(request.Config)
+	opts.BearerToken = cfg.BearerToken
+	opts.Timeout = cfg.Timeout
+
+	if cfg.TLS != nil {
+		opts.TLS = new(request.TLSConfig)
+		opts.TLS.Insecure = cfg.TLS.Insecure
+		opts.TLS.ServerName = cfg.TLS.ServerName
+		opts.TLS.CertFile = cfg.TLS.CertFile
+		opts.TLS.KeyFile = cfg.TLS.KeyFile
+		opts.TLS.CAFile = cfg.TLS.CAFile
+		opts.TLS.CAData = cfg.TLS.CAData
+		opts.TLS.CertData = cfg.TLS.CertData
+		opts.TLS.KeyData = cfg.TLS.KeyData
+	}
+
+	client, err := request.NewRESTClient(endpoint, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	c.client = client
+	cl.client = client
 
-	return c, nil
+	return cl, nil
 }
 
 func (c Client) V1() types.ClientV1 {

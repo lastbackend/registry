@@ -23,8 +23,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-
-		)
+)
 
 var (
 	// RFC 1035.

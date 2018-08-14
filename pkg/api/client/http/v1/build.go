@@ -21,66 +21,23 @@ package v1
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/url"
+	"strconv"
 
-	"github.com/lastbackend/registry/pkg/api/client/http/request"
+	"github.com/lastbackend/registry/pkg/api/client/types"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
+	"github.com/lastbackend/registry/pkg/util/http/request"
 
 	rv1 "github.com/lastbackend/registry/pkg/api/types/v1/request"
 	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
-	"io"
-	"strconv"
 )
 
 type BuildClient struct {
 	client *request.RESTClient
-}
-
-func (bc BuildClient) SetStatus(ctx context.Context, task string, opts *rv1.BuildUpdateStatusOptions) error {
-
-	body, err := opts.ToJson()
-	if err != nil {
-		return err
-	}
-
-	var e *errors.Http
-
-	err = bc.client.Put(fmt.Sprintf("/build/task/%s/status", task)).
-		AddHeader("Content-Type", "application/json").
-		Body(body).
-		JSON(nil, &e)
-
-	if err != nil {
-		return err
-	}
-	if e != nil {
-		return errors.New(e.Message)
-	}
-
-	return nil
-}
-
-func (bc BuildClient) SetImageInfo(ctx context.Context, task string, opts *rv1.BuildUpdateImageInfoOptions) error {
-
-	body, err := opts.ToJson()
-	if err != nil {
-		return err
-	}
-
-	var e *errors.Http
-
-	err = bc.client.Put(fmt.Sprintf("/build/task/%s/info", task)).
-		AddHeader("Content-Type", "application/json").
-		Body(body).
-		JSON(nil, &e)
-
-	if err != nil {
-		return err
-	}
-	if e != nil {
-		return errors.New(e.Message)
-	}
-
-	return nil
+	owner  string
+	name   string
+	id     string
 }
 
 func (bc BuildClient) Create(ctx context.Context, opts *rv1.BuildCreateOptions) (*vv1.Build, error) {
@@ -93,7 +50,7 @@ func (bc BuildClient) Create(ctx context.Context, opts *rv1.BuildCreateOptions) 
 	var s *vv1.Build
 	var e *errors.Http
 
-	err = bc.client.Post("/build").
+	err = bc.client.Post(fmt.Sprintf("/image/%s/%s/build", bc.owner, bc.name)).
 		AddHeader("Content-Type", "application/json").
 		Body(body).
 		JSON(&s, &e)
@@ -108,9 +65,114 @@ func (bc BuildClient) Create(ctx context.Context, opts *rv1.BuildCreateOptions) 
 	return s, nil
 }
 
-func (bc BuildClient) Logs(ctx context.Context, id string, opts *rv1.BuildLogsOptions) (io.ReadCloser, error) {
+func (bc BuildClient) Get(ctx context.Context) (*vv1.Build, error) {
 
-	res := bc.client.Get(fmt.Sprintf("/build/%s/logs", id))
+	var s *vv1.Build
+	var e *errors.Http
+
+	u := url.URL{}
+	u.Path = fmt.Sprintf("/image/%s/%s/build/%s", bc.owner, bc.name, bc.id)
+
+	req := bc.client.Get(u.String())
+
+	err := req.
+		AddHeader("Content-Type", "application/json").
+		JSON(&s, &e)
+	if err != nil {
+		return nil, err
+	}
+	if e != nil {
+		return nil, errors.New(e.Message)
+	}
+
+	return s, nil
+}
+
+func (bc BuildClient) List(ctx context.Context, opts *rv1.BuildListOptions) (*vv1.BuildList, error) {
+
+	var s *vv1.BuildList
+	var e *errors.Http
+
+	u := url.URL{}
+	u.Path = fmt.Sprintf("/image/%s/%s/build", bc.owner, bc.name)
+
+	req := bc.client.Get(u.String())
+
+	if opts != nil {
+		if opts.Active != nil {
+			req.Param("active", strconv.FormatBool(*opts.Active))
+		}
+	}
+
+	err := req.
+		AddHeader("Content-Type", "application/json").
+		JSON(&s, &e)
+	if err != nil {
+		return nil, err
+	}
+	if e != nil {
+		return nil, errors.New(e.Message)
+	}
+
+	if s == nil {
+		list := make(vv1.BuildList, 0)
+		s = &list
+	}
+
+	return s, nil
+}
+
+func (bc BuildClient) SetStatus(ctx context.Context, opts *rv1.BuildUpdateStatusOptions) error {
+
+	body, err := opts.ToJson()
+	if err != nil {
+		return err
+	}
+
+	var e *errors.Http
+
+	err = bc.client.Put(fmt.Sprintf("/image/%s/%s/build/%s/status", bc.owner, bc.name, bc.id)).
+		AddHeader("Content-Type", "application/json").
+		Body(body).
+		JSON(nil, &e)
+
+	if err != nil {
+		return err
+	}
+	if e != nil {
+		return errors.New(e.Message)
+	}
+
+	return nil
+}
+
+func (bc BuildClient) SetImageInfo(ctx context.Context, opts *rv1.BuildSetImageInfoOptions) error {
+
+	body, err := opts.ToJson()
+	if err != nil {
+		return err
+	}
+
+	var e *errors.Http
+
+	err = bc.client.Put(fmt.Sprintf("/image/%s/%s/build/%s/info", bc.owner, bc.name, bc.id)).
+		AddHeader("Content-Type", "application/json").
+		Body(body).
+		JSON(nil, &e)
+
+	if err != nil {
+		return err
+	}
+	if e != nil {
+		return errors.New(e.Message)
+	}
+
+	return nil
+}
+
+func (bc BuildClient) Logs(ctx context.Context, opts *rv1.BuildLogsOptions) (io.ReadCloser, error) {
+
+	res := bc.client.Get(fmt.Sprintf("/image/%s/%s/build/%s/logs", bc.owner, bc.name, bc.id))
 
 	if opts != nil {
 		if opts.Follow {
@@ -121,11 +183,11 @@ func (bc BuildClient) Logs(ctx context.Context, id string, opts *rv1.BuildLogsOp
 	return res.Stream()
 }
 
-func (bc BuildClient) Cancel(ctx context.Context, id string) error {
+func (bc BuildClient) Cancel(ctx context.Context) error {
 
 	var e *errors.Http
 
-	err := bc.client.Put(fmt.Sprintf("/build/%s/cancel", id)).
+	err := bc.client.Put(fmt.Sprintf("/image/%s/%s/build/%s/cancel", bc.owner, bc.name, bc.id)).
 		AddHeader("Content-Type", "application/json").
 		JSON(nil, &e)
 
@@ -139,6 +201,6 @@ func (bc BuildClient) Cancel(ctx context.Context, id string) error {
 	return nil
 }
 
-func newBuildClient(req *request.RESTClient) BuildClient {
-	return BuildClient{client: req}
+func newBuildClient(req *request.RESTClient, owner, name, id string) types.BuildClientV1 {
+	return BuildClient{client: req, owner: owner, name: name, id: id}
 }

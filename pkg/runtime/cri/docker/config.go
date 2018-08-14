@@ -81,7 +81,7 @@ func GetHostConfig(spec *types.SpecTemplateContainer) *container.HostConfig {
 	)
 
 	for _, v := range spec.Volumes {
-		binds = append(binds, fmt.Sprintf("%s:%s:%s", v.Name, v.Path, v.Mode))
+		binds = append(binds, fmt.Sprintf("%s:%s:%s", v.HostPath, v.ContainerPath, v.Mode))
 	}
 
 	for _, l := range spec.Links {

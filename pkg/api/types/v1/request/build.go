@@ -18,6 +18,10 @@
 
 package request
 
+type BuildListOptions struct {
+	Active *bool `json:"active"`
+}
+
 type BuildCreateOptions struct {
 	Owner      string      `json:"owner"`
 	Name       string      `json:"name"`
@@ -38,7 +42,7 @@ type BuildUpdateStatusOptions struct {
 	Canceled bool   `json:"canceled"`
 }
 
-type BuildUpdateImageInfoOptions struct {
+type BuildSetImageInfoOptions struct {
 	Hash        string `json:"id"`
 	Size        int64  `json:"size"`
 	VirtualSize int64  `json:"virtual_size"`

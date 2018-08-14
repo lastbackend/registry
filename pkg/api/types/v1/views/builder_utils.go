@@ -26,25 +26,101 @@ import (
 
 type BuilderView struct{}
 
-func (bv *BuilderView) NewManifest(obj *types.BuildManifest) *BuildManifest {
+func (bv *BuilderView) New(obj *types.Builder) *Builder {
+	if obj == nil {
+		return nil
+	}
+	bl := new(Builder)
+	bl.Meta = bv.ToBuilderMeta(obj.Meta)
+	bl.Status = bv.ToBuilderStatus(obj.Status)
+	bl.Spec = bv.ToBuilderSpec(obj.Spec)
+	return bl
+}
+
+func (bv *BuilderView) ToBuilderMeta(meta types.BuilderMeta) BuilderMeta {
+	return BuilderMeta{
+		ID:       meta.Name,
+		Hostname: meta.Description,
+		Created:  meta.Created,
+		Updated:  meta.Updated,
+	}
+}
+
+func (bv *BuilderView) ToBuilderStatus(status types.BuilderStatus) BuilderStatus {
+	return BuilderStatus{
+		Insecure: status.Insecure,
+		Online:   status.Online,
+		TLS:      status.TLS,
+	}
+}
+
+func (bv *BuilderView) ToBuilderSpec(spec types.BuilderSpec) BuilderSpec {
+	bs := BuilderSpec{
+		Network: BuilderSpecNetwork{
+			Port: spec.Network.Port,
+			TLS:  spec.Network.TLS,
+		},
+	}
+
+	if bs.Network.SSL != nil {
+		bs.Network.SSL = new(SSL)
+		bs.Network.SSL.CA = spec.Network.SSL.CA
+		bs.Network.SSL.ClientCert = spec.Network.SSL.Cert
+		bs.Network.SSL.ClientKey = spec.Network.SSL.Key
+	}
+
+	return bs
+}
+
+func (obj Builder) ToJson() ([]byte, error) {
+	if unsafe.Sizeof(obj) == 0 {
+		return []byte{}, nil
+	}
+	return json.Marshal(obj)
+}
+
+func (bv *BuilderView) NewList(obj []*types.Builder) *BuilderList {
+	if obj == nil {
+		return nil
+	}
+
+	rl := make(BuilderList, 0)
+	for _, v := range obj {
+		rl = append(rl, bv.New(v))
+	}
+
+	return &rl
+}
+
+func (obj BuilderList) ToJson() ([]byte, error) {
+	if unsafe.Sizeof(obj) == 0 {
+		return []byte{}, nil
+	}
+	return json.Marshal(obj)
+}
+
+func (bv *BuilderView) NewManifest(obj *types.Task) *BuildManifest {
 	if obj == nil {
 		return nil
 	}
 
 	manifest := new(BuildManifest)
-	manifest.Image.Host = obj.Image.Host
-	manifest.Image.Name = obj.Image.Name
-	manifest.Image.Owner = obj.Image.Owner
-	manifest.Image.Tag = obj.Image.Tag
-	manifest.Image.Auth = obj.Image.Auth
-	manifest.Source.Url = obj.Source.Url
-	manifest.Source.Branch = obj.Source.Branch
 
-	manifest.Config.Dockerfile = obj.Config.Dockerfile
-	manifest.Config.Context = obj.Config.Context
-	manifest.Config.Command = obj.Config.Command
-	manifest.Config.Workdir = obj.Config.Workdir
-	manifest.Config.EnvVars = obj.Config.EnvVars
+	manifest.Meta.ID = obj.Meta.ID
+
+	manifest.Spec.Image.Host = obj.Spec.Image.Host
+	manifest.Spec.Image.Name = obj.Spec.Image.Name
+	manifest.Spec.Image.Owner = obj.Spec.Image.Owner
+	manifest.Spec.Image.Tag = obj.Spec.Image.Tag
+	manifest.Spec.Image.Auth = obj.Spec.Image.Auth
+	manifest.Spec.Source.Url = obj.Spec.Source.Url
+	manifest.Spec.Source.Branch = obj.Spec.Source.Branch
+
+	manifest.Spec.Config.Dockerfile = obj.Spec.Config.Dockerfile
+	manifest.Spec.Config.Context = obj.Spec.Config.Context
+	manifest.Spec.Config.Command = obj.Spec.Config.Command
+	manifest.Spec.Config.Workdir = obj.Spec.Config.Workdir
+	manifest.Spec.Config.EnvVars = obj.Spec.Config.EnvVars
 
 	return manifest
 }

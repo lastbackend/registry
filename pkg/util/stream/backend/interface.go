@@ -23,7 +23,7 @@ type msg struct {
 	MD []byte
 }
 
-type StreamBackend interface {
+type IStreamBackend interface {
 	Disconnect()
 	Write([]byte)
 	End() error

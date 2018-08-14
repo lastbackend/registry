@@ -62,8 +62,8 @@ func (obj *BuildList) ToJson() ([]byte, error) {
 
 func (bv *BuildView) ToBuildMeta(obj *types.BuildMeta) *BuildMeta {
 	return &BuildMeta{
-		ID:     obj.ID,
-		Number: obj.Number,
+		ID:      obj.ID,
+		Number:  obj.Number,
 		Updated: obj.Updated,
 		Created: obj.Created,
 	}

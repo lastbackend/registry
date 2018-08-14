@@ -24,22 +24,21 @@ import (
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage"
-		)
+	"github.com/lastbackend/registry/pkg/storage/types/filter"
+)
 
 type IBuild interface {
 	Get(id string) (*types.Build, error)
-	GetByTask(id string) (*types.Build, error)
-	List(image *types.Image) ([]*types.Build, error)
+	List(image *types.Image, opts *types.BuildListOptions) ([]*types.Build, error)
 	Create(opts *types.BuildCreateOptions) (*types.Build, error)
 	UpdateStatus(build *types.Build, opts *types.BuildUpdateStatusOptions) error
 	UpdateInfo(build *types.Build, opts *types.BuildUpdateInfoOptions) error
-	UpdateTask(build *types.Build, opts *types.BuildUpdateTaskOptions) error
 	Unfreeze() error
 }
 
 type Build struct {
 	context context.Context
-	storage storage.Storage
+	storage storage.IStorage
 }
 
 func (b Build) Get(id string) (*types.Build, error) {
@@ -55,20 +54,7 @@ func (b Build) Get(id string) (*types.Build, error) {
 	return build, nil
 }
 
-func (b Build) GetByTask(id string) (*types.Build, error) {
-
-	log.V(logLevel).Infof("%s:build:get_by_task:> get build by task %s info", logPrefix, id)
-
-	build, err := b.storage.Build().GetByTask(b.context, id)
-	if err != nil {
-		log.V(logLevel).Errorf("%s:get_by_task:get:> get build by task %s info err: %v", logPrefix, id, err)
-		return nil, err
-	}
-
-	return build, nil
-}
-
-func (b Build) List(image *types.Image) ([]*types.Build, error) {
+func (b Build) List(image *types.Image, opts *types.BuildListOptions) ([]*types.Build, error) {
 
 	if image == nil {
 		return nil, errors.New("invalid argument")
@@ -76,7 +62,12 @@ func (b Build) List(image *types.Image) ([]*types.Build, error) {
 
 	log.V(logLevel).Infof("%s:build:list:> get builds list for image %s/%s", logPrefix, image.Meta.Owner, image.Meta.Name)
 
-	builds, err := b.storage.Build().List(b.context, image.Meta.ID)
+	f := filter.NewFilter().Build()
+	if opts.Active != nil {
+		f.Active = opts.Active
+	}
+
+	builds, err := b.storage.Build().List(b.context, image.Meta.ID, f)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:build:list:> get builds list err: %v", logPrefix, err)
 		return nil, err
@@ -199,28 +190,6 @@ func (b Build) UpdateInfo(build *types.Build, opts *types.BuildUpdateInfoOptions
 	return nil
 }
 
-func (b Build) UpdateTask(build *types.Build, opts *types.BuildUpdateTaskOptions) error {
-
-	if build == nil {
-		return errors.New("invalid argument")
-	}
-
-	if opts == nil {
-		opts = new(types.BuildUpdateTaskOptions)
-	}
-
-	log.V(logLevel).Infof("%s:build:update_task:> update build %s data", logPrefix, build.Meta.ID)
-
-	build.Meta.TaskID = opts.TaskID
-
-	if err := b.storage.Build().Update(b.context, build); err != nil {
-		log.Errorf("%s:build:update_task:> set build task err: %v", logPrefix, err)
-		return err
-	}
-
-	return nil
-}
-
 func (b Build) Unfreeze() error {
 
 	log.V(logLevel).Infof("%s:build:unfreeze:> unfreeze dangling builds", logPrefix)
@@ -233,7 +202,7 @@ func (b Build) Unfreeze() error {
 	return nil
 }
 
-func NewBuildModel(ctx context.Context, stg storage.Storage) IBuild {
+func NewBuildModel(ctx context.Context, stg storage.IStorage) IBuild {
 	return &Build{
 		context: ctx,
 		storage: stg,

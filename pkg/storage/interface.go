@@ -24,7 +24,7 @@ import (
 	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )
 
-type Storage interface {
+type IStorage interface {
 	Begin(ctx context.Context) (context.Context, error)
 	Rollback(ctx context.Context) (context.Context, error)
 	Commit(ctx context.Context) (context.Context, error)

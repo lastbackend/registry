@@ -24,9 +24,11 @@ import (
 
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage/storage"
+	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )
 
 type BuilderStorage struct {
@@ -52,9 +54,16 @@ func (s *BuilderStorage) Get(ctx context.Context, builder string) (*types.Builde
 		      'updated', b.updated
 		    ),
 		    'status', jsonb_build_object(
-          'online', b.online
+          'online', b.online,
+			    'insecure', b.tls
         ),
 				'spec', jsonb_build_object(
+					'network', jsonb_build_object(
+						'tls', b.tls,
+						'ssl', b.ssl,
+						'ip', b.ip,
+						'port', b.port
+					)
 				)
 		  )
 		)
@@ -82,6 +91,73 @@ func (s *BuilderStorage) Get(ctx context.Context, builder string) (*types.Builde
 	return b, nil
 }
 
+func (s *BuilderStorage) List(ctx context.Context, f *filter.BuilderFilter) ([]*types.Builder, error) {
+
+	log.V(logLevel).Debug("%s:builder:list:> get builders list", logPrefix)
+
+	where := types.EmptyString
+
+	if f != nil {
+
+		if f.Online != nil {
+			if *f.Online {
+				where += "online IS TRUE"
+			} else {
+				where += "online IS FALSE"
+			}
+		}
+
+		if where != types.EmptyString {
+			where = fmt.Sprintf("WHERE %s", where)
+		}
+	}
+
+	var query = fmt.Sprintf(`
+		SELECT COALESCE(jsonb_build_array(builders), '[]')
+		FROM (SELECT 
+		json_build_object(
+			'id', id,
+			'hostname', hostname,
+			'created', created,
+			'updated', updated
+		) AS meta,
+		json_build_object(
+			'online', online,
+			'insecure', tls
+		) AS status,
+		json_build_object(
+			json_build_object(
+				'ip', ip,
+				'port', port,
+				'tls', tls,
+				'ssl', ssl
+			) AS network
+		) AS spec
+		FROM builders
+		%s
+		ORDER BY created DESC) AS builders;`, where)
+
+	var buf string
+
+	err := getClient(ctx).QueryRow(query).Scan(&buf)
+	switch err {
+	case nil:
+	case sql.ErrNoRows:
+		return nil, nil
+	default:
+		log.V(logLevel).Errorf("%s:builder:list:> get builders list err: %v", logPrefix, err)
+		return nil, err
+	}
+
+	b := make([]*types.Builder, 0)
+
+	if err := json.Unmarshal([]byte(buf), &b); err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
 func (s *BuilderStorage) Insert(ctx context.Context, builder *types.Builder) error {
 
 	log.V(logLevel).Debugf("%s:builder:insert:> insert builder: %#v", logPrefix, builder)
@@ -93,13 +169,23 @@ func (s *BuilderStorage) Insert(ctx context.Context, builder *types.Builder) err
 	}
 
 	const query = `
-    INSERT INTO builders(hostname, online)
-		VALUES ($1, $2)
+    INSERT INTO builders(hostname, online, tls, ip, port)
+		VALUES ($1, $2, $3, $4, $5)
    	RETURNING id, created, updated;`
 
-	err := getClient(ctx).QueryRowContext(ctx, query,
+	ssl, err := json.Marshal(builder.Spec.Network.SSL)
+	if err != nil {
+		log.Errorf("%s:insert:> prepare ssl struct to database write: %s", logPrefix, err)
+		ssl = []byte("{}")
+	}
+
+	err = getClient(ctx).QueryRowContext(ctx, query,
 		builder.Meta.Hostname,
 		builder.Status.Online,
+		builder.Spec.Network.TLS,
+		builder.Spec.Network.IP,
+		builder.Spec.Network.Port,
+		string(ssl),
 	).
 		Scan(&builder.Meta.ID, &builder.Meta.Created, &builder.Meta.Updated)
 	if err != nil {
@@ -117,13 +203,27 @@ func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) err
 		UPDATE builders
 		SET
 			online = $2,
+			ip = $3,
+			port = $4,
+			tls = $5,
+			ssl = $6,
 			updated = now() at time zone 'utc'
 		WHERE id = $1
 		RETURNING updated;`
 
-	err := getClient(ctx).QueryRowContext(ctx, query,
+	ssl, err := json.Marshal(builder.Spec.Network.SSL)
+	if err != nil {
+		log.Errorf("%s:insert:> prepare ssl struct to database write: %s", logPrefix, err)
+		ssl = []byte("{}")
+	}
+
+	err = getClient(ctx).QueryRowContext(ctx, query,
 		builder.Meta.ID,
 		builder.Status.Online,
+		builder.Spec.Network.IP,
+		builder.Spec.Network.Port,
+		builder.Spec.Network.TLS,
+		string(ssl),
 	).
 		Scan(&builder.Meta.Updated)
 	if err != nil {

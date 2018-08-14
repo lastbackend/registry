@@ -27,8 +27,8 @@ import (
 
 type Build interface {
 	Get(ctx context.Context, id string) (*types.Build, error)
-	GetByTask(ctx context.Context, id string) (*types.Build, error)
-	List(ctx context.Context, image string) ([]*types.Build, error)
+	GetByPID(ctx context.Context, pid string) (*types.Build, error)
+	List(ctx context.Context, image string, f *filter.BuildFilter) ([]*types.Build, error)
 	Insert(ctx context.Context, build *types.Build) error
 	Update(ctx context.Context, build *types.Build) error
 
@@ -38,6 +38,7 @@ type Build interface {
 
 type Builder interface {
 	Get(ctx context.Context, hostname string) (*types.Builder, error)
+	List(ctx context.Context, f *filter.BuilderFilter) ([]*types.Builder, error)
 	Insert(ctx context.Context, builder *types.Builder) error
 	Update(ctx context.Context, builder *types.Builder) error
 

@@ -29,5 +29,21 @@ func (Filter) Image() *ImageFilter {
 }
 
 type ImageFilter struct {
-	Owner string
+	Owner *string
+}
+
+func (Filter) Builder() *BuilderFilter {
+	return new(BuilderFilter)
+}
+
+type BuilderFilter struct {
+	Online *bool
+}
+
+func (Filter) Build() *BuildFilter {
+	return new(BuildFilter)
+}
+
+type BuildFilter struct {
+	Active *bool
 }

@@ -27,19 +27,15 @@ import (
 
 type BuilderRequest struct{}
 
-func (BuilderRequest) ConnectOptions() *BuilderInfoOptions {
-	return new(BuilderInfoOptions)
+func (BuilderRequest) UpdateOptions() *BuilderUpdateOptions {
+	return new(BuilderUpdateOptions)
 }
 
-func (b *BuilderInfoOptions) Validate() *errors.Err {
-	switch true {
-	case len(b.Hostname) == 0:
-		return errors.New("builder").BadParameter("hostname")
-	}
+func (b BuilderUpdateOptions) Validate() *errors.Err {
 	return nil
 }
 
-func (b *BuilderInfoOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
+func (b *BuilderUpdateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 
 	if reader == nil {
 		err := errors.New("data body can not be null")
@@ -63,18 +59,54 @@ func (b *BuilderInfoOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 	return nil
 }
 
-func (i *BuilderInfoOptions) ToJson() ([]byte, error) {
-	return json.Marshal(i)
+func (b BuilderUpdateOptions) ToJson() ([]byte, error) {
+	return json.Marshal(b)
+}
+
+func (BuilderRequest) ConnectOptions() *BuilderConnectOptions {
+	return new(BuilderConnectOptions)
+}
+
+func (b BuilderConnectOptions) Validate() *errors.Err {
+	return nil
+}
+
+func (b *BuilderConnectOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
+
+	if reader == nil {
+		err := errors.New("data body can not be null")
+		return errors.New("builder").IncorrectJSON(err)
+	}
+
+	body, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return errors.New("builder").Unknown(err)
+	}
+
+	err = json.Unmarshal(body, b)
+	if err != nil {
+		return errors.New("builder").IncorrectJSON(err)
+	}
+
+	if err := b.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b BuilderConnectOptions) ToJson() ([]byte, error) {
+	return json.Marshal(b)
 }
 
 func (BuilderRequest) CreateManifestOptions() *BuilderCreateManifestOptions {
 	return new(BuilderCreateManifestOptions)
 }
 
-func (b *BuilderCreateManifestOptions) Validate() *errors.Err {
+func (b BuilderCreateManifestOptions) Validate() *errors.Err {
 	switch true {
-	case len(b.TaskID) == 0:
-		return errors.New("builder").BadParameter("task")
+	case len(b.PID) == 0:
+		return errors.New("builder").BadParameter("pid")
 	}
 	return nil
 }
@@ -103,6 +135,42 @@ func (b *BuilderCreateManifestOptions) DecodeAndValidate(reader io.Reader) *erro
 	return nil
 }
 
-func (i *BuilderCreateManifestOptions) ToJson() ([]byte, error) {
-	return json.Marshal(i)
+func (b BuilderCreateManifestOptions) ToJson() ([]byte, error) {
+	return json.Marshal(b)
+}
+
+func (BuilderRequest) StatusUpdateOptions() *BuilderStatusUpdateOptions {
+	return new(BuilderStatusUpdateOptions)
+}
+
+func (b BuilderStatusUpdateOptions) Validate() *errors.Err {
+	return nil
+}
+
+func (b *BuilderStatusUpdateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
+
+	if reader == nil {
+		err := errors.New("data body can not be null")
+		return errors.New("builder").IncorrectJSON(err)
+	}
+
+	body, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return errors.New("builder").Unknown(err)
+	}
+
+	err = json.Unmarshal(body, b)
+	if err != nil {
+		return errors.New("builder").IncorrectJSON(err)
+	}
+
+	if err := b.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b BuilderStatusUpdateOptions) ToJson() ([]byte, error) {
+	return json.Marshal(b)
 }

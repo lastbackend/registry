@@ -19,42 +19,43 @@
 package types
 
 import (
-	"io"
 	"context"
+	"io"
 
 	rv1 "github.com/lastbackend/registry/pkg/api/types/v1/request"
 	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
 )
 
 type ClientV1 interface {
-	Build() BuildClientV1
-	Builder() BuilderClientV1
-	Registry() RegistryClientV1
-	Image(owner, name string) ImageClientV1
+	Builder(args ...string) BuilderClientV1
+	Image(args ...string) ImageClientV1
+
+	Get(ctx context.Context) (*vv1.Registry, error)
 }
 
 type BuildClientV1 interface {
-	SetStatus(ctx context.Context, task string, opts *rv1.BuildUpdateStatusOptions) error
-	SetImageInfo(ctx context.Context, task string, opts *rv1.BuildUpdateImageInfoOptions) error
+	Get(ctx context.Context) (*vv1.Build, error)
+	List(ctx context.Context, opts *rv1.BuildListOptions) (*vv1.BuildList, error)
 	Create(ctx context.Context, opts *rv1.BuildCreateOptions) (*vv1.Build, error)
-	Logs(ctx context.Context, id string, opts *rv1.BuildLogsOptions) (io.ReadCloser, error)
-	Cancel(ctx context.Context, id string) error
+	SetStatus(ctx context.Context, opts *rv1.BuildUpdateStatusOptions) error
+	SetImageInfo(ctx context.Context, opts *rv1.BuildSetImageInfoOptions) error
+	Logs(ctx context.Context, opts *rv1.BuildLogsOptions) (io.ReadCloser, error)
+	Cancel(ctx context.Context) error
 }
 
 type BuilderClientV1 interface {
-	Connect(ctx context.Context, hostname string) error
-	GetManifest(ctx context.Context, hostname string, opts *rv1.BuilderCreateManifestOptions) (*vv1.BuildManifest, error)
+	List(ctx context.Context) (*vv1.BuilderList, error)
+	Connect(ctx context.Context, opts *rv1.BuilderConnectOptions) error
+	SetStatus(ctx context.Context, opts *rv1.BuilderStatusUpdateOptions) error
+	Manifest(ctx context.Context) (*vv1.BuildManifest, error)
 }
 
 type ImageClientV1 interface {
-	Create(ctx context.Context, opts *rv1.ImageCreateOptions) (*vv1.Image, error)
-	List(ctx context.Context) (*vv1.ImageList, error)
+	Build(args ...string) BuildClientV1
+
 	Get(ctx context.Context) (*vv1.Image, error)
+	List(ctx context.Context) (*vv1.ImageList, error)
+	Create(ctx context.Context, opts *rv1.ImageCreateOptions) (*vv1.Image, error)
 	Update(ctx context.Context, opts *rv1.ImageUpdateOptions) (*vv1.Image, error)
 	Remove(ctx context.Context, opts *rv1.ImageRemoveOptions) error
-	BuildList(ctx context.Context) (*vv1.BuildList, error)
-}
-
-type RegistryClientV1 interface {
-	Get(ctx context.Context) (*vv1.Registry, error)
 }
