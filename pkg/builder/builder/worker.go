@@ -37,7 +37,6 @@ import (
 	"github.com/lastbackend/registry/pkg/util/validator"
 
 	lbt "github.com/lastbackend/registry/pkg/distribution/types"
-	"io/ioutil"
 	"net/http"
 	"github.com/lastbackend/registry/pkg/util/cleaner"
 )
@@ -568,18 +567,8 @@ func (w *worker) upload() error {
 		}
 	}()
 
-	file, err := ioutil.TempFile(os.TempDir(), w.pid)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer os.Remove(file.Name())
-
-	io.Copy(file, cleaner.NewReader(req))
-	req.Close()
-	file.Close()
-
 	if envs.Get().GetBlobStorage() != nil {
-		err = envs.Get().GetBlobStorage().WriteFile(w.task.Meta.ID, file.Name())
+		err = envs.Get().GetBlobStorage().Write(w.task.Meta.ID, cleaner.NewReader(req))
 		if err != nil {
 			log.Errorf("%s:upload:> write container logs to blob err: %v", logWorkerPrefix, err)
 		}

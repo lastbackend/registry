@@ -39,7 +39,7 @@ type reader struct {
 	reader io.Reader
 
 	size   uint32
-	offset uint32
+	cursor uint32
 
 	buffer []byte
 	prefix []byte
@@ -58,21 +58,29 @@ func NewReader(r io.Reader) io.Reader {
 func (r *reader) Read(p []byte) (int, error) {
 
 	if !r.cleared {
+		// parse and store the message
 		if err := r.clear(); err != nil {
 			return 0, err
 		}
 		r.cleared = true
 	}
 
-	if r.size <= r.offset {
+	n, err := r.read(p) // serve from buf
+	if err == io.EOF {
+		err = nil // continue next chunk (clear() handles the EOF from r.reader)
+		r.cleared = false
+	}
+
+	return n, nil
+}
+
+func (r *reader) read(p []byte) (int, error) {
+	if r.size <= r.cursor {
 		r.cleared = false
 		return 0, io.EOF
 	}
-
-	n := copy(p, r.buffer[r.offset:r.size])
-
-	r.offset += uint32(n)
-
+	n := copy(p, r.buffer[r.cursor:r.size])
+	r.cursor += uint32(n)
 	return n, nil
 }
 
@@ -84,7 +92,7 @@ func (r *reader) clear() error {
 		case context.Canceled:
 			return err
 		case io.EOF:
-			return err
+			return err // end of the underlying logs stream
 		case io.ErrUnexpectedEOF:
 			return fmt.Errorf("defective prefix read of %d bytes", n)
 		default:
@@ -97,6 +105,7 @@ func (r *reader) clear() error {
 	}
 
 	size := binary.BigEndian.Uint32(r.prefix[stdWriterSizeIndex : stdWriterSizeIndex+4])
+	// prevent reading garbage
 	if size > defaultDataLength {
 		return fmt.Errorf("exceeded the data limit (%d/%d) bytes", size, defaultDataLength)
 	}
@@ -118,8 +127,9 @@ func (r *reader) clear() error {
 		}
 	}
 
+	// reset cursor for next chunk
 	r.size = size
-	r.offset = uint32(0)
+	r.cursor = uint32(0)
 
 	return nil
 }
