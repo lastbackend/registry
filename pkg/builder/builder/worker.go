@@ -34,7 +34,6 @@ import (
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/lastbackend/registry/pkg/runtime/cri/docker"
-	"github.com/lastbackend/registry/pkg/util/generator"
 	"github.com/lastbackend/registry/pkg/util/validator"
 
 	lbt "github.com/lastbackend/registry/pkg/distribution/types"
@@ -57,9 +56,9 @@ const (
 )
 
 type worker struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	lock   sync.RWMutex
+	ctx        context.Context
+	cancelFunc context.CancelFunc
+	lock       sync.RWMutex
 
 	pid      string
 	endpoint string
@@ -84,12 +83,12 @@ type workerOpts struct {
 }
 
 // Create and configure new worker
-func newWorker(ctx context.Context, cri cri.CRI) *worker {
+func newWorker(ctx context.Context, id string, cri cri.CRI) *worker {
 	log.Infof("%s:new:> create new worker", logWorkerPrefix)
 	var w = new(worker)
 
-	pid := generator.GetUUIDV4()
-	w.ctx, w.cancel = context.WithCancel(ctx)
+	pid := id
+	w.ctx, w.cancelFunc = context.WithCancel(ctx)
 	w.pid = pid
 	w.logPath = os.TempDir()
 	w.cri = cri
@@ -365,6 +364,7 @@ func (w *worker) build() error {
 			w.sendEvent(event{step: types.BuildStepBuild})
 			return nil
 		case c := <-ch:
+
 			if c.ExitCode != 0 {
 				fmt.Println("2 ##")
 				err := fmt.Errorf("container exited with %d code", c.ExitCode)
@@ -574,7 +574,7 @@ func (w *worker) upload() error {
 	}
 	defer os.Remove(file.Name())
 
-	io.Copy(file, req)
+	io.Copy(file, cleaner.NewReader(req))
 	req.Close()
 	file.Close()
 
@@ -586,6 +586,10 @@ func (w *worker) upload() error {
 	}
 
 	return nil
+}
+
+func (w *worker) cancel() {
+	w.cancelFunc()
 }
 
 func (w *worker) cleanup() {
@@ -639,16 +643,26 @@ func (w worker) logging(writer io.Writer) error {
 		default:
 
 			readBytes, err := cleaner.NewReader(req).Read(buffer)
-			if err != nil && err != io.EOF {
-				log.Errorf("%s:logging:> read data from stream err: %v", logWorkerPrefix, err)
-				return err
+			switch err {
+			case nil:
+			case context.Canceled:
+				return nil
+			default:
+				if err != io.EOF {
+					log.Errorf("%s:logging:> read data from stream err: %v", logWorkerPrefix, err)
+					return err
+				}
 			}
+
 			if readBytes == 0 {
-				return err
+				return nil
 			}
 
 			_, err = writer.Write(buffer[0:readBytes])
 			if err != nil {
+				if err == context.Canceled {
+					return nil
+				}
 				log.Errorf("%s:logging:> write stream data err: %v", logWorkerPrefix, err)
 				continue
 			}

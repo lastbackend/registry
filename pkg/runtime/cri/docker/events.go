@@ -70,6 +70,10 @@ func (r *Runtime) Subscribe(ctx context.Context, container chan *types.Container
 			}
 
 		case err := <-err:
+			if err == context.Canceled {
+				log.Warnf("%s:subscribe:> context canceled err: %v", logPrefix, err)
+				return nil
+			}
 			log.Errorf("%s:subscribe:> event listening err: %v", logPrefix, err)
 			return err
 		}

@@ -22,6 +22,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"context"
 )
 
 const (
@@ -80,6 +81,8 @@ func (r *reader) clear() error {
 	n, err := io.ReadFull(r.reader, r.prefix)
 	if err != nil {
 		switch err {
+		case context.Canceled:
+			return err
 		case io.EOF:
 			return err
 		case io.ErrUnexpectedEOF:
@@ -106,6 +109,8 @@ func (r *reader) clear() error {
 	m, err := io.ReadFull(r.reader, r.buffer[:int(size)])
 	if err != nil {
 		switch err {
+		case context.Canceled:
+			return err
 		case io.EOF, io.ErrUnexpectedEOF:
 			return fmt.Errorf("read message %d out of %d bytes err: %v", m, size, err)
 		default:

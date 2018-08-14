@@ -129,32 +129,28 @@ func (b *Builder) Start() error {
 }
 
 // Proxy logs writer from task
-func (b *Builder) BuildLogs(ctx context.Context, pid string, stream io.Writer) error {
-	log.Infof("%s:new_build:> get build logs for writer: %s", logWorkerPrefix, pid)
+func (b *Builder) BuildLogs(ctx context.Context, id string, stream io.Writer) error {
+	log.Infof("%s:new_build:> get build logs for writer: %s", logWorkerPrefix, id)
 
-	var worker *worker
-	for worker = range b.workers {
-		if worker.pid == pid {
-			break
+	for w := range b.workers {
+		if w.pid == id {
+			log.Infof("%s:cancel:> worker process was found: %s", logWorkerPrefix, w.pid)
+			return w.logs(stream)
 		}
-	}
-
-	if worker != nil {
-		return worker.logs(stream)
 	}
 
 	return errors.New("process build is not active")
 }
 
 // Interrupting the build process
-func (b *Builder) BuildCancel(ctx context.Context, pid string) error {
+func (b *Builder) BuildCancel(ctx context.Context, id string) error {
 
-	log.Infof("%s:cancel:> cancel build: %s", logWorkerPrefix, pid)
+	log.Infof("%s:cancel:> cancel build: %s", logWorkerPrefix, id)
 
 	for w := range b.workers {
-		if w.pid == pid {
+		if w.pid == id {
 			log.Infof("%s:cancel:> worker process was found: %s", logWorkerPrefix, w.pid)
-			w.cleanup()
+			w.cancel()
 			break
 		}
 	}
@@ -177,7 +173,7 @@ func (b *Builder) manage() error {
 			case t := <-b.tasks:
 
 				log.Debugf("%s:manage:> create new worker", logWorkerPrefix)
-				w := newWorker(b.ctx, b.cri)
+				w := newWorker(b.ctx, t.Meta.ID, b.cri)
 
 				b.Lock()
 				b.workers[w] = true
