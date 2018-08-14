@@ -65,7 +65,7 @@ func (r *reader) Read(p []byte) (int, error) {
 		r.cleared = true
 	}
 
-	n, err := r.read(p) // serve from buf
+	n, err := r.read(p)
 	if err == io.EOF {
 		err = nil // continue next chunk (clear() handles the EOF from r.reader)
 		r.cleared = false
