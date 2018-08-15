@@ -41,7 +41,7 @@ func (bc BuilderClient) List(ctx context.Context) (*vv1.BuilderList, error) {
 	var s *vv1.BuilderList
 	var e *errors.Http
 
-	err := bc.client.Get(fmt.Sprintf("/registry/builder")).
+	err := bc.client.Get(fmt.Sprintf("/builder")).
 		AddHeader("Content-Type", "application/json").
 		JSON(&s, &e)
 

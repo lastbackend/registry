@@ -39,8 +39,8 @@ func (bv *BuilderView) New(obj *types.Builder) *Builder {
 
 func (bv *BuilderView) ToBuilderMeta(meta types.BuilderMeta) BuilderMeta {
 	return BuilderMeta{
-		ID:       meta.Name,
-		Hostname: meta.Description,
+		ID:       meta.ID,
+		Hostname: meta.Hostname,
 		Created:  meta.Created,
 		Updated:  meta.Updated,
 	}

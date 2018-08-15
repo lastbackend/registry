@@ -126,12 +126,12 @@ func (s *BuilderStorage) List(ctx context.Context, f *filter.BuilderFilter) ([]*
 			'insecure', tls
 		) AS status,
 		json_build_object(
-			json_build_object(
+			'network', json_build_object(
 				'ip', ip,
 				'port', port,
 				'tls', tls,
 				'ssl', ssl
-			) AS network
+			)
 		) AS spec
 		FROM builders
 		%s
