@@ -169,8 +169,8 @@ func (s *BuilderStorage) Insert(ctx context.Context, builder *types.Builder) err
 	}
 
 	const query = `
-    INSERT INTO builders(hostname, online, tls, ip, port)
-		VALUES ($1, $2, $3, $4, $5)
+    INSERT INTO builders(hostname, online, tls, ip, port, ssl)
+		VALUES ($1, $2, $3, $4, $5, $6)
    	RETURNING id, created, updated;`
 
 	ssl, err := json.Marshal(builder.Spec.Network.SSL)

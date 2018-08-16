@@ -23,14 +23,15 @@ type BuildListOptions struct {
 }
 
 type BuildCreateOptions struct {
-	Tag        string      `json:"tag"`
-	Auth       string      `json:"auth"`
-	DockerFile string      `json:"dockerfile"`
-	Context    string      `json:"context"`
-	EnvVars    []string    `json:"environments"`
-	Command    string      `json:"command"`
-	Workdir    string      `json:"workdir"`
-	Source     ImageSource `json:"source"`
+	Tag        string            `json:"tag"`
+	Auth       string            `json:"auth"`
+	DockerFile string            `json:"dockerfile"`
+	Context    string            `json:"context"`
+	EnvVars    []string          `json:"environments"`
+	Command    string            `json:"command"`
+	Workdir    string            `json:"workdir"`
+	Source     ImageSource       `json:"source"`
+	Labels     map[string]string `json:"labels"`
 }
 
 type BuildUpdateStatusOptions struct {

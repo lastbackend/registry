@@ -25,6 +25,7 @@ import (
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage"
 	"github.com/lastbackend/registry/pkg/storage/types/filter"
+	"time"
 )
 
 type IBuild interface {
@@ -87,12 +88,35 @@ func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {
 	}
 
 	bld := new(types.Build)
+
+	bld.Meta.Labels = opts.Labels
+
 	bld.Status.Status = types.BuildStatusQueued
 
 	bld.Spec.Source.Hub = opts.Source.Hub
 	bld.Spec.Source.Owner = opts.Source.Owner
 	bld.Spec.Source.Name = opts.Source.Name
 	bld.Spec.Source.Branch = opts.Source.Branch
+
+	if opts.Labels != nil {
+
+		if hash, ok := opts.Labels["commit_hash"]; ok {
+			bld.Spec.Source.Commit.Hash = hash
+		}
+		if username, ok := opts.Labels["commit_username"]; ok {
+			bld.Spec.Source.Commit.Username = username
+		}
+		if message, ok := opts.Labels["commit_message"]; ok {
+			bld.Spec.Source.Commit.Message = message
+		}
+		if email, ok := opts.Labels["commit_email"]; ok {
+			bld.Spec.Source.Commit.Email = email
+		}
+		if date, ok := opts.Labels["commit_date"]; ok {
+			t, _ := time.Parse(time.RFC3339, date)
+			bld.Spec.Source.Commit.Date = t
+		}
+	}
 
 	if len(opts.Source.Branch) == 0 {
 		bld.Spec.Source.Branch = types.SourceDefaultBranch

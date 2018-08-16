@@ -92,7 +92,7 @@ type BuildImage struct {
 
 type BuildSource struct {
 	Source
-	Commit *BuildCommit `json:"commit,omitempty"`
+	Commit BuildCommit `json:"commit"`
 }
 
 type BuildCommit struct {
@@ -277,6 +277,7 @@ type BuildCreateOptions struct {
 		Workdir    string   `json:"workdir"`
 		EnvVars    []string `json:"environments"`
 	}
+	Labels map[string]string `json:"labels"`
 }
 
 type BuildUpdateStatusOptions struct {
