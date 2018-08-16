@@ -23,8 +23,6 @@ type BuildListOptions struct {
 }
 
 type BuildCreateOptions struct {
-	Owner      string      `json:"owner"`
-	Name       string      `json:"name"`
 	Tag        string      `json:"tag"`
 	Auth       string      `json:"auth"`
 	DockerFile string      `json:"dockerfile"`

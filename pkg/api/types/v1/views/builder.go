@@ -80,6 +80,7 @@ type BuilderSpec struct {
 }
 
 type BuilderSpecNetwork struct {
+	IP   string `json:"ip"`
 	Port uint16 `json:"port"`
 	TLS  bool   `json:"tls"`
 	SSL  *SSL   `json:"ssl"`

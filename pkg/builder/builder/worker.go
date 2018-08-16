@@ -63,14 +63,10 @@ type worker struct {
 	endpoint string
 	dcid     string
 	gcid     string
-
-	logPath string
+	step     string
+	logPath  string
 
 	task *types.Task
-
-	step     string
-	error    string
-	canceled bool
 
 	stdout bool
 
@@ -116,9 +112,6 @@ func (w *worker) run(t *types.Task, wo *workerOpts) error {
 
 	// Configure environment for build and start docker dind
 	err := w.configure()
-	if err == nil && w.canceled {
-		return nil
-	}
 	if err != nil && err != context.Canceled {
 		log.Errorf("%s:start:> configure t %s err:  %s", logWorkerPrefix, w.pid, err)
 		return err
@@ -126,9 +119,6 @@ func (w *worker) run(t *types.Task, wo *workerOpts) error {
 
 	// Running build process
 	err = w.build()
-	if err == nil && w.canceled {
-		return nil
-	}
 	if err != nil && err != context.Canceled {
 		log.Errorf("%s:start:> build t %s err:  %s", logWorkerPrefix, w.pid, err)
 		return err
@@ -139,18 +129,12 @@ func (w *worker) run(t *types.Task, wo *workerOpts) error {
 
 	// Pushing docker image to docker registry
 	err = w.push()
-	if err == nil && w.canceled {
-		return nil
-	}
 	if err != nil && err != context.Canceled {
 		log.Errorf("%s:start:> push %s err:  %s", logWorkerPrefix, w.pid, err)
 		return err
 	}
 
 	err = w.finish()
-	if err == nil && w.canceled {
-		return nil
-	}
 	if err != nil && err != context.Canceled {
 		log.Errorf("%s:start:> finish %s err:  %s", logWorkerPrefix, w.pid, err)
 		return err
@@ -321,13 +305,11 @@ func (w *worker) build() error {
 	case nil:
 	case context.Canceled:
 		log.Debugf("%s:build:> process canceled", logWorkerPrefix)
-		w.canceled = true
-		w.sendEvent(event{step: types.BuildStepBuild})
+		w.sendEvent(event{step: types.BuildStepBuild, canceled: true})
 		return nil
 	default:
 		log.Errorf("%s:build:> create container err: %v", logWorkerPrefix, err)
-		w.error = errorBuildFailed
-		w.sendEvent(event{step: types.BuildStepBuild})
+		w.sendEvent(event{step: types.BuildStepBuild, message: errorBuildFailed, error: true})
 		return err
 	}
 
@@ -338,13 +320,11 @@ func (w *worker) build() error {
 	case nil:
 	case context.Canceled:
 		log.Debugf("%s:build:> process canceled", logWorkerPrefix)
-		w.canceled = true
-		w.sendEvent(event{step: types.BuildStepBuild})
+		w.sendEvent(event{step: types.BuildStepBuild, canceled: true})
 		return nil
 	default:
 		log.Errorf("%s:build:> start container err: %v", logWorkerPrefix, err)
-		w.error = errorBuildFailed
-		w.sendEvent(event{step: types.BuildStepBuild})
+		w.sendEvent(event{step: types.BuildStepBuild, message: errorBuildFailed, error: true})
 		return err
 	}
 
@@ -359,8 +339,7 @@ func (w *worker) build() error {
 		select {
 		case <-w.ctx.Done():
 			log.Debugf("%s:build:> process canceled", logWorkerPrefix)
-			w.canceled = true
-			w.sendEvent(event{step: types.BuildStepBuild})
+			w.sendEvent(event{step: types.BuildStepBuild, canceled: true})
 			return nil
 		case c := <-ch:
 
@@ -368,8 +347,7 @@ func (w *worker) build() error {
 				fmt.Println("2 ##")
 				err := fmt.Errorf("container exited with %d code", c.ExitCode)
 				log.Errorf("%s:build:> container exit with err %v", logWorkerPrefix, err)
-				w.error = errorBuildFailed
-				w.sendEvent(event{step: types.BuildStepBuild})
+				w.sendEvent(event{step: types.BuildStepBuild, message: errorBuildFailed, error: true})
 				return err
 			}
 
@@ -410,13 +388,11 @@ func (w *worker) push() error {
 	case nil:
 	case context.Canceled:
 		log.Debugf("%s:build:> process canceled", logWorkerPrefix)
-		w.canceled = true
-		w.sendEvent(event{step: types.BuildStepUpload})
+		w.sendEvent(event{step: types.BuildStepUpload, canceled: true})
 		return nil
 	default:
 		log.Errorf("%s:push:> create docker extra_hosts client %v", logWorkerPrefix, err)
-		w.error = errorUploadFailed
-		w.sendEvent(event{step: types.BuildStepUpload})
+		w.sendEvent(event{step: types.BuildStepUpload, message: errorUploadFailed, error: true})
 		return err
 	}
 
@@ -425,13 +401,11 @@ func (w *worker) push() error {
 	case nil:
 	case context.Canceled:
 		log.Debugf("%s:build:> process canceled", logWorkerPrefix)
-		w.canceled = true
-		w.sendEvent(event{step: types.BuildStepUpload})
+		w.sendEvent(event{step: types.BuildStepUpload, canceled: true})
 		return nil
 	default:
 		log.Errorf("%s:push:> running push process err: %v", logWorkerPrefix, err)
-		w.error = errorUploadFailed
-		w.sendEvent(event{step: types.BuildStepUpload})
+		w.sendEvent(event{step: types.BuildStepUpload, message: errorUploadFailed, error: true})
 		return err
 	}
 
@@ -501,13 +475,11 @@ func (w *worker) push() error {
 		case nil:
 		case context.Canceled:
 			log.Debugf("%s:build:> process canceled", logWorkerPrefix)
-			w.canceled = true
-			w.sendEvent(event{step: types.BuildStepUpload})
+			w.sendEvent(event{step: types.BuildStepUpload, canceled: true})
 			return nil
 		default:
 			log.Errorf("%s:push:> push image err: %v", logWorkerPrefix, err)
-			w.error = errorUploadFailed
-			w.sendEvent(event{step: types.BuildStepUpload})
+			w.sendEvent(event{step: types.BuildStepUpload, message: errorUploadFailed, error: true})
 			return err
 		}
 	}
@@ -517,13 +489,11 @@ func (w *worker) push() error {
 	case nil:
 	case context.Canceled:
 		log.Debugf("%s:build:> process canceled", logWorkerPrefix)
-		w.canceled = true
-		w.sendEvent(event{step: types.BuildStepUpload})
+		w.sendEvent(event{step: types.BuildStepUpload, canceled: true})
 		return nil
 	default:
 		log.Errorf("%s:push:> get image info err: %v", logWorkerPrefix, err)
-		w.error = errorUploadFailed
-		w.sendEvent(event{step: types.BuildStepUpload})
+		w.sendEvent(event{step: types.BuildStepUpload, message: errorUploadFailed, error: true})
 		return err
 	}
 
@@ -533,16 +503,8 @@ func (w *worker) push() error {
 }
 
 func (w *worker) finish() error {
-
 	log.Infof("%s:finish:> handler after task %s completion", logWorkerPrefix, w.pid)
-
-	// Notify about completed task with status
-	if len(w.error) != 0 {
-		w.sendEvent(event{step: w.step, message: w.error, error: true})
-	} else {
-		w.sendEvent(event{step: types.BuildStepDone})
-	}
-
+	w.sendEvent(event{step: types.BuildStepDone})
 	return nil
 }
 
@@ -598,7 +560,7 @@ func (w *worker) logs(writer io.Writer) error {
 	return w.logging(writer)
 }
 
-func (w worker) logging(writer io.Writer) error {
+func (w *worker) logging(writer io.Writer) error {
 
 	req, err := w.cri.ContainerLogs(w.ctx, w.gcid, true, true, true)
 	switch err {
@@ -608,8 +570,6 @@ func (w worker) logging(writer io.Writer) error {
 	default:
 		err := fmt.Errorf("running logs stream: %s", err)
 		log.Errorf("%s:logging:> logs container err: %v", logWorkerPrefix, err)
-		w.error = errorBuildFailed
-		w.sendEvent(event{step: types.BuildStepBuild})
 		return err
 	}
 	defer func() {
@@ -670,9 +630,10 @@ func (w worker) logging(writer io.Writer) error {
 }
 
 type event struct {
-	step    string
-	message string
-	error   bool
+	step     string
+	message  string
+	error    bool
+	canceled bool
 }
 
 // Send status build event to controller

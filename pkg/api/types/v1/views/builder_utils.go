@@ -57,6 +57,7 @@ func (bv *BuilderView) ToBuilderStatus(status types.BuilderStatus) BuilderStatus
 func (bv *BuilderView) ToBuilderSpec(spec types.BuilderSpec) BuilderSpec {
 	bs := BuilderSpec{
 		Network: BuilderSpecNetwork{
+			IP: spec.Network.IP,
 			Port: spec.Network.Port,
 			TLS:  spec.Network.TLS,
 		},

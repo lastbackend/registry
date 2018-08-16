@@ -51,6 +51,9 @@ func BuildCreateH(w http.ResponseWriter, r *http.Request) {
 		bm = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
 	)
 
+	owner := utils.Vars(r)["owner"]
+	name := utils.Vars(r)["name"]
+
 	// request body struct
 	rq := v1.Request().Build().BuildExecuteOptions()
 	if e := rq.DecodeAndValidate(r.Body); e != nil {
@@ -59,14 +62,14 @@ func BuildCreateH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	img, err := im.Get(rq.Owner, rq.Name)
+	img, err := im.Get(owner, name)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:build:> get image %s/%s err: %v", logPrefix, rq.Owner, rq.Name, err)
+		log.V(logLevel).Errorf("%s:build:> get image %s/%s err: %v", logPrefix, owner, name, err)
 		errors.HTTP.InternalServerError(w)
 		return
 	}
 	if img == nil {
-		log.V(logLevel).Warnf("%s:build:> image `%s/%s` not found", logPrefix, rq.Owner, rq.Name)
+		log.V(logLevel).Warnf("%s:build:> image `%s/%s` not found", logPrefix, owner, name)
 		errors.New("image").NotFound().Http(w)
 		return
 	}
