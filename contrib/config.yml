@@ -1,0 +1,41 @@
+---
+
+# Runtime
+verbose: 7
+domain: "hub.lstbknd.net"
+
+# Database and Messages broker
+psql: "host=127.0.0.1 port=5431 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"
+
+api:
+  host: 0.0.0.0
+  port: 2955
+  endpoint: "127.0.0.1"
+  tls:
+    insecure: false
+    ca: "/opt/cert/registry/ca.pem"
+    cert: "/opt/cert/registry/server.pem"
+    key: "/opt/cert/registry/server-key.pem"
+  blob_storage:
+    type: "s3"
+    endpoint: "127.0.0.1:9000"
+    id: "V1EV9NJJQJDMQL43HJR9"
+    secret: "scXdZkj2//SA9vCSwhr9uywSMuq/DrwY6MUoyOHg"
+    bucket_name: "lb-bucket"
+    ssl: false
+  #    type: "azure"
+  #    endpoint: "devcnrcustoragestandard.blob.core.windows.net"
+  #    account: "devcnrcustoragestandard"
+  #    key: "rGAinAq7+L+GRz2b65Zob+5VOmQeq2m6+CMkemzMMkHdNliycSqzI3Ggp17tTKGbJTi/+oz4iedV0uxW/y0AAA=="
+  #    container: "lb-container"
+  #    ssl: true
+
+builder:
+  tls:
+    insecure: false
+    ca: "/opt/cert/builder/ca.pem"
+    cert: "/opt/cert/builder/client.pem"
+    key: "/opt/cert/builder/client-key.pem"
+
+ctl:
+  uuid: "85c6e91e-dd45-4b7b-8330-e2e3bd0a7bad"

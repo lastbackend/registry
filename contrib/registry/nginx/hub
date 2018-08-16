@@ -1,0 +1,59 @@
+server {
+  listen         80;
+  server_name    hub.lstbknd.net;
+  return         301 https://$server_name$request_uri;
+}
+
+server {
+
+  listen 443;
+  server_name hub.lstbknd.net;
+
+  ssl on;
+  ssl_certificate /usr/local/etc/nginx/ssl/hub.lstbknd.pem;
+  ssl_certificate_key /usr/local/etc/nginx/ssl/hub.lstbknd-key.pem;
+
+  client_max_body_size 0; # disable any limits to avoid HTTP 413 for large image uploads
+
+  proxy_set_header Docker-Distribution-Api-Version registry/2.0;
+
+  # required to avoid HTTP 411: see Issue #1486 (https://github.com/docker/docker/issues/1486)
+  chunked_transfer_encoding on;
+
+  location /_ping {
+    proxy_pass                          https://172.16.0.1:5000;
+    proxy_set_header  Host              $http_host;   # required for docker client's sake
+    proxy_set_header  X-Real-IP         $remote_addr; # pass on real client's IP
+    proxy_set_header  X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header  X-Forwarded-Proto $scheme;
+    proxy_read_timeout                  900;
+  }
+
+  location /v1/_ping {
+    proxy_pass                          https://172.16.0.1:5000;
+    proxy_set_header  Host              $http_host;   # required for docker client's sake
+    proxy_set_header  X-Real-IP         $remote_addr; # pass on real client's IP
+    proxy_set_header  X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header  X-Forwarded-Proto $scheme;
+    proxy_read_timeout                  900; 
+  }
+
+  location /v2/ {
+    proxy_pass                          https://172.16.0.1:5000;
+    proxy_set_header  Host              $http_host;   # required for docker client's sake
+    proxy_set_header  X-Real-IP         $remote_addr; # pass on real client's IP
+    proxy_set_header  X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header  X-Forwarded-Proto $scheme;
+    proxy_read_timeout                  900;
+  }  
+
+  location /v2/_ping {
+    proxy_pass                          https://172.16.0.1:5000;
+    proxy_set_header  Host              $http_host;   # required for docker client's sake
+    proxy_set_header  X-Real-IP         $remote_addr; # pass on real client's IP
+    proxy_set_header  X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header  X-Forwarded-Proto $scheme;
+    proxy_read_timeout                  900;
+  }
+
+}

@@ -1,0 +1,19 @@
+1) To properly work with the docker registering on osx, you need to configure the network
+
+sudo ifconfig lo0 alias 172.16.0.1
+
+2) Update the file hosts
+
+172.16.0.1 api.lstbknd.net hub.lstbknd.net
+
+3) Then update the genesis startup configuration for the builder
+
+builder:
+   workers: 2
+   logs: /opt/logs/
+   uuid: "85c6e91e-dd45-4b7b-8330-e2e3bd0a7bac"
+   docker:
+     host: "172.16.0.1"
+   extra_hosts:
+    - "hub.lstbknd.net:172.16.0.1"
+    - "api.lstbknd.net:172.16.0.1"
