@@ -120,8 +120,12 @@ func (b *Builder) Start() error {
 		return err
 	}
 
+	if err := b.connect(); err != nil {
+		log.Errorf("%s:start:> connect builder err: %v", logWorkerPrefix, err)
+		return err
+	}
+
 	go b.manage()
-	go b.connect()
 	go b.status()
 	// TODO: subscribe to docker
 
