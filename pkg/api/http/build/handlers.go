@@ -104,6 +104,8 @@ func BuildCreateH(w http.ResponseWriter, r *http.Request) {
 	opts.Spec.Workdir = rq.Workdir
 	opts.Spec.Command = rq.Command
 
+	opts.Labels = rq.Labels
+
 	build, err := bm.Create(opts)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:create:> create build err: %v", logPrefix, err)

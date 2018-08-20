@@ -93,7 +93,7 @@ func (s *BuildStorage) Get(ctx context.Context, id string) (*types.Build, error)
 }
 
 func (s *BuildStorage) List(ctx context.Context, image string, f *filter.BuildFilter) ([]*types.Build, error) {
-	log.V(logLevel).Debug("%s:build:list:> get builds list by image", logPrefix)
+	log.V(logLevel).Debugf("%s:build:list:> get builds list by image", logPrefix)
 
 	where := "WHERE ib.image_id = $1"
 

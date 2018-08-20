@@ -21,13 +21,11 @@ package builder
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/lastbackend/registry/pkg/api/types/v1"
-	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/distribution/types"
@@ -37,6 +35,8 @@ import (
 
 	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
 	lbt "github.com/lastbackend/registry/pkg/distribution/types"
+	"io/ioutil"
+	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 )
 
 const (
@@ -346,28 +346,30 @@ func (b *Builder) connect() error {
 	if viper.IsSet("builder.tls") {
 		opts.TLS = !viper.GetBool("builder.tls.insecure")
 
-		caData, err := ioutil.ReadFile(viper.GetString("builder.tls.ca"))
-		if err != nil {
-			log.Errorf("%s:start:> read ca cert file err: %v", logWorkerPrefix, err)
-			return err
-		}
+		if opts.TLS {
+			caData, err := ioutil.ReadFile(viper.GetString("builder.tls.ca"))
+			if err != nil {
+				log.Errorf("%s:start:> read ca cert file err: %v", logWorkerPrefix, err)
+				return err
+			}
 
-		certData, err := ioutil.ReadFile(viper.GetString("builder.tls.client_cert"))
-		if err != nil {
-			log.Errorf("%s:start:> read client cert file err: %v", logWorkerPrefix, err)
-			return err
-		}
+			certData, err := ioutil.ReadFile(viper.GetString("builder.tls.client_cert"))
+			if err != nil {
+				log.Errorf("%s:start:> read client cert file err: %v", logWorkerPrefix, err)
+				return err
+			}
 
-		keyData, err := ioutil.ReadFile(viper.GetString("builder.tls.client_key"))
-		if err != nil {
-			log.Errorf("%s:start:> read client key file err: %v", logWorkerPrefix, err)
-			return err
-		}
+			keyData, err := ioutil.ReadFile(viper.GetString("builder.tls.client_key"))
+			if err != nil {
+				log.Errorf("%s:start:> read client key file err: %v", logWorkerPrefix, err)
+				return err
+			}
 
-		opts.SSL = new(request.SSL)
-		opts.SSL.CA = caData
-		opts.SSL.Key = keyData
-		opts.SSL.Cert = certData
+			opts.SSL = new(request.SSL)
+			opts.SSL.CA = caData
+			opts.SSL.Key = keyData
+			opts.SSL.Cert = certData
+		}
 	}
 
 	if err := envs.Get().GetClient().V1().Builder(envs.Get().GetHostname()).Connect(b.ctx, opts); err != nil {
