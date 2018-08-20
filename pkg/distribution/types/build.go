@@ -92,7 +92,7 @@ type BuildImage struct {
 
 type BuildSource struct {
 	Source
-	Commit BuildCommit `json:"commit"`
+	Commit *BuildCommit `json:"commit"`
 }
 
 type BuildCommit struct {

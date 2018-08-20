@@ -7,7 +7,7 @@ auth_server: "https://api.lstbknd.net/registry/auth"
 registry:
   uri: "127.0.0.1:2955"
   tls:
-    insecure: true
+    insecure: false
     ca: "/opt/cert/registry/ca.pem"
     cert: "/opt/cert/registry/client.pem"
     key: "/opt/cert/registry/client-key.pem"
@@ -17,7 +17,7 @@ builder:
   port: 2954
   ip: "127.0.0.1"
   tls:
-    insecure: true
+    insecure: false
     ca: "/opt/cert/builder/ca.pem"
     server_cert: "/opt/cert/builder/server.pem"
     server_key: "/opt/cert/builder/server-key.pem"

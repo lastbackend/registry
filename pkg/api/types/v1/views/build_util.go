@@ -23,7 +23,7 @@ import (
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"time"
 	"unsafe"
-)
+	)
 
 type BuildView struct{}
 
@@ -70,7 +70,7 @@ func (bv *BuildView) ToBuildMeta(obj *types.BuildMeta) *BuildMeta {
 }
 
 func (bv *BuildView) ToBuildSpec(obj *types.BuildSpec) *BuildSpec {
-	return &BuildSpec{
+	spec := &BuildSpec{
 		Source: BuildSource{
 			Hub:    obj.Source.Hub,
 			Owner:  obj.Source.Owner,
@@ -85,6 +85,17 @@ func (bv *BuildView) ToBuildSpec(obj *types.BuildSpec) *BuildSpec {
 			Command:    obj.Config.Command,
 		},
 	}
+
+	if obj.Source.Commit != nil {
+		spec.Source.Commit = new(BuildCommit)
+		spec.Source.Commit.Hash = obj.Source.Commit.Hash
+		spec.Source.Commit.Username = obj.Source.Commit.Username
+		spec.Source.Commit.Message = obj.Source.Commit.Message
+		spec.Source.Commit.Email = obj.Source.Commit.Email
+		spec.Source.Commit.Date = obj.Source.Commit.Date
+	}
+
+	return spec
 }
 
 func (bv *BuildView) ToBuildStatus(obj *types.BuildStatus) *BuildStatus {

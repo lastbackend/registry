@@ -100,6 +100,8 @@ func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {
 
 	if opts.Labels != nil {
 
+		bld.Spec.Source.Commit = new(types.BuildCommit)
+
 		if hash, ok := opts.Labels["commit_hash"]; ok {
 			bld.Spec.Source.Commit.Hash = hash
 		}
@@ -113,9 +115,11 @@ func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {
 			bld.Spec.Source.Commit.Email = email
 		}
 		if date, ok := opts.Labels["commit_date"]; ok {
-			t, _ := time.Parse(time.RFC3339, date)
+			layout := "2006-01-02 15:04:05 -0700 MST"
+			t, _ := time.Parse(layout, date)
 			bld.Spec.Source.Commit.Date = t
 		}
+
 	}
 
 	if len(opts.Source.Branch) == 0 {
