@@ -10,7 +10,6 @@ psql: "host=127.0.0.1 port=5431 user=lastbackend password=lastbackend dbname=reg
 api:
   host: 0.0.0.0
   port: 2955
-  endpoint: "127.0.0.1"
   tls:
     insecure: false
     ca: "/opt/cert/registry/ca.pem"
