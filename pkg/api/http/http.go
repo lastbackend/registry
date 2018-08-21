@@ -85,6 +85,6 @@ func Listen(host string, port int, opts *HttpOpts) error {
 		return http.Listen(host, port, r)
 	}
 
-	log.V(logLevel).Debugf("%s:> run http server  with tls", logPrefix)
+	log.V(logLevel).Debugf("%s:> run http server with tls", logPrefix)
 	return http.ListenWithTLS(host, port, opts.CaFile, opts.CertFile, opts.KeyFile, r)
 }

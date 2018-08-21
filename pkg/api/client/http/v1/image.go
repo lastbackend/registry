@@ -169,6 +169,6 @@ func (ic ImageClient) Remove(ctx context.Context, opts *rv1.ImageRemoveOptions) 
 	return nil
 }
 
-func newImageClient(req *request.RESTClient, owner, name string) types.ImageClientV1 {
-	return ImageClient{client: req, owner: owner, name: name}
+func newImageClient(req *request.RESTClient, owner, name string) *ImageClient {
+	return &ImageClient{client: req, owner: owner, name: name}
 }

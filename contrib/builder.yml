@@ -5,8 +5,6 @@ verbose: 7
 auth_server: "https://api.lstbknd.net/registry/auth"
 
 api:
-  host: 0.0.0.0
-  port: 2955
   uri: "127.0.0.1:2955"
   tls:
     insecure: false
