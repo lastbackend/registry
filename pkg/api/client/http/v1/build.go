@@ -25,7 +25,6 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/lastbackend/registry/pkg/api/client/types"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/util/http/request"
 
@@ -35,6 +34,7 @@ import (
 
 type BuildClient struct {
 	client *request.RESTClient
+
 	owner  string
 	name   string
 	id     string
@@ -201,6 +201,6 @@ func (bc BuildClient) Cancel(ctx context.Context) error {
 	return nil
 }
 
-func newBuildClient(req *request.RESTClient, owner, name, id string) types.BuildClientV1 {
-	return BuildClient{client: req, owner: owner, name: name, id: id}
+func newBuildClient(req *request.RESTClient, owner, name, id string) *BuildClient {
+	return &BuildClient{client: req, owner: owner, name: name, id: id}
 }

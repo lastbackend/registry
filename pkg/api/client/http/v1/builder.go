@@ -22,8 +22,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lastbackend/registry/pkg/api/client/types"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
+		"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/util/http/request"
 
 	rv1 "github.com/lastbackend/registry/pkg/api/types/v1/request"
@@ -122,6 +121,6 @@ func (bc BuilderClient) Manifest(ctx context.Context) (*vv1.BuildManifest, error
 	return s, nil
 }
 
-func newBuilderClient(req *request.RESTClient, hostname string) types.BuilderClientV1 {
-	return BuilderClient{client: req, hostname: hostname}
+func newBuilderClient(req *request.RESTClient, hostname string) *BuilderClient {
+	return &BuilderClient{client: req, hostname: hostname}
 }

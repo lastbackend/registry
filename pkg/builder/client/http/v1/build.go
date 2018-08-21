@@ -24,8 +24,7 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/lastbackend/registry/pkg/builder/client/types"
-	rv1 "github.com/lastbackend/registry/pkg/builder/types/v1/request"
+		rv1 "github.com/lastbackend/registry/pkg/builder/types/v1/request"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/util/http/request"
 )
@@ -67,6 +66,6 @@ func (bc BuildClient) Cancel(ctx context.Context) error {
 	return nil
 }
 
-func newBuildClient(req *request.RESTClient, pid string) types.BuildClientV1 {
-	return BuildClient{client: req, pid: pid}
+func newBuildClient(req *request.RESTClient, pid string) *BuildClient {
+	return &BuildClient{client: req, pid: pid}
 }
