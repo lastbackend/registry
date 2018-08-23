@@ -178,7 +178,7 @@ func (w *worker) configure() error {
 		Security: lbt.SpecTemplateContainerSecurity{
 			Privileged: true,
 		},
-		Labels:          map[string]string{"LB": w.pid},
+		Labels:          map[string]string{"LBR": w.pid},
 		PublishAllPorts: true,
 	}
 
@@ -293,7 +293,7 @@ func (w *worker) build() error {
 		Image: lbt.SpecTemplateContainerImage{
 			Name: "docker:git",
 		},
-		Labels:  map[string]string{"LB": w.pid},
+		Labels:  map[string]string{"LBR": w.pid},
 		EnvVars: []lbt.SpecTemplateContainerEnv{{Name: "DOCKER_HOST", Value: w.endpoint}},
 		Exec: lbt.SpecTemplateContainerExec{
 			Command: []string{"build", "-f", dockerfile, "-t", image, gituri},
