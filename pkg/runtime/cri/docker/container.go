@@ -160,7 +160,7 @@ func (r *Runtime) ContainerInspect(ctx context.Context, ID string) (*types.Conta
 	container.Created, _ = time.Parse(time.RFC3339Nano, info.Created)
 	container.Started, _ = time.Parse(time.RFC3339Nano, info.State.StartedAt)
 
-	meta, ok := info.Config.Labels["LB"]
+	meta, ok := info.Config.Labels["LBR"]
 	if !ok {
 		log.Debug("Docker: Container Meta not found")
 		return nil, nil
