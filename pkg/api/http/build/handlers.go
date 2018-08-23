@@ -280,30 +280,31 @@ func BuildCancelH(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case strings.Contains(err.Error(), "failed to create tls config"):
-			builder.Status.Error = "SSL certificate is failed"
-			errors.New("builder").BadRequest(err).Http(w)
+			errors.HTTP.BadRequest(w, "SSL certificate is failed")
 			return
 		default:
 			log.V(logLevel).Errorf("%s:cancel:> create http client err: %v", logPrefix, err)
 			errors.HTTP.InternalServerError(w)
 			return
 		}
-	} else {
+	}
 
-		err = httpcli.V1().Build(build.Meta.ID).Cancel(r.Context())
-		if err != nil {
-			switch {
-			case err.Error() == "Unauthorized":
-				builder.Status.Error = "Unauthorized"
-			case strings.Contains(err.Error(), "x509: certificate signed by unknown authority"):
-				builder.Status.Error = "SSL certificate is failed"
-			case strings.Contains(err.Error(), "net/http: HTTP/1.x transport connection broken"):
-				builder.Status.Error = "Connection broken"
-			default:
-				log.V(logLevel).Errorf("%s:cancel:> get registry info from registry `%s` err: %v", logPrefix, endpoint, err)
-				errors.HTTP.InternalServerError(w)
-				return
-			}
+	err = httpcli.V1().Build(build.Meta.ID).Cancel(r.Context())
+	if err != nil {
+		switch {
+		case err.Error() == "Unauthorized":
+			errors.HTTP.BadRequest(w, "access token not set")
+			return
+		case strings.Contains(err.Error(), "x509: certificate signed by unknown authority"):
+			errors.HTTP.BadRequest(w, "ssl certificate is failed")
+			return
+		case strings.Contains(err.Error(), "net/http: HTTP/1.x transport connection broken"):
+			errors.HTTP.BadRequest(w, "tls transport connection broken")
+			return
+		default:
+			log.V(logLevel).Errorf("%s:cancel:> get builder info from builder `%s` err: %v", logPrefix, endpoint, err)
+			errors.HTTP.InternalServerError(w)
+			return
 		}
 	}
 
@@ -424,32 +425,35 @@ func BuildLogsH(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case strings.Contains(err.Error(), "failed to create tls config"):
-			builder.Status.Error = "SSL certificate is failed"
+			errors.HTTP.BadRequest(w, "SSL certificate is failed")
+			return
 		default:
 			log.V(logLevel).Errorf("%s:logs:> create http client err: %v", logPrefix, err)
 			errors.HTTP.InternalServerError(w)
 			return
 		}
-	} else {
-		res, err := httpcli.V1().Build(build.Meta.ID).Logs(r.Context(), &rv1.BuildLogsOptions{Follow: true})
-		if err != nil {
-			switch {
-			case err.Error() == "Unauthorized":
-				builder.Status.Error = "Unauthorized"
-			case strings.Contains(err.Error(), "x509: certificate signed by unknown authority"):
-				builder.Status.Error = "SSL certificate is failed"
-			case strings.Contains(err.Error(), "net/http: HTTP/1.x transport connection broken"):
-				builder.Status.Error = "Connection broken"
-			default:
-				log.V(logLevel).Errorf("%s:logs:> get registry info from registry `%s` err: %v", logPrefix, endpoint, err)
-				errors.HTTP.InternalServerError(w)
-				return
-			}
-		}
-
-		pipe(w, res)
-
 	}
+
+	res, err := httpcli.V1().Build(build.Meta.ID).Logs(r.Context(), &rv1.BuildLogsOptions{Follow: true})
+	if err != nil {
+		switch {
+		case err.Error() == "Unauthorized":
+			errors.HTTP.BadRequest(w, "access token not set")
+			return
+		case strings.Contains(err.Error(), "x509: certificate signed by unknown authority"):
+			errors.HTTP.BadRequest(w, "ssl certificate is failed")
+			return
+		case strings.Contains(err.Error(), "net/http: HTTP/1.x transport connection broken"):
+			errors.HTTP.BadRequest(w, "tls transport connection broken")
+			return
+		default:
+			log.V(logLevel).Errorf("%s:logs:> get builder info from builder `%s` err: %v", logPrefix, endpoint, err)
+			errors.HTTP.InternalServerError(w)
+			return
+		}
+	}
+
+	pipe(w, res)
 
 }
 
