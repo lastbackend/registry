@@ -31,7 +31,7 @@ import (
 	"github.com/lastbackend/registry/pkg/util/blob"
 	"github.com/lastbackend/registry/pkg/util/blob/s3"
 	"github.com/lastbackend/registry/pkg/util/blob/azure"
-	)
+)
 
 func Daemon() bool {
 
@@ -76,10 +76,12 @@ func Daemon() bool {
 
 	go func() {
 		opts := new(http.HttpOpts)
-		opts.Insecure = viper.GetBool("api.tls.insecure")
-		opts.CertFile = viper.GetString("api.tls.cert")
-		opts.KeyFile = viper.GetString("api.tls.key")
-		opts.CaFile = viper.GetString("api.tls.ca")
+		if viper.IsSet("api.tls") {
+			opts.Insecure = viper.GetBool("api.tls.insecure")
+			opts.CertFile = viper.GetString("api.tls.cert")
+			opts.KeyFile = viper.GetString("api.tls.key")
+			opts.CaFile = viper.GetString("api.tls.ca")
+		}
 
 		if err := http.Listen(viper.GetString("api.host"), viper.GetInt("api.port"), opts); err != nil {
 			log.Fatalf("Http server start error: %v", err)

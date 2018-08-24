@@ -45,6 +45,10 @@ func (c *Registry) Get() (*types.Registry, error) {
 	registry := new(types.Registry)
 	registry.Meta.Hostname = viper.GetString("domain")
 
+	if viper.IsSet("api.tls") {
+		registry.Status.TLS = !viper.GetBool("api.tls.insecure")
+	}
+
 	return registry, nil
 }
 

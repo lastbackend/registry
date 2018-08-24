@@ -33,7 +33,7 @@ type RegistryMeta struct {
 }
 
 type RegistryStatus struct {
-	Deleted bool `json:"deleted"`
+	TLS bool `json:"tls"`
 }
 
 type RegistrySpec struct {
