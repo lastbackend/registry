@@ -21,6 +21,7 @@ package views
 type Registry struct {
 	Meta   RegistryMeta   `json:"meta"`
 	Status RegistryStatus `json:"status"`
+	Spec   RegistrySpec   `json:"spec"`
 }
 
 type RegistryMeta struct {
@@ -28,6 +29,10 @@ type RegistryMeta struct {
 }
 
 type RegistryStatus struct {
+	TLS bool `json:"tls"`
+}
+
+type RegistrySpec struct {
 }
 
 type RegistryList []*Registry

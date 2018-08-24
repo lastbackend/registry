@@ -30,6 +30,7 @@ func (rv *RegistryView) New(obj *types.Registry) *Registry {
 	r := Registry{}
 	r.Meta = rv.ToRegistryMeta(obj.Meta)
 	r.Status = rv.ToRegistryStatus(obj.Status)
+	r.Spec = rv.ToRegistrySpec(obj.Spec)
 	return &r
 }
 
@@ -51,5 +52,12 @@ func (rv *RegistryView) ToRegistryMeta(meta types.RegistryMeta) RegistryMeta {
 }
 
 func (rv *RegistryView) ToRegistryStatus(status types.RegistryStatus) RegistryStatus {
-	return RegistryStatus{}
+	return RegistryStatus{
+		TLS: status.TLS,
+	}
+}
+
+func (rv *RegistryView) ToRegistrySpec(spec types.RegistrySpec) RegistrySpec {
+	return RegistrySpec{
+	}
 }
