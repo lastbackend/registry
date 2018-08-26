@@ -42,6 +42,7 @@ func Daemon() bool {
 		done = make(chan bool, 1)
 	)
 
+	log.New(viper.GetInt("verbose"))
 	log.Infof("%s:> start controller", logPrefix)
 
 	stg, err := storage.Get(viper.GetString("psql"))

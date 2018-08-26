@@ -40,6 +40,7 @@ func Daemon() bool {
 		done = make(chan bool, 1)
 	)
 
+	log.New(viper.GetInt("verbose"))
 	log.Info("Start API server")
 
 	stg, err := storage.Get(viper.GetString("psql"))

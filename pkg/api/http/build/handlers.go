@@ -34,6 +34,7 @@ import (
 	"github.com/lastbackend/registry/pkg/util/converter"
 	"github.com/lastbackend/registry/pkg/util/http/utils"
 	"io"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -267,6 +268,7 @@ func BuildCancelH(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cfg := client.NewConfig()
+	cfg.BearerToken = viper.GetString("secret.token")
 	if builder.Spec.Network.SSL != nil {
 		cfg.TLS = client.NewTLSConfig()
 		cfg.TLS.CertData = builder.Spec.Network.SSL.Cert
@@ -413,6 +415,7 @@ func BuildLogsH(w http.ResponseWriter, r *http.Request) {
 
 	cfg := client.NewConfig()
 	cfg.Timeout = 0
+	cfg.BearerToken = viper.GetString("secret.token")
 	if builder.Spec.Network.SSL != nil {
 		cfg.TLS = client.NewTLSConfig()
 		cfg.TLS.CertData = builder.Spec.Network.SSL.Cert

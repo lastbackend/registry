@@ -34,12 +34,14 @@ import (
 	"github.com/spf13/viper"
 	"github.com/lastbackend/registry/pkg/util/blob"
 	"github.com/lastbackend/registry/pkg/util/blob/azure"
-)
+	)
 
 // Daemon - run builder daemon
 func Daemon() bool {
 
 	sigs := make(chan os.Signal)
+
+	log.New(viper.GetInt("verbose"))
 
 	ri, err := cri.New()
 	if err != nil {
@@ -47,6 +49,8 @@ func Daemon() bool {
 	}
 
 	cfg := client.NewConfig()
+
+	cfg.BearerToken = viper.GetString("secret.token")
 
 	if viper.IsSet("registry.tls") && !viper.GetBool("registry.tls.insecure") {
 		cfg.TLS = client.NewTLSConfig()

@@ -16,24 +16,14 @@
 // from Last.Backend LLC.
 //
 
-package views
+package middleware
 
-type Registry struct {
-	Meta   RegistryMeta   `json:"meta"`
-	Status RegistryStatus `json:"status"`
+import (
+	"net/http"
+)
+
+func Context(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(w, r)
+	}
 }
-
-type RegistryMeta struct {
-	ImageHub string `json:"image_hub"`
-}
-
-type RegistryStatus struct {
-	TLS bool `json:"tls"`
-}
-
-type RegistryList []*Registry
-
-type RegistryToken struct {
-	Token string `json:"token"`
-}
-

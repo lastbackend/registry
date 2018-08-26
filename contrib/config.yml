@@ -2,7 +2,15 @@
 
 # Runtime
 verbose: 7
-domain: "hub.lstbknd.net"
+secret:
+  token: "lstbknd"
+
+host: "hub.lstbknd.net"
+issuer: "registry.lstbknd.net"
+service: "hub.lstbknd.net"
+key: "/opt/cert/hub/server/hub.lstbknd.net.key.pem"
+auth_server: "https://api.lstbknd.net/auth"
+access_token: "d424dd39e43a419c99b4abb88373bb30"
 
 # Database and Messages broker
 psql: "host=127.0.0.1 port=5431 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"
@@ -35,6 +43,3 @@ builder:
     ca: "/opt/cert/builder/ca.pem"
     cert: "/opt/cert/builder/client.pem"
     key: "/opt/cert/builder/client-key.pem"
-
-ctl:
-  uuid: "85c6e91e-dd45-4b7b-8330-e2e3bd0a7bad"

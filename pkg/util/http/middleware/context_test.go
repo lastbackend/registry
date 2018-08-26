@@ -16,24 +16,4 @@
 // from Last.Backend LLC.
 //
 
-package views
-
-type Registry struct {
-	Meta   RegistryMeta   `json:"meta"`
-	Status RegistryStatus `json:"status"`
-}
-
-type RegistryMeta struct {
-	ImageHub string `json:"image_hub"`
-}
-
-type RegistryStatus struct {
-	TLS bool `json:"tls"`
-}
-
-type RegistryList []*Registry
-
-type RegistryToken struct {
-	Token string `json:"token"`
-}
-
+package middleware
