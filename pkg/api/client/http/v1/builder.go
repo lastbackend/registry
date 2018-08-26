@@ -107,7 +107,7 @@ func (bc BuilderClient) Manifest(ctx context.Context) (*vv1.BuildManifest, error
 	var s *vv1.BuildManifest
 	var e *errors.Http
 
-	err := bc.client.Post(fmt.Sprintf("/builder/%s/manifest", bc.hostname)).
+	err := bc.client.Get(fmt.Sprintf("/builder/%s/manifest", bc.hostname)).
 		AddHeader("Content-Type", "application/json").
 		JSON(&s, &e)
 

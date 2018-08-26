@@ -2,10 +2,11 @@
 
 # Runtime
 verbose: 7
-auth_server: "https://api.lstbknd.net/registry/auth"
+secret:
+  token: "lstbknd"
 
-api:
-  uri: "127.0.0.1:2955"
+registry:
+  uri: "https://hub.lstbknd.net"
   tls:
     insecure: false
     ca: "/opt/cert/registry/ca.pem"

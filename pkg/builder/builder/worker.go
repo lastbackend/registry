@@ -344,7 +344,6 @@ func (w *worker) build() error {
 		case c := <-ch:
 
 			if c.ExitCode != 0 {
-				fmt.Println("2 ##")
 				err := fmt.Errorf("container exited with %d code", c.ExitCode)
 				log.Errorf("%s:build:> container exit with err %v", logWorkerPrefix, err)
 				w.sendEvent(event{step: types.BuildStepBuild, message: errorBuildFailed, error: true})

@@ -20,15 +20,16 @@ package build
 
 import (
 	"github.com/lastbackend/registry/pkg/util/http"
+	"github.com/lastbackend/registry/pkg/util/http/middleware"
 )
 
 var Routes = []http.Route{
 	// Build handlers
-	{Path: "/image/{owner}/{name}/build", Method: http.MethodPost, Handler: BuildCreateH},
-	{Path: "/image/{owner}/{name}/build", Method: http.MethodGet, Handler: BuildListH},
-	{Path: "/image/{owner}/{name}/build/{build}", Method: http.MethodGet, Handler: BuildInfoH},
-	{Path: "/image/{owner}/{name}/build/{build}/logs", Method: http.MethodGet, Handler: BuildLogsH},
-	{Path: "/image/{owner}/{name}/build/{build}/cancel", Method: http.MethodPut, Handler: BuildCancelH},
-	{Path: "/image/{owner}/{name}/build/{build}/info", Method: http.MethodPut, Handler: BuildInfoUpdateH},
-	{Path: "/image/{owner}/{name}/build/{build}/status", Method: http.MethodPut, Handler: BuildStatusUpdateH},
+	{Path: "/image/{owner}/{name}/build", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildCreateH},
+	{Path: "/image/{owner}/{name}/build", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildListH},
+	{Path: "/image/{owner}/{name}/build/{build}", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildInfoH},
+	{Path: "/image/{owner}/{name}/build/{build}/logs", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildLogsH},
+	{Path: "/image/{owner}/{name}/build/{build}/cancel", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildCancelH},
+	{Path: "/image/{owner}/{name}/build/{build}/info", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildInfoUpdateH},
+	{Path: "/image/{owner}/{name}/build/{build}/status", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Authenticate}, Handler: BuildStatusUpdateH},
 }

@@ -237,7 +237,7 @@ func BuilderStatusH(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func BuilderCreateManifestH(w http.ResponseWriter, r *http.Request) {
+func BuilderGetManifestH(w http.ResponseWriter, r *http.Request) {
 
 	log.V(logLevel).Debugf("%s:get_manifest:> create manifest for builder", logPrefix)
 

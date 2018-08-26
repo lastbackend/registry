@@ -6,12 +6,11 @@ server {
 
 server {
 
-  listen 443;
-  server_name hub.lstbknd.net;
+  listen 443 ssl;
+  server_name hub.lstbknd.net www.hub.lstbknd.net;
 
-  ssl on;
-  ssl_certificate /usr/local/etc/nginx/ssl/hub.lstbknd.pem;
-  ssl_certificate_key /usr/local/etc/nginx/ssl/hub.lstbknd-key.pem;
+  ssl_certificate /usr/local/etc/nginx/ssl/hub.lstbknd.net.cert.pem;
+  ssl_certificate_key /usr/local/etc/nginx/ssl/hub.lstbknd.net.key.pem;
 
   client_max_body_size 0; # disable any limits to avoid HTTP 413 for large image uploads
 
@@ -20,7 +19,12 @@ server {
   # required to avoid HTTP 411: see Issue #1486 (https://github.com/docker/docker/issues/1486)
   chunked_transfer_encoding on;
 
-  location /_ping {
+  # Traffic forwarding to docker registry
+  # /v1
+  # /v1/_ping
+  # /v2
+  # /v2/_ping
+  location ~ ^/v(1|2)/(?:_ping)? {
     proxy_pass                          https://172.16.0.1:5000;
     proxy_set_header  Host              $http_host;   # required for docker client's sake
     proxy_set_header  X-Real-IP         $remote_addr; # pass on real client's IP
@@ -29,31 +33,28 @@ server {
     proxy_read_timeout                  900;
   }
 
-  location /v1/_ping {
-    proxy_pass                          https://172.16.0.1:5000;
-    proxy_set_header  Host              $http_host;   # required for docker client's sake
-    proxy_set_header  X-Real-IP         $remote_addr; # pass on real client's IP
-    proxy_set_header  X-Forwarded-For   $proxy_add_x_forwarded_for;
-    proxy_set_header  X-Forwarded-Proto $scheme;
-    proxy_read_timeout                  900; 
+  location ~ ^/image/.+/.+/build/.+/logs$ {
+    proxy_set_header            Upgrade $http_upgrade;
+    proxy_set_header            Connection "upgrade";
+    proxy_set_header            X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header            Host $host;
+    proxy_set_header            X-Real-IP $remote_addr; # pass on real client's IP
+    proxy_http_version          1.1;
+    proxy_read_timeout          900;
+    proxy_buffering             off;
+    proxy_cache                 off;
+    proxy_redirect              off;
+    chunked_transfer_encoding   off;
+    proxy_pass                  https://172.16.0.1:2955;
+    proxy_ssl_certificate       /usr/local/etc/nginx/ssl/registry.pem;
+    proxy_ssl_certificate_key   /usr/local/etc/nginx/ssl/registry.key;
   }
 
-  location /v2/ {
-    proxy_pass                          https://172.16.0.1:5000;
-    proxy_set_header  Host              $http_host;   # required for docker client's sake
-    proxy_set_header  X-Real-IP         $remote_addr; # pass on real client's IP
-    proxy_set_header  X-Forwarded-For   $proxy_add_x_forwarded_for;
-    proxy_set_header  X-Forwarded-Proto $scheme;
-    proxy_read_timeout                  900;
-  }  
-
-  location /v2/_ping {
-    proxy_pass                          https://172.16.0.1:5000;
-    proxy_set_header  Host              $http_host;   # required for docker client's sake
-    proxy_set_header  X-Real-IP         $remote_addr; # pass on real client's IP
-    proxy_set_header  X-Forwarded-For   $proxy_add_x_forwarded_for;
-    proxy_set_header  X-Forwarded-Proto $scheme;
-    proxy_read_timeout                  900;
+  # Traffic forwarding to registry api without tls
+  location / {
+    proxy_pass 		    https://172.16.0.1:2955;
+    proxy_ssl_certificate       /usr/local/etc/nginx/ssl/registry.pem;
+    proxy_ssl_certificate_key   /usr/local/etc/nginx/ssl/registry.key;
   }
 
 }

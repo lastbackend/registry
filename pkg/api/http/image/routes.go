@@ -20,13 +20,14 @@ package image
 
 import (
 	"github.com/lastbackend/registry/pkg/util/http"
+	"github.com/lastbackend/registry/pkg/util/http/middleware"
 )
 
 var Routes = []http.Route{
 	// Image handlers
-	{Path: "/image", Method: http.MethodPost, Handler: ImageCreateH},
-	{Path: "/image/{owner}", Method: http.MethodGet, Handler: ImageListH},
-	{Path: "/image/{owner}/{name}", Method: http.MethodGet, Handler: ImageInfoH},
-	{Path: "/image/{owner}/{name}", Method: http.MethodPut, Handler: ImageUpdateH},
-	{Path: "/image/{owner}/{name}", Method: http.MethodDelete, Handler: ImageRemoveH},
+	{Path: "/image", Method: http.MethodPost, Middleware: []http.Middleware{middleware.Authenticate}, Handler: ImageCreateH},
+	{Path: "/image/{owner}", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: ImageListH},
+	{Path: "/image/{owner}/{name}", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: ImageInfoH},
+	{Path: "/image/{owner}/{name}", Method: http.MethodPut, Middleware: []http.Middleware{middleware.Authenticate}, Handler: ImageUpdateH},
+	{Path: "/image/{owner}/{name}", Method: http.MethodDelete, Middleware: []http.Middleware{middleware.Authenticate}, Handler: ImageRemoveH},
 }

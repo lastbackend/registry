@@ -30,7 +30,6 @@ func (rv *RegistryView) New(obj *types.Registry) *Registry {
 	r := Registry{}
 	r.Meta = rv.ToRegistryMeta(obj.Meta)
 	r.Status = rv.ToRegistryStatus(obj.Status)
-	r.Spec = rv.ToRegistrySpec(obj.Spec)
 	return &r
 }
 
@@ -46,9 +45,7 @@ func (rl *RegistryList) ToJson() ([]byte, error) {
 }
 
 func (rv *RegistryView) ToRegistryMeta(meta types.RegistryMeta) RegistryMeta {
-	return RegistryMeta{
-		Hostname: meta.Hostname,
-	}
+	return RegistryMeta{}
 }
 
 func (rv *RegistryView) ToRegistryStatus(status types.RegistryStatus) RegistryStatus {
@@ -57,7 +54,10 @@ func (rv *RegistryView) ToRegistryStatus(status types.RegistryStatus) RegistrySt
 	}
 }
 
-func (rv *RegistryView) ToRegistrySpec(spec types.RegistrySpec) RegistrySpec {
-	return RegistrySpec{
-	}
+func (RegistryView) NewToken(token string) *RegistryToken {
+	return &RegistryToken{token}
+}
+
+func (obj *RegistryToken) ToJson() ([]byte, error) {
+	return json.Marshal(obj)
 }

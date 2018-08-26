@@ -218,7 +218,7 @@ func (b Build) NewBuildManifest() *Task {
 
 	manifest.Meta.ID = b.Meta.ID
 
-	manifest.Spec.Image.Host = viper.GetString("domain")
+	manifest.Spec.Image.Host = viper.GetString("host")
 	manifest.Spec.Image.Name = b.Spec.Image.Name
 	manifest.Spec.Image.Owner = b.Spec.Image.Owner
 	manifest.Spec.Image.Tag = b.Spec.Image.Tag
