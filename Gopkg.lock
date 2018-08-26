@@ -3,9 +3,12 @@
 
 [[projects]]
   name = "github.com/Azure/azure-sdk-for-go"
-  packages = ["storage"]
-  revision = "2d1d76c9013c4feb6695a2346f0e66ea0ef77aa6"
-  version = "v11.3.0-beta"
+  packages = [
+    "storage",
+    "version"
+  ]
+  revision = "4e8cbbfb1aeab140cd0fa97fd16b64ee18c3ca6a"
+  version = "v19.1.0"
 
 [[projects]]
   name = "github.com/Azure/go-autorest"
@@ -172,6 +175,12 @@
   version = "v1.8.0"
 
 [[projects]]
+  name = "github.com/marstr/guid"
+  packages = ["."]
+  revision = "8bd9a64bf37eb297b492a4101fb28e80ac0b290f"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/minio/minio-go"
   packages = [
     ".",
@@ -231,12 +240,6 @@
 
 [[projects]]
   name = "github.com/satori/go.uuid"
-  packages = ["."]
-  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
-  version = "v1.2.0"
-
-[[projects]]
-  name = "github.com/satori/uuid"
   packages = ["."]
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
   version = "v1.2.0"
@@ -359,6 +362,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cb67e718c54c9ed9af495c7403a774d6330507de422f2c7fd872f7574af599af"
+  inputs-digest = "29a509922938b0896629a3476db3b7baad3528460fefde77889dc91090141661"
   solver-name = "gps-cdcl"
   solver-version = 1

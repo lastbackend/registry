@@ -24,14 +24,39 @@
 #   go-tests = true
 #   unused-packages = true
 
+# Override start
+# =========================================================================
+
+[[override]]
+  name = "github.com/docker/distribution"
+  revision = "83389a148052d74ac602f5f1d62f86ff2f3c4aa5"
+
+[[override]]
+  name = "github.com/docker/docker"
+  revision = "cbde00b44273a584bed2ee3513db68924b4a6dba"
+
+# =========================================================================
+# Override end
 
 [[constraint]]
   name = "github.com/Azure/azure-sdk-for-go"
-  version = "11.3.0-beta"
+  version = "19.1.0"
 
 [[constraint]]
   name = "github.com/asaskevich/govalidator"
   version = "9.0.0"
+
+[[constraint]]
+  name = "github.com/dgrijalva/jwt-go"
+  version = "3.2.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/docker/docker"
+
+[[constraint]]
+  name = "github.com/docker/go-connections"
+  version = "0.4.0"
 
 [[constraint]]
   name = "github.com/gorilla/mux"
@@ -39,19 +64,27 @@
 
 [[constraint]]
   name = "github.com/gorilla/websocket"
-  version = "1.2.0"
+  version = "1.3.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/lib/pq"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/minio/minio-go"
+  version = "6.0.5"
 
 [[constraint]]
   name = "github.com/pkg/errors"
   version = "0.8.0"
 
 [[constraint]]
+  name = "github.com/satori/go.uuid"
+  version = "1.2.0"
+
+[[constraint]]
   name = "github.com/sirupsen/logrus"
-  version = "1.0.5"
+  version = "1.0.6"
 
 [[constraint]]
   name = "github.com/spf13/cobra"
@@ -59,7 +92,7 @@
 
 [[constraint]]
   name = "github.com/spf13/viper"
-  version = "1.0.2"
+  version = "1.1.0"
 
 [[constraint]]
   name = "github.com/stretchr/testify"
@@ -77,22 +110,6 @@
   name = "gopkg.in/yaml.v2"
   version = "2.2.1"
 
-#
-# Override dependencies from origin last backend
-#
-
-[[override]]
-  name = "github.com/docker/distribution"
-  revision = "83389a148052d74ac602f5f1d62f86ff2f3c4aa5"
-
-[[override]]
-  name = "github.com/docker/docker"
-  revision = "cbde00b44273a584bed2ee3513db68924b4a6dba"
-
 [prune]
   go-tests = true
   unused-packages = true
-
-[[constraint]]
-  name = "github.com/minio/minio-go"
-  version = "6.0.5"
