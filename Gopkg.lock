@@ -86,7 +86,6 @@
     "tlsconfig"
   ]
   revision = "7395e3f8aa162843a74ed6d48e79627d9792ac55"
-  version = "v0.4.0"
 
 [[projects]]
   name = "github.com/docker/go-units"
@@ -362,6 +361,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "29a509922938b0896629a3476db3b7baad3528460fefde77889dc91090141661"
+  inputs-digest = "3bee11733ad2788701c457a0516c5084832275f0017674faf0cb39b1b65073bd"
   solver-name = "gps-cdcl"
   solver-version = 1

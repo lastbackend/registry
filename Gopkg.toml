@@ -24,19 +24,6 @@
 #   go-tests = true
 #   unused-packages = true
 
-# Override start
-# =========================================================================
-
-[[override]]
-  name = "github.com/docker/distribution"
-  revision = "83389a148052d74ac602f5f1d62f86ff2f3c4aa5"
-
-[[override]]
-  name = "github.com/docker/docker"
-  revision = "cbde00b44273a584bed2ee3513db68924b4a6dba"
-
-# =========================================================================
-# Override end
 
 [[constraint]]
   name = "github.com/Azure/azure-sdk-for-go"
@@ -51,12 +38,12 @@
   version = "3.2.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/docker/docker"
+  revision = "cbde00b44273a584bed2ee3513db68924b4a6dba"
 
 [[constraint]]
   name = "github.com/docker/go-connections"
-  version = "0.4.0"
+  revision = "7395e3f8aa162843a74ed6d48e79627d9792ac55"
 
 [[constraint]]
   name = "github.com/gorilla/mux"
