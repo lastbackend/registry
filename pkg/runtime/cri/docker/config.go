@@ -88,12 +88,12 @@ func GetHostConfig(spec *types.SpecTemplateContainer) *container.HostConfig {
 		links = append(links, fmt.Sprintf("%s:%s", l.Link, l.Alias))
 	}
 
-	log := container.LogConfig{}
+	logC := container.LogConfig{}
 	ports = make(nat.PortMap)
 
 	return &container.HostConfig{
 		Binds:           binds,
-		LogConfig:       log,
+		LogConfig:       logC,
 		NetworkMode:     container.NetworkMode(spec.Network.Mode),
 		PortBindings:    ports,
 		DNS:             spec.DNS.Server,
