@@ -32,7 +32,7 @@ import (
 		"strings"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"encoding/base64"
-)
+	)
 
 const (
 	logLevel  = 2
@@ -150,9 +150,15 @@ func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if resp.StatusCode == http.StatusBadGateway {
+			log.V(logLevel).Errorf("%s:auth:> bad gateway", logPrefix)
+			errors.HTTP.BadGateway(w)
+			return
+		}
+
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.V(logLevel).Errorf("%s:auth:> read response body: %v", logPrefix)
+			log.V(logLevel).Errorf("%s:auth:> read response body: %v", logPrefix, err)
 			errors.HTTP.InternalServerError(w)
 			return
 		}
