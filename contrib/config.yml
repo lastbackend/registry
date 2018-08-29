@@ -5,10 +5,10 @@ verbose: 7
 secret:
   token: "lstbknd"
 
-host: "hub.lstbknd.net"
+host: "hub.lstbknd.io"
 issuer: "registry.lstbknd.net"
-service: "hub.lstbknd.net"
-key: "/opt/cert/hub/server/hub.lstbknd.net.key.pem"
+service: "hub.lstbknd.io"
+key: "/opt/cert/hub/server/hub.lstbknd.io.key.pem"
 auth_server: "https://api.lstbknd.net/auth"
 access_token: "d424dd39e43a419c99b4abb88373bb30"
 

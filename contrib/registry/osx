@@ -4,7 +4,7 @@ sudo ifconfig lo0 alias 172.16.0.1
 
 2) Update the file hosts
 
-172.16.0.1 api.lstbknd.net hub.lstbknd.net
+172.16.0.1 api.lstbknd.net hub.lstbknd.io
 
 3) Then update the genesis startup configuration for the builder
 
@@ -15,5 +15,5 @@ builder:
    docker:
      host: "172.16.0.1"
    extra_hosts:
-    - "hub.lstbknd.net:172.16.0.1"
+    - "hub.lstbknd.io:172.16.0.1"
     - "api.lstbknd.net:172.16.0.1"
