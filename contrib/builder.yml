@@ -32,8 +32,8 @@ builder:
   blob_storage:
     type: "s3"
     endpoint: "127.0.0.1:9000"
-    id: "V1EV9NJJQJDMQL43HJR9"
-    secret: "scXdZkj2//SA9vCSwhr9uywSMuq/DrwY6MUoyOHg"
+    id: "O58DY1RITYG0J4R28537"
+    secret: "HIkiwTFq3FNsu+4Ff0pupD8jM0Zx/jgGJTX8krIe"
     bucket_name: "lb-bucket"
     ssl: false
   #    type: "azure"

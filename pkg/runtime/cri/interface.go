@@ -45,7 +45,6 @@ type ContainerRuntime interface {
 	ContainerRemove(ctx context.Context, ID string, clean bool, force bool) error
 	ContainerInspect(ctx context.Context, ID string) (*types.Container, error)
 	ContainerLogs(ctx context.Context, ID string, stdout, stderr, follow bool) (io.ReadCloser, error)
-	ToContainerCopy(ctx context.Context, ID, path string, content io.Reader) error
 }
 
 type ImageRuntime interface {

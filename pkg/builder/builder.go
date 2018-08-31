@@ -29,12 +29,12 @@ import (
 	"github.com/lastbackend/registry/pkg/builder/http"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/runtime/cri/cri"
+	"github.com/lastbackend/registry/pkg/util/blob"
+	"github.com/lastbackend/registry/pkg/util/blob/azure"
 	"github.com/lastbackend/registry/pkg/util/blob/s3"
 	"github.com/lastbackend/registry/pkg/util/system"
 	"github.com/spf13/viper"
-	"github.com/lastbackend/registry/pkg/util/blob"
-	"github.com/lastbackend/registry/pkg/util/blob/azure"
-	)
+)
 
 // Daemon - run builder daemon
 func Daemon() bool {
@@ -84,6 +84,7 @@ func Daemon() bool {
 				viper.GetString("builder.blob_storage.id"),
 				viper.GetString("builder.blob_storage.secret"),
 				viper.GetString("builder.blob_storage.bucket_name"),
+				viper.GetString("builder.blob_storage.region"),
 				viper.GetBool("builder.blob_storage.ssl"),
 			)
 		case "azure":
@@ -95,7 +96,7 @@ func Daemon() bool {
 				viper.GetBool("builder.blob_storage.ssl"),
 			)
 		default:
-
+			panic("unknown blog storage driver")
 		}
 
 		envs.Get().SetBlobStorage(blobStorage)

@@ -18,6 +18,10 @@ build:
 	@echo "== Building Last.Backend platform"
 	@bash ./hack/build-cross.sh
 
+image:
+	@echo "== Pre-building configuration"
+	@sh ./hack/build-images.sh
+
 install:
 	@echo "== Install binaries"
 	@bash ./hack/install-cross.sh

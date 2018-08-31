@@ -168,10 +168,3 @@ func (r *Runtime) ContainerInspect(ctx context.Context, ID string) (*types.Conta
 	container.Label = meta
 	return container, nil
 }
-
-// ToContainerCopy - https://docs.docker.com/engine/api/v1.29/#operation/PutContainerArchive
-func (r *Runtime) ToContainerCopy(ctx context.Context, ID, path string, content io.Reader) error {
-	return r.client.CopyToContainer(ctx, ID, path, content, docker.CopyToContainerOptions{
-		AllowOverwriteDirWithFile: true,
-	})
-}

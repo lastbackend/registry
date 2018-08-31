@@ -59,6 +59,7 @@ func Daemon() bool {
 				viper.GetString("api.blob_storage.id"),
 				viper.GetString("api.blob_storage.secret"),
 				viper.GetString("api.blob_storage.bucket_name"),
+				viper.GetString("api.blob_storage.region"),
 				viper.GetBool("api.blob_storage.ssl"),
 			)
 		case "azure":
@@ -70,6 +71,7 @@ func Daemon() bool {
 				viper.GetBool("api.blob_storage.ssl"),
 			)
 		default:
+			panic("unknown blog storage driver")
 		}
 
 		envs.Get().SetBlobStorage(blobStorage)
