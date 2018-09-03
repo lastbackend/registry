@@ -16,23 +16,22 @@
 // from Last.Backend LLC.
 //
 
-package v1
+package types
 
-import (
-	"github.com/lastbackend/registry/pkg/api/types/v1/request"
-	"github.com/lastbackend/registry/pkg/api/types/v1/views"
-)
+import "time"
 
-type IRequest interface {
-	Image() *request.ImageRequest
-	Build() *request.BuildRequest
-	Builder() *request.BuilderRequest
-	Registry() *request.RegistryRequest
+type System struct {
+	AccessToken string
+	AuthServer  string
+	Created     time.Time
+	Updated     time.Time
 }
 
-type IView interface {
-	Build() *views.BuildView
-	Builder() *views.BuilderView
-	Image() *views.ImageView
-	Registry() *views.RegistryView
+// *********************************************
+// System distribution options
+// *********************************************
+
+type SystemUpdateOptions struct {
+	AccessToken *string
+	AuthServer  *string
 }

@@ -16,23 +16,31 @@
 // from Last.Backend LLC.
 //
 
-package v1
+package mock
 
 import (
-	"github.com/lastbackend/registry/pkg/api/types/v1/request"
-	"github.com/lastbackend/registry/pkg/api/types/v1/views"
+	"context"
+
+	"github.com/lastbackend/registry/pkg/distribution/types"
+	"github.com/lastbackend/registry/pkg/log"
+	"github.com/lastbackend/registry/pkg/storage/storage"
 )
 
-type IRequest interface {
-	Image() *request.ImageRequest
-	Build() *request.BuildRequest
-	Builder() *request.BuilderRequest
-	Registry() *request.RegistryRequest
+type SystemStorage struct {
+	storage.System
 }
 
-type IView interface {
-	Build() *views.BuildView
-	Builder() *views.BuilderView
-	Image() *views.ImageView
-	Registry() *views.RegistryView
+func (s *SystemStorage) Get(ctx context.Context) (*types.System, error) {
+	log.V(logLevel).Debugf("%s:system:get> get system", logPrefix)
+	return nil, nil
+}
+
+func (s *SystemStorage) Update(ctx context.Context, system *types.System) error {
+	log.V(logLevel).Debugf("%s:system:update> update system %#v", logPrefix, system)
+	return nil
+}
+
+func newSystemStorage() *SystemStorage {
+	s := new(SystemStorage)
+	return s
 }

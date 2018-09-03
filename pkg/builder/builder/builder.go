@@ -33,10 +33,10 @@ import (
 	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/spf13/viper"
 
+	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
 	lbt "github.com/lastbackend/registry/pkg/distribution/types"
 	"io/ioutil"
-	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 )
 
 const (

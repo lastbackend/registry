@@ -1,16 +1,16 @@
 server {
   listen         80;
-  server_name    hub.lstbknd.io;
+  server_name    hub.lstbknd.net;
   return         301 https://$server_name$request_uri;
 }
 
 server {
 
   listen 443 ssl;
-  server_name hub.lstbknd.io www.hub.lstbknd.io;
+  server_name hub.lstbknd.net www.hub.lstbknd.net;
 
-  ssl_certificate /usr/local/etc/nginx/ssl/hub.lstbknd.io.cert.pem;
-  ssl_certificate_key /usr/local/etc/nginx/ssl/hub.lstbknd.io.key.pem;
+  ssl_certificate /usr/local/etc/nginx/ssl/hub.lstbknd.net.cert.pem;
+  ssl_certificate_key /usr/local/etc/nginx/ssl/hub.lstbknd.net.key.pem;
 
   client_max_body_size 0; # disable any limits to avoid HTTP 413 for large image uploads
 

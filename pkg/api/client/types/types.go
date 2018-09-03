@@ -31,6 +31,7 @@ type ClientV1 interface {
 	Image(args ...string) ImageClientV1
 
 	Get(ctx context.Context) (*vv1.Registry, error)
+	Update(ctx context.Context, opts *rv1.RegistryUpdateOptions) (*vv1.Registry, error)
 }
 
 type BuildClientV1 interface {

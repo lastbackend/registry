@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/viper"
 	"net/http"
 	"strings"
-	)
+)
 
 // Auth - authentication middleware
 func Authenticate(h http.HandlerFunc) http.HandlerFunc {

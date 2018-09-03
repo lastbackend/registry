@@ -39,3 +39,7 @@ func (Request) Build() *BuildRequest {
 func (Request) Builder() *BuilderRequest {
 	return new(BuilderRequest)
 }
+
+func (Request) Registry() *RegistryRequest {
+	return new(RegistryRequest)
+}

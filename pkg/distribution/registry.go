@@ -20,10 +20,10 @@ package distribution
 
 import (
 	"context"
-	"github.com/spf13/viper"
-	"strings"
-	"sort"
 	"errors"
+	"github.com/spf13/viper"
+	"sort"
+	"strings"
 
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
@@ -41,7 +41,7 @@ type Registry struct {
 }
 
 // Info - get registry info
-func (c *Registry) Get() (*types.Registry, error) {
+func (r *Registry) Get() (*types.Registry, error) {
 
 	log.V(logLevel).Debugf("%s:get:> get info", logRegistryPrefix)
 

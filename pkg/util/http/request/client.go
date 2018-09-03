@@ -20,11 +20,11 @@ package request
 
 import (
 	"fmt"
+	"github.com/lastbackend/registry/pkg/util/serializer"
+	"github.com/pkg/errors"
 	"net/http"
 	"net/url"
 	"strings"
-	"github.com/lastbackend/registry/pkg/util/serializer"
-	"github.com/pkg/errors"
 	"time"
 )
 

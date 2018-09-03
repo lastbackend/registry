@@ -24,7 +24,7 @@ import (
 	"io"
 	"strconv"
 
-		rv1 "github.com/lastbackend/registry/pkg/builder/types/v1/request"
+	rv1 "github.com/lastbackend/registry/pkg/builder/types/v1/request"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/util/http/request"
 )

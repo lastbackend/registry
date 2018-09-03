@@ -37,8 +37,8 @@ import (
 	"github.com/lastbackend/registry/pkg/util/validator"
 
 	lbt "github.com/lastbackend/registry/pkg/distribution/types"
-	"net/http"
 	"github.com/lastbackend/registry/pkg/util/cleaner"
+	"net/http"
 )
 
 const (

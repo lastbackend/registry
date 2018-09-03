@@ -35,9 +35,9 @@ import (
 type BuildClient struct {
 	client *request.RESTClient
 
-	owner  string
-	name   string
-	id     string
+	owner string
+	name  string
+	id    string
 }
 
 func (bc BuildClient) Create(ctx context.Context, opts *rv1.BuildCreateOptions) (*vv1.Build, error) {

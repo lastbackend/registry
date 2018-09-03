@@ -5,12 +5,10 @@ verbose: 7
 secret:
   token: "lstbknd"
 
-host: "hub.lstbknd.io"
+host: "hub.lstbknd.net"
 issuer: "registry.lstbknd.net"
-service: "hub.lstbknd.io"
-key: "/opt/cert/hub/server/hub.lstbknd.io.key.pem"
-auth_server: "https://api.lstbknd.net/auth"
-access_token: "779783aa913242a297b0061137026e30"
+service: "hub.lstbknd.net"
+key: "/opt/cert/hub/server/hub.lstbknd.net.key.pem"
 
 # Database and Messages broker
 psql: "host=127.0.0.1 port=5431 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"

@@ -28,6 +28,10 @@ import (
 	"time"
 )
 
+const (
+	logBuildPrefix = "distribution:build"
+)
+
 type IBuild interface {
 	Get(id string) (*types.Build, error)
 	List(image *types.Image, opts *types.BuildListOptions) ([]*types.Build, error)
@@ -44,11 +48,11 @@ type Build struct {
 
 func (b Build) Get(id string) (*types.Build, error) {
 
-	log.V(logLevel).Infof("%s:build:get:> get build %s info", logPrefix, id)
+	log.V(logLevel).Infof("%s:build:get:> get build %s info", logBuildPrefix, id)
 
 	build, err := b.storage.Build().Get(b.context, id)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:build:get:> get build %s info err: %v", logPrefix, id, err)
+		log.V(logLevel).Errorf("%s:build:get:> get build %s info err: %v", logBuildPrefix, id, err)
 		return nil, err
 	}
 
@@ -61,7 +65,7 @@ func (b Build) List(image *types.Image, opts *types.BuildListOptions) ([]*types.
 		return nil, errors.New("invalid argument")
 	}
 
-	log.V(logLevel).Infof("%s:build:list:> get builds list for image %s/%s", logPrefix, image.Meta.Owner, image.Meta.Name)
+	log.V(logLevel).Infof("%s:build:list:> get builds list for image %s/%s", logBuildPrefix, image.Meta.Owner, image.Meta.Name)
 
 	f := filter.NewFilter().Build()
 	if opts.Active != nil {
@@ -70,18 +74,18 @@ func (b Build) List(image *types.Image, opts *types.BuildListOptions) ([]*types.
 
 	builds, err := b.storage.Build().List(b.context, image.Meta.ID, f)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:build:list:> get builds list err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:build:list:> get builds list err: %v", logBuildPrefix, err)
 		return nil, err
 	}
 
-	log.V(logLevel).Debugf("%s:build:list:> found builds count: %d", logPrefix, len(builds))
+	log.V(logLevel).Debugf("%s:build:list:> found builds count: %d", logBuildPrefix, len(builds))
 
 	return builds, nil
 }
 
 func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {
 
-	log.V(logLevel).Infof("%s:build:create> create new build %#v", logPrefix, opts)
+	log.V(logLevel).Infof("%s:build:create> create new build %#v", logBuildPrefix, opts)
 
 	if opts == nil {
 		opts = new(types.BuildCreateOptions)
@@ -152,7 +156,7 @@ func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {
 	bld.Spec.Config.Command = opts.Spec.Command
 
 	if err := b.storage.Build().Insert(b.context, bld); err != nil {
-		log.V(logLevel).Errorf("%s:build:create> create new build err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:build:create> create new build err: %v", logBuildPrefix, err)
 		return nil, err
 	}
 
@@ -169,7 +173,7 @@ func (b Build) UpdateStatus(build *types.Build, opts *types.BuildUpdateStatusOpt
 		opts = new(types.BuildUpdateStatusOptions)
 	}
 
-	log.V(logLevel).Infof("%s:build:update_status:> update build %s data", logPrefix, build.Meta.ID)
+	log.V(logLevel).Infof("%s:build:update_status:> update build %s data", logBuildPrefix, build.Meta.ID)
 
 	switch true {
 	case opts.Canceled:
@@ -188,7 +192,7 @@ func (b Build) UpdateStatus(build *types.Build, opts *types.BuildUpdateStatusOpt
 	}
 
 	if err := b.storage.Build().Update(b.context, build); err != nil {
-		log.Errorf("%s:build:update_status:> update build status err: %v", logPrefix, err)
+		log.Errorf("%s:build:update_status:> update build status err: %v", logBuildPrefix, err)
 		return err
 	}
 
@@ -205,13 +209,13 @@ func (b Build) UpdateInfo(build *types.Build, opts *types.BuildUpdateInfoOptions
 		opts = new(types.BuildUpdateInfoOptions)
 	}
 
-	log.V(logLevel).Infof("%s:build:update_info:> update build %s data", logPrefix, build.Meta.ID)
+	log.V(logLevel).Infof("%s:build:update_info:> update build %s data", logBuildPrefix, build.Meta.ID)
 
 	build.Status.Size = opts.Size
 	build.Spec.Image.Hash = opts.Hash
 
 	if err := b.storage.Build().Update(b.context, build); err != nil {
-		log.Errorf("%s:build:update_info:> set build info err: %v", logPrefix, err)
+		log.Errorf("%s:build:update_info:> set build info err: %v", logBuildPrefix, err)
 		return err
 	}
 
@@ -220,10 +224,10 @@ func (b Build) UpdateInfo(build *types.Build, opts *types.BuildUpdateInfoOptions
 
 func (b Build) Unfreeze() error {
 
-	log.V(logLevel).Infof("%s:build:unfreeze:> unfreeze dangling builds", logPrefix)
+	log.V(logLevel).Infof("%s:build:unfreeze:> unfreeze dangling builds", logBuildPrefix)
 
 	if err := b.storage.Build().Unfreeze(b.context); err != nil {
-		log.Errorf("%s:build:unfreeze:> unfreeze builds err: %v", logPrefix, err)
+		log.Errorf("%s:build:unfreeze:> unfreeze builds err: %v", logBuildPrefix, err)
 		return err
 	}
 

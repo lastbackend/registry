@@ -33,8 +33,8 @@ import (
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/converter"
 	"github.com/lastbackend/registry/pkg/util/http/utils"
-	"io"
 	"github.com/spf13/viper"
+	"io"
 )
 
 const (

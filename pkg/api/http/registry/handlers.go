@@ -19,20 +19,21 @@
 package registry
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"strings"
+
 	"github.com/lastbackend/registry/pkg/api/envs"
 	"github.com/lastbackend/registry/pkg/api/types/v1"
 	"github.com/lastbackend/registry/pkg/distribution"
 	"github.com/lastbackend/registry/pkg/distribution/errors"
+	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/url"
 	"github.com/spf13/viper"
-	"io/ioutil"
-	"encoding/json"
-		"strings"
-	"github.com/lastbackend/registry/pkg/distribution/types"
-	"encoding/base64"
-	)
+)
 
 const (
 	logLevel  = 2
@@ -66,6 +67,62 @@ func RegistryInfoH(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func RegistryUpdateH(w http.ResponseWriter, r *http.Request) {
+
+	log.V(logLevel).Debugf("%s:update:> update registry info", logPrefix)
+
+	var (
+		rm = distribution.NewRegistryModel(r.Context(), envs.Get().GetStorage())
+		sm = distribution.NewSystemModel(r.Context(), envs.Get().GetStorage())
+	)
+
+	// request body struct
+	rq := v1.Request().Registry().UpdateOptions()
+	if e := rq.DecodeAndValidate(r.Body); e != nil {
+		log.V(logLevel).Errorf("%s:update:> validation incoming data err: %v", logPrefix, e)
+		errors.New("Invalid incoming data").Unknown().Http(w)
+		return
+	}
+
+	system, err := sm.Get()
+	if err != nil {
+		log.V(logLevel).Errorf("%s:update:> update registry err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	opts := new(types.SystemUpdateOptions)
+	opts.AccessToken = rq.AccessToken
+	opts.AuthServer = rq.AuthServer
+
+	err = sm.Update(system, opts)
+	if err != nil {
+		log.V(logLevel).Errorf("%s:update:> update registry err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	ri, err := rm.Get()
+	if err != nil {
+		log.V(logLevel).Errorf("%s:update:> get registry err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	response, err := v1.View().Registry().New(ri).ToJson()
+	if err != nil {
+		log.V(logLevel).Errorf("%s:update:> convert struct to json err: %v", logPrefix)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(response); err != nil {
+		log.V(logLevel).Errorf("%s:update:> write response err: %v", logPrefix, err)
+		return
+	}
+}
+
 func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
 
 	log.V(logLevel).Debugf("%s:auth:> authentication registry", logPrefix)
@@ -82,6 +139,7 @@ func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
 		account = new(types.RegistryUser)
 		scopes  = new(types.Scopes)
 		rgm     = distribution.NewRegistryModel(r.Context(), envs.Get().GetStorage())
+		sm = distribution.NewSystemModel(r.Context(), envs.Get().GetStorage())
 	)
 
 	// Checking for service being authenticated.
@@ -112,6 +170,13 @@ func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
 
 	log.V(logLevel).Debugf("%s:auth:> check scope", logPrefix)
 
+	system, err := sm.Get()
+	if err != nil {
+		log.V(logLevel).Errorf("%s:update:> update registry err: %v", logPrefix, err)
+		errors.HTTP.InternalServerError(w)
+		return
+	}
+
 	for _, scopeStr := range scope {
 
 		s, err := rgm.ParseScope(scopeStr)
@@ -121,7 +186,7 @@ func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		u, err := url.Parse(viper.GetString("auth_server"))
+		u, err := url.Parse(system.AuthServer)
 		if err != nil {
 			log.V(logLevel).Errorf("%s:auth:> auth server url incorrect: %v", logPrefix)
 			errors.HTTP.InternalServerError(w)
@@ -135,7 +200,7 @@ func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
 		}
 
 		req.Header.Set("Authorization", r.Header.Get("Authorization"))
-		req.Header.Set("X-Registry-Auth", viper.GetString("access_token"))
+		req.Header.Set("X-Registry-Auth", system.AccessToken)
 
 		q := req.URL.Query()
 

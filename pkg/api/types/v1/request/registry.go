@@ -16,23 +16,9 @@
 // from Last.Backend LLC.
 //
 
-package v1
+package request
 
-import (
-	"github.com/lastbackend/registry/pkg/api/types/v1/request"
-	"github.com/lastbackend/registry/pkg/api/types/v1/views"
-)
-
-type IRequest interface {
-	Image() *request.ImageRequest
-	Build() *request.BuildRequest
-	Builder() *request.BuilderRequest
-	Registry() *request.RegistryRequest
-}
-
-type IView interface {
-	Build() *views.BuildView
-	Builder() *views.BuilderView
-	Image() *views.ImageView
-	Registry() *views.RegistryView
+type RegistryUpdateOptions struct {
+	AccessToken *string `json:"access_token"`
+	AuthServer  *string `json:"auth_server"`
 }

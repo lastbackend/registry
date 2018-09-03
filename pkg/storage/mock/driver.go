@@ -47,6 +47,7 @@ type Storage struct {
 	*BuildStorage
 	*BuilderStorage
 	*ImageStorage
+	*SystemStorage
 }
 
 const sql_connection_name = "sqlc"
@@ -137,6 +138,13 @@ func (s *Storage) Image() storage.Image {
 		return nil
 	}
 	return s.ImageStorage
+}
+
+func (s *Storage) System() storage.System {
+	if s == nil {
+		return nil
+	}
+	return s.SystemStorage
 }
 
 func New() (*Storage, error) {

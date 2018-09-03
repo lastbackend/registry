@@ -33,6 +33,7 @@ type IStorage interface {
 	Build() storage.Build
 	Image() storage.Image
 	Builder() storage.Builder
+	System() storage.System
 }
 
 type IFilter interface {

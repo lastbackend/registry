@@ -19,16 +19,16 @@
 package types
 
 import (
-	"crypto/rsa"
-	"github.com/dgrijalva/jwt-go"
-	"time"
-	"io/ioutil"
-	"crypto/x509"
-	"crypto"
-	"strings"
-	"encoding/base32"
 	"bytes"
+	"crypto"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/base32"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/lastbackend/registry/pkg/util/generator"
+	"io/ioutil"
+	"strings"
+	"time"
 )
 
 type RegistryList []*Registry
