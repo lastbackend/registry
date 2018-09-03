@@ -23,22 +23,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/lastbackend/lastbackend/pkg/log"
+	"github.com/lastbackend/lastbackend/pkg/runtime/cri"
+	"github.com/lastbackend/lastbackend/pkg/runtime/cri/docker"
+	"github.com/lastbackend/lastbackend/pkg/runtime/iri"
 	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
-	"github.com/lastbackend/registry/pkg/runtime/cri"
-	"github.com/lastbackend/registry/pkg/runtime/cri/docker"
+	"github.com/lastbackend/registry/pkg/util/cleaner"
 	"github.com/lastbackend/registry/pkg/util/validator"
 
-	lbt "github.com/lastbackend/registry/pkg/distribution/types"
-	"net/http"
-	"github.com/lastbackend/registry/pkg/util/cleaner"
+	lbt "github.com/lastbackend/lastbackend/pkg/distribution/types"
 )
 
 const (
@@ -71,6 +72,7 @@ type worker struct {
 	stdout bool
 
 	cri cri.CRI
+	iri iri.IRI
 }
 
 type workerOpts struct {
@@ -78,7 +80,7 @@ type workerOpts struct {
 }
 
 // Create and configure new worker
-func newWorker(ctx context.Context, id string, cri cri.CRI) *worker {
+func newWorker(ctx context.Context, id string, cri cri.CRI, iri iri.IRI) *worker {
 	log.Infof("%s:new:> create new worker", logWorkerPrefix)
 	var w = new(worker)
 
@@ -87,6 +89,7 @@ func newWorker(ctx context.Context, id string, cri cri.CRI) *worker {
 	w.pid = pid
 	w.logPath = os.TempDir()
 	w.cri = cri
+	w.iri = iri
 
 	return w
 }
@@ -121,11 +124,13 @@ func (w *worker) run(t *types.Task, wo *workerOpts) error {
 	err = w.build()
 	if err != nil && err != context.Canceled {
 		log.Errorf("%s:start:> build t %s err:  %s", logWorkerPrefix, w.pid, err)
+		// Upload logs to blob storage
+		w.uploadLogs()
 		return err
 	}
 
 	// Upload logs to blob storage
-	go w.upload()
+	w.uploadLogs()
 
 	// Pushing docker image to docker registry
 	err = w.push()
@@ -166,10 +171,8 @@ func (w *worker) configure() error {
 		rootCerts = w.ctx.Value("rootCerts").([]string)
 	}
 
-	spec := lbt.SpecTemplateContainer{
-		Image: lbt.SpecTemplateContainerImage{
-			Name: "docker:dind",
-		},
+	spec := lbt.ContainerManifest{
+		Image:      "docker:dind",
 		AutoRemove: true,
 		ExtraHosts: extraHosts,
 		Exec: lbt.SpecTemplateContainerExec{
@@ -191,34 +194,31 @@ func (w *worker) configure() error {
 				continue
 			}
 
-			host := items[0]
-			path := items[1]
+			hostPath := items[1]
 			mode := "ro" // read only
 
 			if len(items) > 2 {
 				mode = items[2]
 			}
 
-			spec.Volumes = append(spec.Volumes, types.SpecTemplateContainerVolume{
-				HostPath:      path,
-				ContainerPath: fmt.Sprintf("/etc/docker/certs.d/%s/ca.crt", host),
-				Mode:          mode,
-			})
+			containerPath := fmt.Sprintf("/etc/docker/certs.d/%s/ca.crt", items[0])
+
+			spec.Binds = append(spec.Binds, fmt.Sprintf("%s:%s:%s", hostPath, containerPath, mode))
 		}
 	}
 
-	dcid, err := w.cri.ContainerCreate(w.ctx, &spec)
+	dcid, err := w.cri.Create(w.ctx, &spec)
 	if err != nil {
 		log.Errorf("%s:start:> create container with docker:dind err: %v", logWorkerPrefix, err)
 		return err
 	}
 
-	if err := w.cri.ContainerStart(w.ctx, dcid); err != nil {
+	if err := w.cri.Start(w.ctx, dcid); err != nil {
 		log.Errorf("%s:start:> start container with docker:dind err: %v", logWorkerPrefix, err)
 		return err
 	}
 
-	inspect, err := w.cri.ContainerInspect(w.ctx, dcid)
+	inspect, err := w.cri.Inspect(w.ctx, dcid)
 	if err != nil {
 		log.Errorf("%s:start:> Inspect docker:dind container err: %v", logWorkerPrefix, err)
 		return err
@@ -289,18 +289,16 @@ func (w *worker) build() error {
 	}
 
 	// TODO: change this logic to docker client [cli.ImageBuild]
-	spec := &lbt.SpecTemplateContainer{
-		Image: lbt.SpecTemplateContainerImage{
-			Name: "docker:git",
-		},
-		Labels:  map[string]string{"LBR": w.pid},
-		EnvVars: []lbt.SpecTemplateContainerEnv{{Name: "DOCKER_HOST", Value: w.endpoint}},
+	spec := &lbt.ContainerManifest{
+		Image:  "docker:git",
+		Labels: map[string]string{"LBR": w.pid},
+		Envs:   []string{fmt.Sprintf("%s=%s", "DOCKER_HOST", w.endpoint)},
 		Exec: lbt.SpecTemplateContainerExec{
 			Command: []string{"build", "-f", dockerfile, "-t", image, gituri},
 		},
 	}
 
-	cid, err := w.cri.ContainerCreate(w.ctx, spec)
+	cid, err := w.cri.Create(w.ctx, spec)
 	switch err {
 	case nil:
 	case context.Canceled:
@@ -315,7 +313,7 @@ func (w *worker) build() error {
 
 	w.gcid = cid
 
-	err = w.cri.ContainerStart(w.ctx, cid)
+	err = w.cri.Start(w.ctx, cid)
 	switch err {
 	case nil:
 	case context.Canceled:
@@ -332,8 +330,12 @@ func (w *worker) build() error {
 		go w.logging(os.Stdout)
 	}
 
-	ch := make(chan *types.Container)
-	go w.cri.Subscribe(w.ctx, ch, &types.ContainerEventFilter{Image: "docker:git"})
+	ch, err := w.cri.Subscribe(w.ctx)
+	if err != nil {
+		log.Errorf("%s:build:> subscribe container err: %v", logWorkerPrefix, err)
+		w.sendEvent(event{step: types.BuildStepBuild, message: errorBuildFailed, error: true})
+		return err
+	}
 
 	for {
 		select {
@@ -350,7 +352,7 @@ func (w *worker) build() error {
 				return err
 			}
 
-			if c.Label != w.pid {
+			if c.Labels != w.pid {
 				continue
 			}
 
@@ -395,7 +397,7 @@ func (w *worker) push() error {
 		return err
 	}
 
-	req, err := cli.ImagePush(w.ctx, &lbt.SpecTemplateContainerImage{Name: namespace, Auth: auth})
+	req, err := w.iri.Push(w.ctx, &lbt.ImageManifest{Name: namespace, Auth: auth})
 	switch err {
 	case nil:
 	case context.Canceled:
@@ -483,7 +485,7 @@ func (w *worker) push() error {
 		}
 	}
 
-	info, _, err := cli.ImageInspect(w.ctx, namespace)
+	info, err := w.iri.Inspect(w.ctx, namespace)
 	switch err {
 	case nil:
 	case context.Canceled:
@@ -507,22 +509,22 @@ func (w *worker) finish() error {
 	return nil
 }
 
-func (w *worker) upload() error {
+func (w *worker) uploadLogs() error {
 
-	req, err := w.cri.ContainerLogs(w.ctx, w.gcid, true, true, true)
+	req, err := w.cri.Logs(w.ctx, w.gcid, true, true, true)
 	switch err {
 	case nil:
 	case context.Canceled:
 		return nil
 	default:
 		err := fmt.Errorf("running logs stream: %s", err)
-		log.Errorf("%s:upload:> logs container err: %v", logWorkerPrefix, err)
+		log.Errorf("%s:upload_logs:> logs container err: %v", logWorkerPrefix, err)
 		return err
 	}
 	defer func() {
 		if req != nil {
 			if err := req.Close(); err != nil {
-				log.Errorf("%s:upload:> close log stream err: %s", err)
+				log.Errorf("%s:upload_logs:> close log stream err: %s", err)
 				return
 			}
 		}
@@ -531,7 +533,7 @@ func (w *worker) upload() error {
 	if envs.Get().GetBlobStorage() != nil {
 		err = envs.Get().GetBlobStorage().Write(w.task.Meta.ID, cleaner.NewReader(req))
 		if err != nil {
-			log.Errorf("%s:upload:> write container logs to blob err: %v", logWorkerPrefix, err)
+			log.Errorf("%s:upload_logs:> write container logs to blob err: %v", logWorkerPrefix, err)
 		}
 	}
 
@@ -544,11 +546,11 @@ func (w *worker) cancel() {
 
 func (w *worker) cleanup() {
 
-	if err := w.cri.ContainerRemove(context.Background(), w.dcid, true, true); err != nil {
+	if err := w.cri.Remove(context.Background(), w.dcid, true, true); err != nil {
 		log.Errorf("%s:cleanup:> remove %s container dind  err: %v", logWorkerPrefix, w.dcid, err)
 	}
 
-	if err := w.cri.ContainerRemove(context.Background(), w.gcid, true, true); err != nil {
+	if err := w.cri.Remove(context.Background(), w.gcid, true, true); err != nil {
 		log.Errorf("%s:cleanup:> remove %s container git err: %v", logWorkerPrefix, w.gcid, err)
 	}
 
@@ -561,7 +563,7 @@ func (w *worker) logs(writer io.Writer) error {
 
 func (w *worker) logging(writer io.Writer) error {
 
-	req, err := w.cri.ContainerLogs(w.ctx, w.gcid, true, true, true)
+	req, err := w.cri.Logs(w.ctx, w.gcid, true, true, true)
 	switch err {
 	case nil:
 	case context.Canceled:
@@ -656,16 +658,16 @@ func (w *worker) sendEvent(event event) {
 }
 
 // Send status build event to controller
-func (w *worker) sendInfo(info *lbt.ImageInfo) {
+func (w *worker) sendInfo(info *lbt.Image) {
 	log.Debugf("%s:send_info> send task status event %s", logWorkerPrefix, w.pid)
 
 	mspec := w.task.Spec
 	mmeta := w.task.Meta
 
 	e := new(request.BuildSetImageInfoOptions)
-	e.Size = info.Size
-	e.Hash = info.ID
-	e.VirtualSize = info.VirtualSize
+	e.Size = info.Status.Size
+	e.Hash = info.Meta.ID
+	e.VirtualSize = info.Status.VirtualSize
 
 	envs.Get().GetClient().V1().
 		Image(mspec.Image.Owner, mspec.Image.Name).

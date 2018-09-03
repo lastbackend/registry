@@ -21,22 +21,23 @@ package builder
 import (
 	"context"
 	"io"
+	"io/ioutil"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
+	"github.com/lastbackend/lastbackend/pkg/log"
+	"github.com/lastbackend/lastbackend/pkg/runtime/cri"
+	"github.com/lastbackend/lastbackend/pkg/runtime/iri"
 	"github.com/lastbackend/registry/pkg/api/types/v1"
+	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 	"github.com/lastbackend/registry/pkg/builder/envs"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
-	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/spf13/viper"
 
+	lbt "github.com/lastbackend/lastbackend/pkg/distribution/types"
 	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
-	lbt "github.com/lastbackend/registry/pkg/distribution/types"
-	"io/ioutil"
-	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 )
 
 const (
@@ -52,6 +53,7 @@ type Builder struct {
 	cancel   context.CancelFunc
 	hostname string
 	cri      cri.CRI
+	iri      iri.IRI
 	limit    int
 
 	opts BuilderOpts
@@ -71,7 +73,7 @@ type BuilderOpts struct {
 }
 
 // Preparing the builder environment for workers
-func New(cri cri.CRI, opts *BuilderOpts) *Builder {
+func New(cri cri.CRI, iri iri.IRI, opts *BuilderOpts) *Builder {
 
 	log.Infof("%s:new:> create builder", logBuilderPrefix)
 
@@ -86,6 +88,7 @@ func New(cri cri.CRI, opts *BuilderOpts) *Builder {
 
 	b.limit = opts.Limit
 	b.cri = cri
+	b.iri = iri
 	b.opts = *opts
 
 	b.done = make(chan bool)
@@ -177,7 +180,7 @@ func (b *Builder) manage() error {
 			case t := <-b.tasks:
 
 				log.Debugf("%s:manage:> create new worker", logWorkerPrefix)
-				w := newWorker(b.ctx, t.Meta.ID, b.cri)
+				w := newWorker(b.ctx, t.Meta.ID, b.cri, b.iri)
 
 				b.Lock()
 				b.workers[w] = true
@@ -239,7 +242,7 @@ func (b *Builder) manage() error {
 func (b *Builder) configure() error {
 	// Check image exists
 	imageExists := func(name string) bool {
-		images, err := b.cri.ImageList(b.ctx)
+		images, err := b.iri.List(b.ctx)
 		if err != nil {
 			return false
 		}
@@ -267,9 +270,7 @@ func (b *Builder) configure() error {
 			continue
 		}
 
-		req, err := b.cri.ImagePull(b.ctx, &lbt.SpecTemplateContainerImage{
-			Name: img,
-		})
+		req, err := b.iri.Pull(b.ctx, &lbt.ImageManifest{Name: img})
 		if err != nil {
 			log.Errorf("%s:configure:> pull image err: %v", logWorkerPrefix, err)
 			return err
@@ -290,7 +291,7 @@ func (b *Builder) configure() error {
 
 func (b *Builder) restore() error {
 
-	containers, err := b.cri.ContainerList(b.ctx, true)
+	containers, err := b.cri.List(b.ctx, true)
 	if err != nil {
 		log.Errorf("Pods restore error: %v", err)
 		return err
@@ -298,14 +299,14 @@ func (b *Builder) restore() error {
 
 	for _, c := range containers {
 
-		info, err := b.cri.ContainerInspect(b.ctx, c.ID)
+		info, err := b.cri.Inspect(b.ctx, c.ID)
 		if err != nil {
 			log.Errorf("inspect container err: %v", err)
 			return err
 		}
 
 		// TODO: here you need get builder state and implement the logic of workers recovery
-		if err := b.cri.ContainerRemove(b.ctx, info.ID, true, true); err != nil {
+		if err := b.cri.Remove(b.ctx, info.ID, true, true); err != nil {
 			log.Errorf("remove container err: %v", err)
 			return err
 		}

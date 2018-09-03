@@ -21,10 +21,11 @@ package v1
 import (
 	"context"
 
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/api/client/types"
-	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/util/http/request"
+
+	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
 )
 
 type Client struct {

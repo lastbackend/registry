@@ -19,20 +19,21 @@
 package registry
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"strings"
+
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/api/envs"
 	"github.com/lastbackend/registry/pkg/api/types/v1"
 	"github.com/lastbackend/registry/pkg/distribution"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
-	"github.com/lastbackend/registry/pkg/log"
+	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/util/url"
 	"github.com/spf13/viper"
-	"io/ioutil"
-	"encoding/json"
-		"strings"
-	"github.com/lastbackend/registry/pkg/distribution/types"
-	"encoding/base64"
-	)
+)
 
 const (
 	logLevel  = 2

@@ -23,12 +23,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/lastbackend/lastbackend/pkg/log"
+	"github.com/lastbackend/lastbackend/pkg/runtime/cri/cri"
+	"github.com/lastbackend/lastbackend/pkg/runtime/iri/iri"
 	"github.com/lastbackend/registry/pkg/api/client"
 	"github.com/lastbackend/registry/pkg/builder/builder"
 	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/builder/http"
-	"github.com/lastbackend/registry/pkg/log"
-	"github.com/lastbackend/registry/pkg/runtime/cri/cri"
 	"github.com/lastbackend/registry/pkg/util/blob"
 	"github.com/lastbackend/registry/pkg/util/blob/azure"
 	"github.com/lastbackend/registry/pkg/util/blob/s3"
@@ -43,9 +44,14 @@ func Daemon() bool {
 
 	log.New(viper.GetInt("verbose"))
 
-	ri, err := cri.New()
+	_cri, err := cri.New()
 	if err != nil {
-		log.Fatalf("Cannot initialize runtime: %v", err)
+		log.Fatalf("Cannot initialize container runtime interface: %v", err)
+	}
+
+	_iri, err := iri.New()
+	if err != nil {
+		log.Fatalf("Cannot initialize image runtime interface: %v", err)
 	}
 
 	cfg := client.NewConfig()
@@ -102,7 +108,7 @@ func Daemon() bool {
 		envs.Get().SetBlobStorage(blobStorage)
 	}
 
-	b := builder.New(ri, bo)
+	b := builder.New(_cri, _iri, bo)
 
 	if viper.IsSet("builder.ip") {
 		envs.Get().SetIP(viper.GetString("builder.ip"))

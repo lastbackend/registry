@@ -23,14 +23,14 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/api/envs"
 	"github.com/lastbackend/registry/pkg/api/http"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage"
-	"github.com/spf13/viper"
 	"github.com/lastbackend/registry/pkg/util/blob"
-	"github.com/lastbackend/registry/pkg/util/blob/s3"
 	"github.com/lastbackend/registry/pkg/util/blob/azure"
+	"github.com/lastbackend/registry/pkg/util/blob/s3"
+	"github.com/spf13/viper"
 )
 
 func Daemon() bool {

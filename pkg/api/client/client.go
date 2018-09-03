@@ -19,10 +19,10 @@
 package client
 
 import (
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/api/client/config"
 	"github.com/lastbackend/registry/pkg/api/client/http"
 	"github.com/lastbackend/registry/pkg/api/client/types"
-	"github.com/lastbackend/registry/pkg/log"
 )
 
 const (

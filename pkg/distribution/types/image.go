@@ -83,12 +83,6 @@ type ImageTagSpec struct {
 	EnvVars    []string `json:"environments"`
 }
 
-type ImageInfo struct {
-	ID          string `json:"id"`
-	Size        int64  `json:"size"`
-	VirtualSize int64  `json:"virtual_size"`
-}
-
 // *********************************************
 // Image distribution options
 // *********************************************
