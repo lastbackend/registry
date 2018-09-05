@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/api/client/types"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/util/http/request"
 
 	rv1 "github.com/lastbackend/registry/pkg/api/types/v1/request"

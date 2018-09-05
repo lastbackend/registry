@@ -20,9 +20,10 @@ package azure
 
 import (
 	"fmt"
-	"github.com/Azure/azure-sdk-for-go/storage"
-	"github.com/lastbackend/registry/pkg/log"
 	"io"
+
+	"github.com/Azure/azure-sdk-for-go/storage"
+	"github.com/lastbackend/lastbackend/pkg/log"
 )
 
 const (

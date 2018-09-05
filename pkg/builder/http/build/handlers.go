@@ -21,11 +21,11 @@ package build
 import (
 	"net/http"
 
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/builder/envs"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/http/utils"
 	"github.com/lastbackend/registry/pkg/util/stream"
-	)
+)
 
 const (
 	logLevel  = 2

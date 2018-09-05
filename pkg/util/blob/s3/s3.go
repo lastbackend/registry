@@ -30,13 +30,20 @@ type Driver struct {
 	bucketName string
 }
 
-func New(endpoint, accessKey, secretKey, bucketName string, ssl bool) *Driver {
+func New(endpoint, accessKey, secretKey, bucketName, region string, ssl bool) *Driver {
 	d := new(Driver)
 
-	client, err := minio.New(endpoint, accessKey, secretKey, ssl)
+	var err error
+	var client *minio.Client
+
+	if len(region) == 0 {
+		client, err = minio.New(endpoint, accessKey, secretKey, ssl)
+	} else {
+		client, err = minio.NewWithRegion(endpoint, accessKey, secretKey, ssl, region)
+	}
 	if err != nil {
 		fmt.Println(err)
-		return nil
+		panic("error initialize client")
 	}
 
 	d.bucketName = bucketName

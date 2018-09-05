@@ -19,22 +19,24 @@
 package builder
 
 import (
+	"fmt"
+	"github.com/lastbackend/lastbackend/pkg/runtime/cri/cri"
+	"github.com/lastbackend/lastbackend/pkg/runtime/iri/iri"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/api/client"
 	"github.com/lastbackend/registry/pkg/builder/builder"
 	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/builder/http"
-	"github.com/lastbackend/registry/pkg/log"
-	"github.com/lastbackend/registry/pkg/runtime/cri/cri"
+	"github.com/lastbackend/registry/pkg/util/blob"
+	"github.com/lastbackend/registry/pkg/util/blob/azure"
 	"github.com/lastbackend/registry/pkg/util/blob/s3"
 	"github.com/lastbackend/registry/pkg/util/system"
 	"github.com/spf13/viper"
-	"github.com/lastbackend/registry/pkg/util/blob"
-	"github.com/lastbackend/registry/pkg/util/blob/azure"
-	)
+)
 
 // Daemon - run builder daemon
 func Daemon() bool {
@@ -43,9 +45,16 @@ func Daemon() bool {
 
 	log.New(viper.GetInt("verbose"))
 
-	ri, err := cri.New()
+	criDriver := viper.GetString("runtime.cri.type")
+	_cri, err := cri.New(criDriver, viper.GetStringMap(fmt.Sprintf("runtime.%s", criDriver)))
 	if err != nil {
-		log.Fatalf("Cannot initialize runtime: %v", err)
+		log.Errorf("Cannot initialize cri: %v", err)
+	}
+
+	iriDriver := viper.GetString("runtime.iri.type")
+	_iri, err := iri.New(iriDriver, viper.GetStringMap(fmt.Sprintf("runtime.%s", iriDriver)))
+	if err != nil {
+		log.Errorf("Cannot initialize iri: %v", err)
 	}
 
 	cfg := client.NewConfig()
@@ -66,7 +75,7 @@ func Daemon() bool {
 	}
 
 	bo := new(builder.BuilderOpts)
-	bo.DockerHost = viper.GetString("builder.docker.host")
+	bo.DindHost = viper.GetString("builder.dind.host")
 	bo.ExtraHosts = viper.GetStringSlice("builder.extra_hosts")
 	bo.Limit = viper.GetInt("builder.workers")
 	bo.RootCerts = viper.GetStringSlice("builder.cacerts")
@@ -84,6 +93,7 @@ func Daemon() bool {
 				viper.GetString("builder.blob_storage.id"),
 				viper.GetString("builder.blob_storage.secret"),
 				viper.GetString("builder.blob_storage.bucket_name"),
+				viper.GetString("builder.blob_storage.region"),
 				viper.GetBool("builder.blob_storage.ssl"),
 			)
 		case "azure":
@@ -95,13 +105,13 @@ func Daemon() bool {
 				viper.GetBool("builder.blob_storage.ssl"),
 			)
 		default:
-
+			panic("unknown blog storage driver")
 		}
 
 		envs.Get().SetBlobStorage(blobStorage)
 	}
 
-	b := builder.New(ri, bo)
+	b := builder.New(_cri, _iri, bo)
 
 	if viper.IsSet("builder.ip") {
 		envs.Get().SetIP(viper.GetString("builder.ip"))

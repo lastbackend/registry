@@ -23,11 +23,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/lastbackend/registry/pkg/log"
-	"github.com/lastbackend/registry/pkg/util/stream/backend"
 	"io"
 	"sync"
 	"time"
+
+	"github.com/lastbackend/lastbackend/pkg/log"
+	"github.com/lastbackend/registry/pkg/util/stream/backend"
 )
 
 type IStream interface {

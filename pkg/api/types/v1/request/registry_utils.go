@@ -20,42 +20,45 @@ package request
 
 import (
 	"encoding/json"
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 	"io"
 	"io/ioutil"
-
-	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 )
 
-type TaskRequest struct{}
+type RegistryRequest struct{}
 
-func (TaskRequest) ExecuteOptions() *BuildLogsOptions {
-	return new(BuildLogsOptions)
+func (RegistryRequest) UpdateOptions() *RegistryUpdateOptions {
+	return new(RegistryUpdateOptions)
 }
 
-func (b *BuildLogsOptions) Validate() *errors.Err {
+func (r *RegistryUpdateOptions) Validate() *errors.Err {
 	return nil
 }
 
-func (b *BuildLogsOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
+func (r *RegistryUpdateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
 
 	if reader == nil {
 		err := errors.New("data body can not be null")
-		return errors.New("pid").IncorrectJSON(err)
+		return errors.New("registry").IncorrectJSON(err)
 	}
 
 	body, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return errors.New("pid").Unknown(err)
+		return errors.New("registry").Unknown(err)
 	}
 
-	err = json.Unmarshal(body, b)
+	err = json.Unmarshal(body, r)
 	if err != nil {
-		return errors.New("pid").IncorrectJSON(err)
+		return errors.New("registry").IncorrectJSON(err)
 	}
 
-	if err := b.Validate(); err != nil {
+	if err := r.Validate(); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (r *RegistryUpdateOptions) ToJson() ([]byte, error) {
+	return json.Marshal(r)
 }

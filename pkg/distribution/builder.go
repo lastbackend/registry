@@ -20,14 +20,15 @@ package distribution
 
 import (
 	"context"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
+
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage"
 )
 
 const (
-	logBuilderPrefix = "builder"
+	logBuilderPrefix = "distribution:builder"
 )
 
 type IBuilder interface {
@@ -50,7 +51,7 @@ func (b *Builder) Get(hostname string) (*types.Builder, error) {
 
 	builder, err := b.storage.Builder().Get(b.context, hostname)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:get:> get builder %s err: %v", logPrefix, hostname, err)
+		log.V(logLevel).Errorf("%s:get:> get builder %s err: %v", logBuilderPrefix, hostname, err)
 		return nil, err
 	}
 
@@ -63,7 +64,7 @@ func (b *Builder) List() ([]*types.Builder, error) {
 
 	builder, err := b.storage.Builder().List(b.context, nil)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:list:> get builders list err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:list:> get builders list err: %v", logBuilderPrefix, err)
 		return nil, err
 	}
 
@@ -91,7 +92,7 @@ func (b *Builder) Create(opts *types.BuilderCreateOptions) (*types.Builder, erro
 	}
 
 	if err := b.storage.Builder().Insert(b.context, builder); err != nil {
-		log.V(logLevel).Errorf("%s:create:> insert builder %s err: %v", logPrefix, builder.Meta.Hostname, err)
+		log.V(logLevel).Errorf("%s:create:> insert builder %s err: %v", logBuilderPrefix, builder.Meta.Hostname, err)
 		return nil, err
 	}
 
@@ -136,7 +137,7 @@ func (b *Builder) Update(builder *types.Builder, opts *types.BuilderUpdateOption
 	}
 
 	if err := b.storage.Builder().Update(b.context, builder); err != nil {
-		log.V(logLevel).Errorf("%s:update:> update builder %s err: %v", logPrefix, builder.Meta.Hostname, err)
+		log.V(logLevel).Errorf("%s:update:> update builder %s err: %v", logBuilderPrefix, builder.Meta.Hostname, err)
 		return err
 	}
 
@@ -159,7 +160,7 @@ func (b *Builder) FindBuild(builder *types.Builder) (*types.Build, error) {
 
 	build, err := b.storage.Build().Attach(ctx, builder)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:find_build:> get build for builder %s err: %v", logPrefix, builder.Meta.Hostname, err)
+		log.V(logLevel).Errorf("%s:find_build:> get build for builder %s err: %v", logBuilderPrefix, builder.Meta.Hostname, err)
 		return nil, err
 	}
 
@@ -180,7 +181,7 @@ func (b *Builder) MarkOffline() error {
 	log.V(logLevel).Debugf("%s:mark_offline:> find and mark offline builders", logBuilderPrefix)
 
 	if err := b.storage.Builder().MarkOffline(b.context); err != nil {
-		log.V(logLevel).Errorf("%s:mark_offline:> find and mark offline builders err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:mark_offline:> find and mark offline builders err: %v", logBuilderPrefix, err)
 		return err
 	}
 

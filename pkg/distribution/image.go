@@ -20,14 +20,15 @@ package distribution
 
 import (
 	"context"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
+
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage"
 )
 
 const (
-	logPrefix = "registry:api:distribution"
+	logImagePrefix = "distribution:builder"
 )
 
 type IImage interface {
@@ -44,11 +45,11 @@ type Image struct {
 }
 
 func (i Image) Get(owner, name string) (*types.Image, error) {
-	log.V(logLevel).Debugf("%s:get:> get image `%s/%s`", logPrefix, owner, name)
+	log.V(logLevel).Debugf("%s:get:> get image `%s/%s`", logImagePrefix, owner, name)
 
 	image, err := i.storage.Image().Get(i.context, owner, name)
 	if err != nil {
-		log.V(logLevel).Debugf("%s:get:> get image `%s/%s` err: %v", logPrefix, owner, name, err)
+		log.V(logLevel).Debugf("%s:get:> get image `%s/%s` err: %v", logImagePrefix, owner, name, err)
 		return nil, err
 	}
 
@@ -56,7 +57,7 @@ func (i Image) Get(owner, name string) (*types.Image, error) {
 }
 
 func (i Image) List(opts *types.ImageListOptions) ([]*types.Image, error) {
-	log.V(logLevel).Debugf("%s:list:> get image list", logPrefix)
+	log.V(logLevel).Debugf("%s:list:> get image list", logImagePrefix)
 
 	if opts == nil {
 		opts = new(types.ImageListOptions)
@@ -69,7 +70,7 @@ func (i Image) List(opts *types.ImageListOptions) ([]*types.Image, error) {
 
 	list, err := i.storage.Image().List(i.context, filter)
 	if err != nil {
-		log.V(logLevel).Debugf("%s:list:> get image list err: %v", logPrefix, err)
+		log.V(logLevel).Debugf("%s:list:> get image list err: %v", logImagePrefix, err)
 		return nil, err
 	}
 
@@ -78,7 +79,7 @@ func (i Image) List(opts *types.ImageListOptions) ([]*types.Image, error) {
 
 func (i Image) Create(opts *types.ImageCreateOptions) (*types.Image, error) {
 
-	log.V(logLevel).Debugf("%s:create:> create image %#v", logPrefix, opts)
+	log.V(logLevel).Debugf("%s:create:> create image %#v", logImagePrefix, opts)
 
 	if opts == nil {
 		opts = new(types.ImageCreateOptions)
@@ -92,7 +93,7 @@ func (i Image) Create(opts *types.ImageCreateOptions) (*types.Image, error) {
 	image.Spec.Private = opts.Private
 
 	if err := i.storage.Image().Insert(i.context, image); err != nil {
-		log.V(logLevel).Errorf("%s:create:> insert image %s/%s err: %v", logPrefix, image.Meta.Owner, image.Meta.Name, err)
+		log.V(logLevel).Errorf("%s:create:> insert image %s/%s err: %v", logImagePrefix, image.Meta.Owner, image.Meta.Name, err)
 		return nil, err
 	}
 
@@ -109,7 +110,7 @@ func (i Image) Update(image *types.Image, opts *types.ImageUpdateOptions) error 
 		opts = new(types.ImageUpdateOptions)
 	}
 
-	log.V(logLevel).Debugf("%s:update:> update image %s/%s -> %#v", logPrefix, image.Meta.Owner, image.Meta.Name, opts)
+	log.V(logLevel).Debugf("%s:update:> update image %s/%s -> %#v", logImagePrefix, image.Meta.Owner, image.Meta.Name, opts)
 
 	if opts.Description != nil {
 		image.Meta.Description = *opts.Description
@@ -120,7 +121,7 @@ func (i Image) Update(image *types.Image, opts *types.ImageUpdateOptions) error 
 	}
 
 	if err := i.storage.Image().Update(i.context, image); err != nil {
-		log.V(logLevel).Errorf("%s:update:> update image err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:update:> update image err: %v", logImagePrefix, err)
 		return err
 	}
 
@@ -133,10 +134,10 @@ func (i Image) Remove(image *types.Image) error {
 		return errors.New("invalid argument")
 	}
 
-	log.V(logLevel).Debugf("%s:remove:> remove image %s/%s", logPrefix, image.Meta.Owner, image.Meta.Name)
+	log.V(logLevel).Debugf("%s:remove:> remove image %s/%s", logImagePrefix, image.Meta.Owner, image.Meta.Name)
 
 	if err := i.storage.Image().Remove(i.context, image); err != nil {
-		log.V(logLevel).Debugf("%s:remove:> remove image `%s/%s` err: %v", logPrefix, image.Meta.Owner, image.Meta.Name, err)
+		log.V(logLevel).Debugf("%s:remove:> remove image `%s/%s` err: %v", logImagePrefix, image.Meta.Owner, image.Meta.Name, err)
 		return err
 	}
 

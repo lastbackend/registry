@@ -19,11 +19,12 @@
 package backend
 
 import (
-	"github.com/gorilla/websocket"
-	"github.com/lastbackend/registry/pkg/log"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/lastbackend/lastbackend/pkg/log"
 )
 
 const (

@@ -23,7 +23,7 @@ import (
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"time"
 	"unsafe"
-	)
+)
 
 type BuildView struct{}
 

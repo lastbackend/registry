@@ -19,12 +19,12 @@
 package middleware
 
 import (
-	"github.com/lastbackend/registry/pkg/distribution/errors"
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/util/http/utils"
 	"github.com/spf13/viper"
 	"net/http"
 	"strings"
-	)
+)
 
 // Auth - authentication middleware
 func Authenticate(h http.HandlerFunc) http.HandlerFunc {

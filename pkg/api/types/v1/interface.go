@@ -27,6 +27,7 @@ type IRequest interface {
 	Image() *request.ImageRequest
 	Build() *request.BuildRequest
 	Builder() *request.BuilderRequest
+	Registry() *request.RegistryRequest
 }
 
 type IView interface {

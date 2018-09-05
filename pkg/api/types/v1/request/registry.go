@@ -16,41 +16,9 @@
 // from Last.Backend LLC.
 //
 
-package hooks
+package request
 
-import (
-	"github.com/sirupsen/logrus"
-	"path"
-	"runtime"
-	"strings"
-)
-
-type ContextHook struct {
-	Skip int
-}
-
-func (ContextHook) Levels() []logrus.Level {
-	return logrus.AllLevels
-}
-
-func (h ContextHook) Fire(entry *logrus.Entry) error {
-	if h.Skip == 0 {
-		h.Skip = 8
-	}
-
-	pc := make([]uintptr, 3, 3)
-	cnt := runtime.Callers(h.Skip, pc)
-
-	for i := 0; i < cnt; i++ {
-		fu := runtime.FuncForPC(pc[i] - 1)
-		name := fu.Name()
-		if !strings.Contains(name, "github.com/sirupsen/logrus") {
-			file, line := fu.FileLine(pc[i] - 1)
-			entry.Data["func"] = path.Base(name)
-			entry.Data["file"] = file
-			entry.Data["line"] = line
-			break
-		}
-	}
-	return nil
+type RegistryUpdateOptions struct {
+	AccessToken *string `json:"access_token"`
+	AuthServer  *string `json:"auth_server"`
 }

@@ -16,4 +16,31 @@
 // from Last.Backend LLC.
 //
 
-package runtime
+package mock
+
+import (
+	"context"
+
+	"github.com/lastbackend/lastbackend/pkg/log"
+	"github.com/lastbackend/registry/pkg/distribution/types"
+	"github.com/lastbackend/registry/pkg/storage/storage"
+)
+
+type SystemStorage struct {
+	storage.System
+}
+
+func (s *SystemStorage) Get(ctx context.Context) (*types.System, error) {
+	log.V(logLevel).Debugf("%s:system:get> get system", logPrefix)
+	return nil, nil
+}
+
+func (s *SystemStorage) Update(ctx context.Context, system *types.System) error {
+	log.V(logLevel).Debugf("%s:system:update> update system %#v", logPrefix, system)
+	return nil
+}
+
+func newSystemStorage() *SystemStorage {
+	s := new(SystemStorage)
+	return s
+}

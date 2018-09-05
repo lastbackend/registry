@@ -16,20 +16,22 @@
 // from Last.Backend LLC.
 //
 
-package cri
+package types
 
-import (
-	"fmt"
-	"github.com/lastbackend/registry/pkg/runtime/cri"
-	"github.com/lastbackend/registry/pkg/runtime/cri/docker"
-	"github.com/spf13/viper"
-)
+import "time"
 
-func New() (cri.CRI, error) {
-	switch viper.GetString("builder.cri.type") {
-	case "docker":
-		return docker.New()
-	default:
-		return nil, fmt.Errorf("container runtime <%s> interface not supported", viper.GetString("node.cri.type"))
-	}
+type System struct {
+	AccessToken string
+	AuthServer  string
+	Created     time.Time
+	Updated     time.Time
+}
+
+// *********************************************
+// System distribution options
+// *********************************************
+
+type SystemUpdateOptions struct {
+	AccessToken *string
+	AuthServer  *string
 }

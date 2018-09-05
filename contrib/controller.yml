@@ -4,4 +4,4 @@
 verbose: 7
 
 # Database and Messages broker
-psql: "host=127.0.0.1 port=5431 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"
+psql: "host=127.0.0.1 port=5432 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"

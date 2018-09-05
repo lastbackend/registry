@@ -19,10 +19,10 @@
 package cleaner
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io"
-	"context"
 )
 
 const (

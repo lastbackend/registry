@@ -19,9 +19,9 @@
 package envs
 
 import (
+	"github.com/lastbackend/lastbackend/pkg/runtime/cri"
 	"github.com/lastbackend/registry/pkg/api/client"
 	"github.com/lastbackend/registry/pkg/builder/types"
-	"github.com/lastbackend/registry/pkg/runtime/cri"
 	"github.com/lastbackend/registry/pkg/storage"
 	"github.com/lastbackend/registry/pkg/util/blob"
 )

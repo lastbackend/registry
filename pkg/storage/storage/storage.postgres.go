@@ -52,3 +52,8 @@ type Image interface {
 	Update(ctx context.Context, image *types.Image) error
 	Remove(ctx context.Context, image *types.Image) error
 }
+
+type System interface {
+	Get(ctx context.Context) (*types.System, error)
+	Update(ctx context.Context, system *types.System) error
+}

@@ -24,10 +24,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/api"
 	"github.com/lastbackend/registry/pkg/builder"
 	"github.com/lastbackend/registry/pkg/controller"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

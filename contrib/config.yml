@@ -5,15 +5,13 @@ verbose: 7
 secret:
   token: "lstbknd"
 
-host: "hub.lstbknd.io"
+host: "hub.lstbknd.net"
 issuer: "registry.lstbknd.net"
-service: "hub.lstbknd.io"
-key: "/opt/cert/hub/server/hub.lstbknd.io.key.pem"
-auth_server: "https://api.lstbknd.net/auth"
-access_token: "d424dd39e43a419c99b4abb88373bb30"
+service: "hub.lstbknd.net"
+key: "/opt/cert/hub/server/hub.lstbknd.net.key.pem"
 
 # Database and Messages broker
-psql: "host=127.0.0.1 port=5431 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"
+psql: "host=127.0.0.1 port=5432 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"
 
 api:
   host: 0.0.0.0
@@ -26,8 +24,8 @@ api:
   blob_storage:
     type: "s3"
     endpoint: "127.0.0.1:9000"
-    id: "V1EV9NJJQJDMQL43HJR9"
-    secret: "scXdZkj2//SA9vCSwhr9uywSMuq/DrwY6MUoyOHg"
+    id: "IGAKM8N0LT1R9730AZX6"
+    secret: "6AZzUGzbwrsBR7oEVf9eoMjDriJ75UsnVpDHNzGS"
     bucket_name: "lb-bucket"
     ssl: false
   #    type: "azure"

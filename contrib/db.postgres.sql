@@ -113,6 +113,15 @@ CREATE TABLE images_builds (
   updated          TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc')
 );
 
+CREATE TABLE systems (
+  id           boolean PRIMARY KEY             NOT NULL    DEFAULT TRUE,
+  access_token VARCHAR(512)                                DEFAULT '',
+  auth_server  TEXT                                        DEFAULT '',
+  created      TIMESTAMPTZ                                 DEFAULT (now() AT TIME ZONE 'utc'),
+  updated      TIMESTAMPTZ                                 DEFAULT (now() AT TIME ZONE 'utc'),
+  CONSTRAINT only_one_row CHECK (id = TRUE)
+);
+
 ---------------------------------------------------------------------------------------------------
 -------------------------------------- Creates foreign keys ---------------------------------------
 ---------------------------------------------------------------------------------------------------
@@ -164,3 +173,16 @@ CREATE CONSTRAINT TRIGGER lb_after_images_builds_change
   ON images_builds
   DEFERRABLE
   FOR EACH ROW EXECUTE PROCEDURE lb_after_images_builds_function();
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------- Creates default records  ---------------------------------
+---------------------------------------------------------------------------------------------------
+
+INSERT INTO systems (access_token, auth_server)
+VALUES ('', '');
+
+---------------------------------------------------------------------------------------------------
+---------------------------------------- Creates rules  -------------------------------------------
+---------------------------------------------------------------------------------------------------
+
+CREATE RULE systems_rule AS ON DELETE TO systems DO INSTEAD NOTHING

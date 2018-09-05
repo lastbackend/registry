@@ -97,4 +97,3 @@ func GenerateRandomString(n int) string {
 
 	return str[:n]
 }
-

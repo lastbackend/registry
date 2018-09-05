@@ -36,4 +36,3 @@ type RegistryList []*Registry
 type RegistryToken struct {
 	Token string `json:"token"`
 }
-

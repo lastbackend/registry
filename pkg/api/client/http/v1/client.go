@@ -21,10 +21,12 @@ package v1
 import (
 	"context"
 
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/api/client/types"
-	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/util/http/request"
+
+	rv1 "github.com/lastbackend/registry/pkg/api/types/v1/request"
+	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
 )
 
 type Client struct {
@@ -80,6 +82,31 @@ func (rc Client) Get(ctx context.Context) (*vv1.Registry, error) {
 
 	err := rc.client.Get("/registry").
 		AddHeader("Content-Type", "application/json").
+		JSON(&s, &e)
+
+	if err != nil {
+		return nil, err
+	}
+	if e != nil {
+		return nil, errors.New(e.Message)
+	}
+
+	return s, nil
+}
+
+func (rc Client) Update(ctx context.Context, opts *rv1.RegistryUpdateOptions) (*vv1.Registry, error) {
+
+	body, err := opts.ToJson()
+	if err != nil {
+		return nil, err
+	}
+
+	var s *vv1.Registry
+	var e *errors.Http
+
+	err = rc.client.Put("/registry").
+		AddHeader("Content-Type", "application/json").
+		Body(body).
 		JSON(&s, &e)
 
 	if err != nil {

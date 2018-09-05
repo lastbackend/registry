@@ -25,8 +25,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage/storage"
 	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )
@@ -248,6 +248,7 @@ func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
 				'name', image ->> 'name',
 				'owner', image ->> 'owner',
 				'tag', image ->> 'tag',
+				'auth', image ->> 'auth',
 				'hash', $10 :: TEXT
 			),
 			builder_id = CASE WHEN $11 <> '' THEN $11 :: UUID ELSE NULL END,
@@ -299,32 +300,25 @@ func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*typ
 		    state_status     = 'queued',
 		    state_processing = TRUE
 		WHERE images_builds.id = (
-			SELECT ib1.id
-			FROM images_builds AS ib1
-			WHERE (
-				(
-					-- check if there are builds that are not set as processing
-					NOT (ib1.state_done OR ib1.state_canceled OR ib1.state_error OR ib1.state_processing)
-					
-					-- check if exists builds that are set as processing for one tag
-					AND NOT EXISTS(
-						SELECT TRUE
-						FROM images_builds AS ib2
-						WHERE ib2.state_processing AND ib2.image ->> 'tag' = ib1.image ->> 'tag')
-					)
-					OR (
-					
-					-- check if exists builds that are set as processing, but the builder is offline
-					EXISTS(
-						SELECT TRUE
-						FROM images_builds AS ib3
-							INNER JOIN builders AS b ON ib3.builder_id = b.id
-						WHERE b.online IS FALSE AND ib1.state_processing)
+		 SELECT ib1.id
+		  FROM images_builds AS ib1
+		  WHERE 
+		  (
+		      -- check if there are builds that are not active or finished
+		      NOT (ib1.state_done OR ib1.state_canceled OR ib1.state_error OR
+		           ib1.state_processing)
+		      -- check if exists builds that are set as processing for one tag
+		      AND NOT EXISTS(
+		        SELECT TRUE
+		        FROM images_builds AS ib2
+		        WHERE ib2.state_processing
+		          AND ib2.image ->> 'name' = ib1.image ->> 'name'
+		          AND ib2.image ->> 'owner' = ib1.image ->> 'owner'
+		          AND ib2.image ->> 'tag' = ib1.image ->> 'tag'
 				)
-			)
-			ORDER BY ib1.created
-			LIMIT 1
-		)
+		  )
+		  ORDER BY ib1.created
+		  LIMIT 1)
 		RETURNING images_builds.id;`
 
 	var id sql.NullString
