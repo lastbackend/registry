@@ -29,10 +29,11 @@ type Build struct {
 type BuildList []*Build
 
 type BuildMeta struct {
-	ID      string    `json:"id"`
-	Number  int64     `json:"number"`
-	Updated time.Time `json:"updated"`
-	Created time.Time `json:"created"`
+	ID      string            `json:"id"`
+	Labels  map[string]string `json:"string"`
+	Number  int64             `json:"number"`
+	Updated time.Time         `json:"updated"`
+	Created time.Time         `json:"created"`
 }
 
 type BuildStatus struct {
@@ -49,6 +50,7 @@ type BuildStatus struct {
 }
 
 type BuildSpec struct {
+	Image  BuildImage  `json:"image"`
 	Source BuildSource `json:"source"`
 	Config BuildConfig `json:"config"`
 }
@@ -59,6 +61,11 @@ type BuildSource struct {
 	Name   string       `json:"name"`
 	Branch string       `json:"branch"`
 	Commit *BuildCommit `json:"commit,omitempty"`
+}
+
+type BuildImage struct {
+	Name string `json:"name"`
+	Tag  string `json:"tag"`
 }
 
 type BuildCommit struct {

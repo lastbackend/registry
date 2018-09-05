@@ -20,6 +20,7 @@ package views
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"time"
 	"unsafe"
@@ -61,16 +62,27 @@ func (obj *BuildList) ToJson() ([]byte, error) {
 }
 
 func (bv *BuildView) ToBuildMeta(obj *types.BuildMeta) *BuildMeta {
-	return &BuildMeta{
+	bm := &BuildMeta{
 		ID:      obj.ID,
 		Number:  obj.Number,
 		Updated: obj.Updated,
 		Created: obj.Created,
 	}
+
+	bm.Labels = obj.Labels
+	if obj.Labels != nil {
+		bm.Labels = make(map[string]string, 0)
+	}
+
+	return bm
 }
 
 func (bv *BuildView) ToBuildSpec(obj *types.BuildSpec) *BuildSpec {
 	spec := &BuildSpec{
+		Image: BuildImage{
+			Name: fmt.Sprintf("%s/%s", obj.Image.Owner, obj.Image.Name),
+			Tag:  obj.Image.Tag,
+		},
 		Source: BuildSource{
 			Hub:    obj.Source.Hub,
 			Owner:  obj.Source.Owner,
