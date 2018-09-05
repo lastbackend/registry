@@ -104,10 +104,6 @@ func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {
 	bld.Spec.Source.Branch = opts.Source.Branch
 	bld.Spec.Source.Token = opts.Source.Token
 
-	if readme, ok := opts.Labels["readme"]; ok {
-		bld.Spec.Source.Readme = readme
-	}
-
 	if opts.Labels != nil {
 
 		bld.Spec.Source.Commit = new(types.BuildCommit)

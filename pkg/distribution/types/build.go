@@ -92,7 +92,6 @@ type BuildImage struct {
 
 type BuildSource struct {
 	Source
-	Readme string       `json:"readme"`
 	Commit *BuildCommit `json:"commit"`
 }
 
