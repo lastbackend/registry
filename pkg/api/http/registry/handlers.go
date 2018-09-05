@@ -25,12 +25,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/api/envs"
 	"github.com/lastbackend/registry/pkg/api/types/v1"
 	"github.com/lastbackend/registry/pkg/distribution"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/url"
 	"github.com/spf13/viper"
 )
@@ -139,7 +139,7 @@ func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
 		account = new(types.RegistryUser)
 		scopes  = new(types.Scopes)
 		rgm     = distribution.NewRegistryModel(r.Context(), envs.Get().GetStorage())
-		sm = distribution.NewSystemModel(r.Context(), envs.Get().GetStorage())
+		sm      = distribution.NewSystemModel(r.Context(), envs.Get().GetStorage())
 	)
 
 	// Checking for service being authenticated.

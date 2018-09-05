@@ -20,8 +20,8 @@
     "logger",
     "version"
   ]
-  revision = "39013ecb48eaf6ced3f4e3e1d95515140ce6b3cf"
-  version = "v10.15.2"
+  revision = "a35eae345f69bbfbe3b8fa0b1d3fe98f8430b21a"
+  version = "v10.15.3"
 
 [[projects]]
   name = "github.com/Microsoft/go-winio"
@@ -48,12 +48,13 @@
   version = "v3.2.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/docker/distribution"
   packages = [
     "digestset",
     "reference"
   ]
-  revision = "83389a148052d74ac602f5f1d62f86ff2f3c4aa5"
+  revision = "90705d2fb81dda1466be49bd958ed8a0dd9a6145"
 
 [[projects]]
   name = "github.com/docker/docker"
@@ -85,7 +86,7 @@
     "sockets",
     "tlsconfig"
   ]
-  revision = "7395e3f8aa162843a74ed6d48e79627d9792ac55"
+  revision = "master"
 
 [[projects]]
   name = "github.com/docker/go-units"
@@ -132,8 +133,8 @@
 [[projects]]
   name = "github.com/gorilla/websocket"
   packages = ["."]
-  revision = "3ff3320c2a1756a3691521efc290b4701575147c"
-  version = "v1.3.0"
+  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
+  version = "v1.4.0"
 
 [[projects]]
   name = "github.com/hashicorp/hcl"
@@ -157,6 +158,25 @@
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
   version = "v1.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lastbackend/lastbackend"
+  packages = [
+    "pkg/distribution/errors",
+    "pkg/distribution/types",
+    "pkg/log",
+    "pkg/log/formatter",
+    "pkg/log/hooks",
+    "pkg/log/logger",
+    "pkg/runtime/cri",
+    "pkg/runtime/cri/cri",
+    "pkg/runtime/cri/docker",
+    "pkg/runtime/iri",
+    "pkg/runtime/iri/docker",
+    "pkg/runtime/iri/iri"
+  ]
+  revision = "9071565a6dbff8807299ec30f7f01d4047204942"
 
 [[projects]]
   name = "github.com/lib/pq"
@@ -304,7 +324,7 @@
     "blowfish",
     "ssh/terminal"
   ]
-  revision = "614d502a4dac94afa3a6ce146bd1736da82514c6"
+  revision = "182538f80094b6a8efaade63a8fd8e0d9d5843dd"
 
 [[projects]]
   branch = "master"
@@ -329,7 +349,7 @@
     "unix",
     "windows"
   ]
-  revision = "4910a1d54f876d7b22162a85f4d066d3ee649450"
+  revision = "2b024373dcd9800f0cae693839fac6ede8d64a8c"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -361,6 +381,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3bee11733ad2788701c457a0516c5084832275f0017674faf0cb39b1b65073bd"
+  inputs-digest = "f8f93c70ba639765913a1eb48b1d17db17aaba81a57f6043f2c2c41523dccf1d"
   solver-name = "gps-cdcl"
   solver-version = 1

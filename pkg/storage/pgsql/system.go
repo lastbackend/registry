@@ -21,8 +21,9 @@ package pgsql
 import (
 	"context"
 	"database/sql"
+
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage/storage"
 )
 

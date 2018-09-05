@@ -24,7 +24,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/lastbackend/registry/pkg/log"
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage/storage"
 	"github.com/lastbackend/registry/pkg/storage/store"
 	"github.com/lib/pq"

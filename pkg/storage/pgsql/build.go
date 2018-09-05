@@ -25,8 +25,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage/storage"
 	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )
@@ -248,6 +248,7 @@ func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
 				'name', image ->> 'name',
 				'owner', image ->> 'owner',
 				'tag', image ->> 'tag',
+				'auth', image ->> 'auth',
 				'hash', $10 :: TEXT
 			),
 			builder_id = CASE WHEN $11 <> '' THEN $11 :: UUID ELSE NULL END,
@@ -313,7 +314,8 @@ func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*typ
 		        WHERE ib2.state_processing
 		          AND ib2.image ->> 'name' = ib1.image ->> 'name'
 		          AND ib2.image ->> 'owner' = ib1.image ->> 'owner'
-		          AND ib2.image ->> 'tag' = ib1.image ->> 'tag')
+		          AND ib2.image ->> 'tag' = ib1.image ->> 'tag'
+				)
 		  )
 		  ORDER BY ib1.created
 		  LIMIT 1)

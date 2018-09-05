@@ -22,9 +22,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/controller/envs"
 	"github.com/lastbackend/registry/pkg/distribution"
-	"github.com/lastbackend/registry/pkg/log"
 )
 
 const (

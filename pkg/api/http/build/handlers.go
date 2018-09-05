@@ -20,21 +20,22 @@ package build
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/api/envs"
 	"github.com/lastbackend/registry/pkg/api/types/v1"
 	"github.com/lastbackend/registry/pkg/builder/client"
-	rv1 "github.com/lastbackend/registry/pkg/builder/types/v1/request"
 	"github.com/lastbackend/registry/pkg/distribution"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/util/converter"
 	"github.com/lastbackend/registry/pkg/util/http/utils"
 	"github.com/spf13/viper"
-	"io"
+
+	rv1 "github.com/lastbackend/registry/pkg/builder/types/v1/request"
 )
 
 const (

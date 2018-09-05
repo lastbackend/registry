@@ -39,7 +39,6 @@ func New(endpoint, accessKey, secretKey, bucketName, region string, ssl bool) *D
 	if len(region) == 0 {
 		client, err = minio.New(endpoint, accessKey, secretKey, ssl)
 	} else {
-		fmt.Println(endpoint, accessKey, secretKey, ssl, region)
 		client, err = minio.NewWithRegion(endpoint, accessKey, secretKey, ssl, region)
 	}
 	if err != nil {

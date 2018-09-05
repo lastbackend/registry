@@ -23,9 +23,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/api/envs"
 	"github.com/lastbackend/registry/pkg/api/http"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage"
 	"github.com/lastbackend/registry/pkg/util/blob"
 	"github.com/lastbackend/registry/pkg/util/blob/azure"

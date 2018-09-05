@@ -20,13 +20,13 @@ package pgsql
 
 import (
 	"context"
-	"errors"
-
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage/storage"
 	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )

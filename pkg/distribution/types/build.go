@@ -86,12 +86,13 @@ type BuildImage struct {
 	Name  string `json:"name"`
 	Owner string `json:"owner"`
 	Tag   string `json:"tag"`
-	Auth  string `json:"auth"`
 	Hash  string `json:"hash"`
+	Auth       string   `json:"auth"`
 }
 
 type BuildSource struct {
 	Source
+	Readme string       `json:"readme"`
 	Commit *BuildCommit `json:"commit"`
 }
 

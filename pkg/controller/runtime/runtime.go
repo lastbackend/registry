@@ -20,9 +20,9 @@ package runtime
 
 import (
 	"context"
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/controller/runtime/build"
 	"github.com/lastbackend/registry/pkg/controller/runtime/builder"
-	"github.com/lastbackend/registry/pkg/log"
 )
 
 const (

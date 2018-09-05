@@ -21,8 +21,8 @@ package mock
 import (
 	"context"
 
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage/storage"
 	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )

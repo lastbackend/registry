@@ -21,11 +21,12 @@ package distribution
 import (
 	"context"
 	"errors"
+	"time"
+
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage"
 	"github.com/lastbackend/registry/pkg/storage/types/filter"
-	"time"
 )
 
 const (
@@ -101,6 +102,11 @@ func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {
 	bld.Spec.Source.Owner = opts.Source.Owner
 	bld.Spec.Source.Name = opts.Source.Name
 	bld.Spec.Source.Branch = opts.Source.Branch
+	bld.Spec.Source.Token = opts.Source.Token
+
+	if readme, ok := opts.Labels["readme"]; ok {
+		bld.Spec.Source.Readme = readme
+	}
 
 	if opts.Labels != nil {
 
@@ -130,18 +136,15 @@ func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {
 		bld.Spec.Source.Branch = types.SourceDefaultBranch
 	}
 
-	bld.Spec.Source.Token = opts.Source.Token
-
 	bld.Spec.Image.ID = opts.Image.ID
 	bld.Spec.Image.Owner = opts.Image.Owner
 	bld.Spec.Image.Name = opts.Image.Name
 	bld.Spec.Image.Tag = opts.Image.Tag
+	bld.Spec.Image.Auth = opts.Image.Auth
 
 	if len(opts.Image.Tag) == 0 {
 		bld.Spec.Image.Tag = types.ImageDefaultTag
 	}
-
-	bld.Spec.Image.Auth = opts.Image.Auth
 
 	bld.Spec.Config.Dockerfile = opts.Spec.DockerFile
 	bld.Spec.Config.Context = opts.Spec.Context

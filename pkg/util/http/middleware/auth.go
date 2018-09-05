@@ -19,7 +19,7 @@
 package middleware
 
 import (
-	"github.com/lastbackend/registry/pkg/distribution/errors"
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/util/http/utils"
 	"github.com/spf13/viper"
 	"net/http"

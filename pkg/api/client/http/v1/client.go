@@ -20,10 +20,9 @@ package v1
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/api/client/types"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/util/http/request"
 
 	rv1 "github.com/lastbackend/registry/pkg/api/types/v1/request"
@@ -105,7 +104,7 @@ func (rc Client) Update(ctx context.Context, opts *rv1.RegistryUpdateOptions) (*
 	var s *vv1.Registry
 	var e *errors.Http
 
-	err = rc.client.Put(fmt.Sprintf("/registry")).
+	err = rc.client.Put("/registry").
 		AddHeader("Content-Type", "application/json").
 		Body(body).
 		JSON(&s, &e)

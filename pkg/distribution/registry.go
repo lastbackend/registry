@@ -21,13 +21,13 @@ package distribution
 import (
 	"context"
 	"errors"
-	"github.com/spf13/viper"
 	"sort"
 	"strings"
 
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage"
+	"github.com/spf13/viper"
 )
 
 const (

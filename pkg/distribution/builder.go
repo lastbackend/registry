@@ -20,9 +20,10 @@ package distribution
 
 import (
 	"context"
-	"github.com/lastbackend/registry/pkg/distribution/errors"
+
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"github.com/lastbackend/registry/pkg/log"
 	"github.com/lastbackend/registry/pkg/storage"
 )
 

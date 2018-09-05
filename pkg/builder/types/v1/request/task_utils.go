@@ -23,7 +23,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/lastbackend/registry/pkg/distribution/errors"
+	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 )
 
 type TaskRequest struct{}
