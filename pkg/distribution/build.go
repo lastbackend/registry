@@ -95,6 +95,9 @@ func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {
 	bld := new(types.Build)
 
 	bld.Meta.Labels = opts.Labels
+	if bld.Meta.Labels == nil {
+		bld.Meta.Labels = make(map[string]string, 0)
+	}
 
 	bld.Status.Status = types.BuildStatusQueued
 
