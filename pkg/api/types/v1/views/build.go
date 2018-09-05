@@ -30,7 +30,7 @@ type BuildList []*Build
 
 type BuildMeta struct {
 	ID      string            `json:"id"`
-	Labels  map[string]string `json:"string"`
+	Labels  map[string]string `json:"labels"`
 	Number  int64             `json:"number"`
 	Updated time.Time         `json:"updated"`
 	Created time.Time         `json:"created"`
