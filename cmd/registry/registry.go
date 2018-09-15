@@ -132,6 +132,10 @@ func init() {
 	CLI.Flags().IntVarP(&debug, "verbose", "v", 0, "verbose level")
 
 	_ = viper.BindPFlag("verbose", CLI.Flags().Lookup("verbose"))
+
+	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
 }
 
 func main() {
