@@ -1,0 +1,114 @@
+== Getting Started
+
+image:assets/infrastructure.png[Last.Backend]
+
+=== Build
+
+==== Prerequisites
+
+- Go 1.7 or higher
+- Go docker client v17.03
+- Git
+
+
+[source,bash]
+----
+$ go get github.com/lastbackend/registry
+$ cd ${GOPATH:-~/go}/src/github.com/lastbackend/registry
+$ make deps && make build && make install
+----
+
+=== Create local development environment
+
+use docker-machine to create nodes for cluster
+
+[source,bash]
+----
+# set sources path
+export LB_SOURCES_PATH=/opt/src/github.com/lastbackend/registry
+cd ${LB_SOURCES_PATH}
+make deps
+
+# create master node
+docker-machine create --driver virtualbox master
+docker-machine stop master
+# note: for virtulabox driver we can mount host dir into docker-machine with this command
+VBoxManage sharedfolder add master --name /lastbackend --hostpath $LB_SOURCES_PATH --automount
+docker-machine start master
+
+# create minion nodes
+docker-machine create --driver virtualbox minion-00
+docker-machine stop minion-00
+VBoxManage sharedfolder add minion-00 --name /lastbackend --hostpath $LB_SOURCES_PATH --automount
+docker-machine start minion-00
+
+docker-machine create --driver virtualbox minion-01
+docker-machine stop minion-01
+VBoxManage sharedfolder add minion-01 --name /lastbackend --hostpath $LB_SOURCES_PATH --automount
+docker-machine start minion-01
+
+export MASTER_IP=$(docker-machine ip master)
+
+eval `docker-machine env master`
+
+# run docker registry on master
+docker run -d -it --restart=always \
+  --name registry \
+  -p 5000:5000 \
+  registry:2
+
+docker run -i -d --restart=always \
+  --name=pgs_lb \
+  -e POSTGRES_USER=lastbackend \
+  -e POSTGRES_PASSWORD=lastbackend \
+  -e POSTGRES_DB=lastbackend \
+  -p 5432:5432 \
+  postgres
+
+# fetch deps
+docker run --rm -it  \
+      -v /lastbackend:/go/src/github.com/lastbackend/registry \
+      -w /go/src/github.com/lastbackend/registry \
+      --name=deps \
+      --net=host \
+      golang ./hack/bootstrap.sh
+
+# run Last.Backend Controller from sources in docker
+docker run -d -it --restart=always \
+      -v /lastbackend:/go/src/github.com/lastbackend/registry \
+      -v /lastbackend/contrib/config.yml:/etc/lastbackend/controller.yml \
+      -w /go/src/github.com/lastbackend/registry \
+      --name=ctrl \
+      --net=host \
+      golang go run ./cmd/registry/registry.go ctrl -c /etc/lastbackend/controller.yml
+
+eval `docker-machine env minion-00`
+
+# fetch deps
+docker run --rm -it  \
+      -v /lastbackend:/go/src/github.com/lastbackend/registry \
+      -w /go/src/github.com/lastbackend/registry \
+      --name=deps \
+      --net=host \
+      golang ./hack/bootstrap.sh
+
+# run Last.Backend Registry API from sources in docker
+docker run -d -it --restart=always \
+      -v /lastbackend:/go/src/github.com/lastbackend/registry \
+      -v /lastbackend/contrib/config.yml:/etc/lastbackend/config.yml \
+      -w /go/src/github.com/lastbackend/registry \
+      -e PSQL="host=${MASTER_IP} port=5432 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes" \
+      --name=api \
+      --net=host \
+      golang go run ./cmd/registry/registry.go api --config=./contrib/config.yml
+
+# run Last.Backend Builder from sources in docker
+docker run -d -it --restart=always \
+      -v /lastbackend:/go/src/github.com/lastbackend/registry \
+      -v /lastbackend/contrib/config.yml:/etc/lastbackend/builder.yml \
+      -w /go/src/github.com/lastbackend/registry \
+      --name=builder \
+      --net=host \
+      golang go run ./cmd/registry/registry.go builder --config=./contrib/builder.yml
+
+----

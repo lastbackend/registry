@@ -20,8 +20,8 @@
     "logger",
     "version"
   ]
-  revision = "a35eae345f69bbfbe3b8fa0b1d3fe98f8430b21a"
-  version = "v10.15.3"
+  revision = "a88c19ef2016e095f0b6c3b451074b4663f53bed"
+  version = "v10.15.4"
 
 [[projects]]
   name = "github.com/Microsoft/go-winio"
@@ -54,7 +54,7 @@
     "digestset",
     "reference"
   ]
-  revision = "90705d2fb81dda1466be49bd958ed8a0dd9a6145"
+  revision = "b089e91688254eb5aef187f188c8ee0ebe4e4675"
 
 [[projects]]
   name = "github.com/docker/docker"
@@ -176,7 +176,7 @@
     "pkg/runtime/iri/docker",
     "pkg/runtime/iri/iri"
   ]
-  revision = "07e028b136b4ba99d35bfbff7385c3a07ff0c277"
+  revision = "e98b1cba190331cfafa6a3a7247c66e4bb15b420"
 
 [[projects]]
   name = "github.com/lib/pq"
@@ -209,8 +209,8 @@
     "pkg/s3utils",
     "pkg/set"
   ]
-  revision = "70799fe8dae6ecfb6c7d7e9e048fce27f23a1992"
-  version = "v6.0.5"
+  revision = "519049881e73150d1bbeac1d443e7c96b76e1b8d"
+  version = "v6.0.6"
 
 [[projects]]
   name = "github.com/mitchellh/go-homedir"
@@ -275,8 +275,8 @@
     ".",
     "mem"
   ]
-  revision = "787d034dfe70e44075ccc060d346146ef53270ad"
-  version = "v1.1.1"
+  revision = "d40851caa0d747393da1ffb28f7f9d8b4eeffebd"
+  version = "v1.1.2"
 
 [[projects]]
   name = "github.com/spf13/cast"
@@ -291,10 +291,10 @@
   version = "v0.0.3"
 
 [[projects]]
-  branch = "master"
   name = "github.com/spf13/jwalterweatherman"
   packages = ["."]
-  revision = "14d3d4c518341bea657dd8a226f5121c0ff8c9f2"
+  revision = "4a4406e478ca629068e7768fc33f3f044173c0a6"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/spf13/pflag"
@@ -305,8 +305,8 @@
 [[projects]]
   name = "github.com/spf13/viper"
   packages = ["."]
-  revision = "907c19d40d9a6c9bb55f040ff4ae45271a4754b9"
-  version = "v1.1.0"
+  revision = "8fb642006536c8d3760c99d4fa2389f5e2205631"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/stretchr/testify"
@@ -324,7 +324,7 @@
     "blowfish",
     "ssh/terminal"
   ]
-  revision = "0709b304e793a5edb4a2c0145f281ecdc20838a4"
+  revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
 
 [[projects]]
   branch = "master"
@@ -339,7 +339,7 @@
     "internal/socks",
     "proxy"
   ]
-  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
+  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
 
 [[projects]]
   branch = "master"
@@ -349,7 +349,7 @@
     "unix",
     "windows"
   ]
-  revision = "2b024373dcd9800f0cae693839fac6ede8d64a8c"
+  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
 
 [[projects]]
   name = "golang.org/x/text"

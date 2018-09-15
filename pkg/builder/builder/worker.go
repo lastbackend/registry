@@ -152,16 +152,12 @@ func (w *worker) configure() error {
 
 	var (
 		extraHosts = make([]string, 0)
-		dockerHost = defaultDockerHost
-		rootCerts  = make([]string, 0)
+		//dockerHost = defaultDockerHost
+		rootCerts = make([]string, 0)
 	)
 
 	if w.ctx.Value("extraHosts") != nil {
 		extraHosts = w.ctx.Value("extraHosts").([]string)
-	}
-
-	if w.ctx.Value("dockerHost") != nil {
-		dockerHost = w.ctx.Value("dockerHost").(string)
 	}
 
 	if w.ctx.Value("rootCerts") != nil {
@@ -231,31 +227,7 @@ func (w *worker) configure() error {
 		return err
 	}
 
-	var port = ""
-	for p, binds := range inspect.Network.Ports {
-		match := strings.Split(p, "/")
-
-		if match[0] != "2375" {
-			continue
-		}
-
-		if len(binds) == 0 {
-			err := fmt.Errorf("there are no ports available")
-			log.Errorf("%s:start:> cannot receive docker daemon connection port: %v", logWorkerPrefix, err)
-			return err
-		}
-
-		for _, bind := range binds {
-			if port != "" {
-				break
-			}
-			if bind.HostPort != "" {
-				port = bind.HostPort
-			}
-		}
-	}
-
-	w.endpoint = fmt.Sprintf("tcp://%s:%s", dockerHost, port)
+	w.endpoint = fmt.Sprintf("tcp://%s:2375", inspect.Network.IPAddress)
 	w.dcid = dcid
 
 	return nil
@@ -381,7 +353,7 @@ func (w *worker) push() error {
 	opts := viper.GetStringMap(fmt.Sprintf("runtime.%s", iriDriver))
 	opts["host"] = w.endpoint
 
-	_iri, err := client_iri.New(iriDriver, viper.GetStringMap(fmt.Sprintf("runtime.%s", iriDriver)))
+	_iri, err := client_iri.New(iriDriver, opts)
 	switch err {
 	case nil:
 	case context.Canceled:
