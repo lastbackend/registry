@@ -20,8 +20,8 @@
     "logger",
     "version"
   ]
-  revision = "a88c19ef2016e095f0b6c3b451074b4663f53bed"
-  version = "v10.15.4"
+  revision = "9bc4033dd347c7f416fca46b2f42a043dc1fbdf6"
+  version = "v10.15.5"
 
 [[projects]]
   name = "github.com/Microsoft/go-winio"
@@ -48,13 +48,13 @@
   version = "v3.2.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/docker/distribution"
   packages = [
     "digestset",
     "reference"
   ]
-  revision = "b089e91688254eb5aef187f188c8ee0ebe4e4675"
+  revision = "17b3ff188dfde7d5b59a94ab99e6a967b3a59563"
+  version = "v2.7.0-rc.0"
 
 [[projects]]
   name = "github.com/docker/docker"
@@ -109,8 +109,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "5cf292cae48347c2490ac1a58fe36735fb78df7e"
-  version = "v1.38.2"
+  revision = "7b294651033cd7d9e7f0d9ffa1b75ed1e198e737"
+  version = "v1.38.3"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -161,6 +161,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  revision = "b729f2633dfe35f4d1d8a32385f6685610ce1cb5"
+
+[[projects]]
+  branch = "master"
   name = "github.com/lastbackend/dynamic"
   packages = [
     "pkg/log",
@@ -187,7 +193,7 @@
     "pkg/runtime/iri/docker",
     "pkg/runtime/iri/iri"
   ]
-  revision = "08a71bb770d666013dc23f8aba08ec1191dfd35f"
+  revision = "2c8ee7ddce2e95b776163844f697d9593ece934f"
 
 [[projects]]
   name = "github.com/lib/pq"
@@ -220,8 +226,8 @@
     "pkg/s3utils",
     "pkg/set"
   ]
-  revision = "519049881e73150d1bbeac1d443e7c96b76e1b8d"
-  version = "v6.0.6"
+  revision = "e8c97c88468e122f161683409cde02dc89a2961c"
+  version = "v6.0.7"
 
 [[projects]]
   name = "github.com/mitchellh/go-homedir"
@@ -232,8 +238,8 @@
 [[projects]]
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
-  revision = "fa473d140ef3c6adf42d6b391fe76707f1f243c8"
-  version = "v1.0.0"
+  revision = "fe40af7a9c397fa3ddba203c38a5042c5d0475ad"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/opencontainers/go-digest"
@@ -277,8 +283,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "3e01752db0189b9157070a0e1668a620f9a85da2"
-  version = "v1.0.6"
+  revision = "a67f783a3814b8729bd2dac5780b5f78f8dbd64d"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/spf13/afero"
@@ -316,8 +322,8 @@
 [[projects]]
   name = "github.com/spf13/viper"
   packages = ["."]
-  revision = "8fb642006536c8d3760c99d4fa2389f5e2205631"
-  version = "v1.2.0"
+  revision = "2c12c60302a5a0e62ee102ca9bc996277c2f64f5"
+  version = "v1.2.1"
 
 [[projects]]
   name = "github.com/stretchr/testify"
@@ -335,7 +341,7 @@
     "blowfish",
     "ssh/terminal"
   ]
-  revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
+  revision = "e3636079e1a4c1f337f212cc5cd2aca108f6c900"
 
 [[projects]]
   branch = "master"
@@ -350,7 +356,7 @@
     "internal/socks",
     "proxy"
   ]
-  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
+  revision = "4dfa2610cdf3b287375bbba5b8f2a14d3b01d8de"
 
 [[projects]]
   branch = "master"
@@ -360,7 +366,7 @@
     "unix",
     "windows"
   ]
-  revision = "ee1b12c67af419cf5a9be3bdbeea7fc1c5f32f11"
+  revision = "e4b3c5e9061176387e7cea65e4dc5853801f3fb7"
 
 [[projects]]
   name = "golang.org/x/text"
