@@ -16,36 +16,44 @@
 // from Last.Backend LLC.
 //
 
-package envs
+package state
 
 import (
-	"github.com/lastbackend/registry/pkg/controller/state"
-	"github.com/lastbackend/registry/pkg/storage"
+	"github.com/lastbackend/registry/pkg/distribution/types"
+	"sync"
 )
 
-var e Env
-
-type Env struct {
-	storage storage.IStorage
-	state   *state.State
+type BuildState struct {
+	lock   sync.RWMutex
+	builds map[string]types.Build
 }
 
-func Get() *Env {
-	return &e
+func (s *BuildState) Set(key string, build *types.Build) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.builds[key] = *build
 }
 
-func (c *Env) SetStorage(storage storage.IStorage) {
-	c.storage = storage
+func (s BuildState) List() map[string]types.Build {
+	return s.builds
 }
 
-func (c *Env) GetStorage() storage.IStorage {
-	return c.storage
+func (s BuildState) Get(key string) *types.Build {
+	if _, ok := s.builds[key]; ok {
+		t := s.builds[key]
+		return &t
+	}
+	return nil
 }
 
-func (c *Env) SetState(s *state.State) {
-	c.state = s
+func (s *BuildState) Del(key string) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	delete(s.builds, key)
 }
 
-func (c *Env) GetState() *state.State {
-	return c.state
+func NewBuildState() *BuildState {
+	bs := new(BuildState)
+	bs.builds = make(map[string]types.Build, 0)
+	return bs
 }

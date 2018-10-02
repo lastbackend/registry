@@ -43,10 +43,10 @@ builder:
   #    container: "lb-container"
   #    ssl: true
   dind:
-    host: "10.27.8.20"
+    host: "172.17.0.1"
   extra_hosts:
-  - "hub.lstbknd.net:10.27.8.20"
-  - "api.lstbknd.net:10.27.8.20"
+  - "hub.lstbknd.net:172.17.0.1"
+  - "api.lstbknd.net:172.17.0.1"
 
 
 # Runtime

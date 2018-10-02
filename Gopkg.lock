@@ -176,7 +176,7 @@
     "pkg/runtime/iri/docker",
     "pkg/runtime/iri/iri"
   ]
-  revision = "e98b1cba190331cfafa6a3a7247c66e4bb15b420"
+  revision = "08a71bb770d666013dc23f8aba08ec1191dfd35f"
 
 [[projects]]
   name = "github.com/lib/pq"
@@ -349,7 +349,7 @@
     "unix",
     "windows"
   ]
-  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
+  revision = "ee1b12c67af419cf5a9be3bdbeea7fc1c5f32f11"
 
 [[projects]]
   name = "golang.org/x/text"

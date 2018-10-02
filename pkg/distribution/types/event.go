@@ -16,36 +16,11 @@
 // from Last.Backend LLC.
 //
 
-package envs
+package types
 
-import (
-	"github.com/lastbackend/registry/pkg/controller/state"
-	"github.com/lastbackend/registry/pkg/storage"
-)
-
-var e Env
-
-type Env struct {
-	storage storage.IStorage
-	state   *state.State
-}
-
-func Get() *Env {
-	return &e
-}
-
-func (c *Env) SetStorage(storage storage.IStorage) {
-	c.storage = storage
-}
-
-func (c *Env) GetStorage() storage.IStorage {
-	return c.storage
-}
-
-func (c *Env) SetState(s *state.State) {
-	c.state = s
-}
-
-func (c *Env) GetState() *state.State {
-	return c.state
+type Event struct {
+	Channel   string `json:"channel"`
+	Entity    string `json:"entity"`
+	Operation string `json:"operation"`
+	//Payload   json.RawMessage `json:"payload"`
 }

@@ -16,14 +16,14 @@
 // from Last.Backend LLC.
 //
 
-package build
+package registry
 
 import (
 	"context"
 	"encoding/json"
 	"time"
 
-	"github.com/lastbackend/lastbackend/pkg/log"
+	"github.com/lastbackend/dynamic/pkg/log"
 	"github.com/lastbackend/registry/pkg/controller/envs"
 	"github.com/lastbackend/registry/pkg/distribution"
 	"github.com/lastbackend/registry/pkg/distribution/types"
@@ -31,27 +31,11 @@ import (
 
 const (
 	logLevel                  = 3
-	logPrefix                 = "runtime:build"
+	logPrefix                 = "runtime:registry"
 	delayForCheckUnfreezeTime = 1 * time.Minute
 )
 
-func Inspector(ctx context.Context) {
-	log.V(logLevel).Infof("%s:> run inspector for build", logPrefix)
-
-	for range time.Tick(delayForCheckUnfreezeTime) {
-		var (
-			bm = distribution.NewBuildModel(ctx, envs.Get().GetStorage())
-		)
-
-		if err := bm.Unfreeze(); err != nil {
-			log.V(logLevel).Errorf("%s:inspector:> check and unfreeze dangling builds err: %v", logPrefix, err)
-			continue
-		}
-	}
-}
-
 func Watch(ctx context.Context) {
-	log.V(logLevel).Infof("%s:> run build watcher", logPrefix)
 
 	var bm = distribution.NewBuildModel(ctx, envs.Get().GetStorage())
 	var evs = make(chan string)

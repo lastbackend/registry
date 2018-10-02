@@ -28,7 +28,6 @@ import (
 
 type ClientV1 interface {
 	Build(id string) BuildClientV1
-
 	Status(ctx context.Context) (*vv1.Builder, error)
 }
 
@@ -36,3 +35,4 @@ type BuildClientV1 interface {
 	Logs(ctx context.Context, opts *rv1.BuildLogsOptions) (io.ReadCloser, error)
 	Cancel(ctx context.Context) error
 }
+

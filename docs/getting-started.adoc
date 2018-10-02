@@ -82,6 +82,15 @@ docker run -d -it --restart=always \
       --net=host \
       golang go run ./cmd/registry/registry.go ctrl -c /etc/lastbackend/controller.yml
 
+# run Last.Backend Registry API from sources in docker
+docker run -d -it --restart=always \
+      -v /lastbackend:/go/src/github.com/lastbackend/registry \
+      -v /lastbackend/contrib/config.yml:/etc/lastbackend/config.yml \
+      -w /go/src/github.com/lastbackend/registry \
+      --name=api \
+      --net=host \
+      golang go run ./cmd/registry/registry.go api --config=./contrib/config.yml
+
 eval `docker-machine env minion-00`
 
 # fetch deps
@@ -92,15 +101,24 @@ docker run --rm -it  \
       --net=host \
       golang ./hack/bootstrap.sh
 
-# run Last.Backend Registry API from sources in docker
+# run Last.Backend Builder from sources in docker
 docker run -d -it --restart=always \
       -v /lastbackend:/go/src/github.com/lastbackend/registry \
-      -v /lastbackend/contrib/config.yml:/etc/lastbackend/config.yml \
+      -v /lastbackend/contrib/config.yml:/etc/lastbackend/builder.yml \
       -w /go/src/github.com/lastbackend/registry \
-      -e PSQL="host=${MASTER_IP} port=5432 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes" \
-      --name=api \
+      --name=builder \
       --net=host \
-      golang go run ./cmd/registry/registry.go api --config=./contrib/config.yml
+      golang go run ./cmd/registry/registry.go builder --config=./contrib/builder.yml
+
+eval `docker-machine env minion-01`
+
+# fetch deps
+docker run --rm -it  \
+      -v /lastbackend:/go/src/github.com/lastbackend/registry \
+      -w /go/src/github.com/lastbackend/registry \
+      --name=deps \
+      --net=host \
+      golang ./hack/bootstrap.sh
 
 # run Last.Backend Builder from sources in docker
 docker run -d -it --restart=always \

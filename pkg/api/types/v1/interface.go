@@ -28,6 +28,7 @@ type IRequest interface {
 	Build() *request.BuildRequest
 	Builder() *request.BuilderRequest
 	Registry() *request.RegistryRequest
+	Event() *request.EventRequest
 }
 
 type IView interface {
