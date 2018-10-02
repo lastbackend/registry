@@ -153,13 +153,37 @@ BEGIN
       INSERT INTO images_tags (image_id, name) VALUES (NEW.image_id, NEW.image ->> 'tag');
     END IF;
 
+    PERFORM pg_notify('e_watch_build',
+                      JSON_BUILD_OBJECT('channel', 'build', 'entity', NEW.id :: TEXT, 'operation',
+                                        'insert') :: TEXT);
+
     RETURN NEW;
   ELSIF TG_OP = 'UPDATE'
     THEN
+
+      PERFORM pg_notify('e_watch_build',
+                        JSON_BUILD_OBJECT('channel', 'build', 'entity', NEW.id :: TEXT, 'operation',
+                                          'update') :: TEXT);
+
       RETURN NEW;
   ELSE
     RETURN NEW;
   END IF;
+END;
+$$
+LANGUAGE plpgsql;
+
+---------------------------------------------------------------------------------------------------
+--------------------------------------- Creates notify procedures ---------------------------------
+---------------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION lb_notify(gate TEXT, channel TEXT, op TEXT, entity TEXT, payload JSON)
+  RETURNS BOOLEAN AS
+$$
+BEGIN
+  PERFORM pg_notify(gate, JSON_BUILD_OBJECT('channel', channel, 'entity', entity, 'operation', op, 'payload',
+                                            payload) :: TEXT);
+  RETURN TRUE;
 END;
 $$
 LANGUAGE plpgsql;
@@ -185,4 +209,5 @@ VALUES ('', '');
 ---------------------------------------- Creates rules  -------------------------------------------
 ---------------------------------------------------------------------------------------------------
 
-CREATE RULE systems_rule AS ON DELETE TO systems DO INSTEAD NOTHING
+CREATE RULE systems_rule AS ON DELETE
+  TO systems DO INSTEAD NOTHING

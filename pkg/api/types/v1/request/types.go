@@ -43,3 +43,7 @@ func (Request) Builder() *BuilderRequest {
 func (Request) Registry() *RegistryRequest {
 	return new(RegistryRequest)
 }
+
+func (Request) Event() *EventRequest {
+	return new(EventRequest)
+}

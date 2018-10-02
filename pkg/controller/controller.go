@@ -26,6 +26,7 @@ import (
 	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/controller/envs"
 	"github.com/lastbackend/registry/pkg/controller/runtime"
+	"github.com/lastbackend/registry/pkg/controller/state"
 	"github.com/lastbackend/registry/pkg/storage"
 	"github.com/spf13/viper"
 )
@@ -50,10 +51,16 @@ func Daemon() bool {
 		log.Fatalf("%s:> cannot initialize storage: %v", logPrefix, err)
 	}
 	env.SetStorage(stg)
+	env.SetState(state.New())
 
 	// Initialize Runtime
 	r := runtime.NewRuntime()
-	r.Inspector()
+	go r.Inspector()
+	go r.Watcher()
+
+	if viper.IsSet("exporter.uri") {
+		go r.Exporter(viper.GetString("exporter.uri"), viper.GetDuration("exporter.timeout"))
+	}
 
 	// Handle SIGINT and SIGTERM.
 	signal.Notify(sigs, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)

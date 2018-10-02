@@ -43,13 +43,13 @@ type System struct {
 func (i System) Get() (*types.System, error) {
 	log.V(logLevel).Debugf("%s:get:> get system", logSystemPrefix)
 
-	image, err := i.storage.System().Get(i.context)
+	sys, err := i.storage.System().Get(i.context)
 	if err != nil {
 		log.V(logLevel).Debugf("%s:get:> get system err: %v", logSystemPrefix, err)
 		return nil, err
 	}
 
-	return image, nil
+	return sys, nil
 }
 
 func (i System) Update(system *types.System, opts *types.SystemUpdateOptions) error {

@@ -44,7 +44,20 @@ type RegistryMeta struct {
 }
 
 type RegistryStatus struct {
-	TLS bool `json:"tls"`
+	TLS       bool              `json:"tls"`
+	Capacity  RegistryResources `json:"capacity"`
+	Allocated RegistryResources `json:"allocated"`
+}
+
+type RegistryResources struct {
+	// Registry total builders
+	Builders int `json:"builders"`
+	// Registry total memory
+	Memory int64 `json:"memory"`
+	// Registry total cpu
+	Cpu int `json:"cpu"`
+	// Registry storage
+	Storage int `json:"storage"`
 }
 
 type RegistryUser struct {

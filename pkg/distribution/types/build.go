@@ -87,7 +87,7 @@ type BuildImage struct {
 	Owner string `json:"owner"`
 	Tag   string `json:"tag"`
 	Hash  string `json:"hash"`
-	Auth       string   `json:"auth"`
+	Auth  string `json:"auth"`
 }
 
 type BuildSource struct {

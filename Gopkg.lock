@@ -161,6 +161,17 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/lastbackend/dynamic"
+  packages = [
+    "pkg/log",
+    "pkg/log/formatter",
+    "pkg/log/hooks",
+    "pkg/log/logger"
+  ]
+  revision = "5aef9f6be44788760f559f97f23fa2c35025fa7d"
+
+[[projects]]
+  branch = "master"
   name = "github.com/lastbackend/lastbackend"
   packages = [
     "pkg/distribution/errors",
@@ -176,7 +187,7 @@
     "pkg/runtime/iri/docker",
     "pkg/runtime/iri/iri"
   ]
-  revision = "e98b1cba190331cfafa6a3a7247c66e4bb15b420"
+  revision = "08a71bb770d666013dc23f8aba08ec1191dfd35f"
 
 [[projects]]
   name = "github.com/lib/pq"
@@ -349,7 +360,7 @@
     "unix",
     "windows"
   ]
-  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
+  revision = "ee1b12c67af419cf5a9be3bdbeea7fc1c5f32f11"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -381,6 +392,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "490a60d4996443064aa1760a8b9a1f53d75e4122d5496a6518cc7cee7466192a"
+  inputs-digest = "726c3084229692737f280c6fbc48178bfd25300216fd2432a900ef2a06a293a8"
   solver-name = "gps-cdcl"
   solver-version = 1

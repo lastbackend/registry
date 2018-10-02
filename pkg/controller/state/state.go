@@ -16,36 +16,18 @@
 // from Last.Backend LLC.
 //
 
-package envs
+package state
 
-import (
-	"github.com/lastbackend/registry/pkg/controller/state"
-	"github.com/lastbackend/registry/pkg/storage"
-)
-
-var e Env
-
-type Env struct {
-	storage storage.IStorage
-	state   *state.State
+type State struct {
+	build *BuildState
 }
 
-func Get() *Env {
-	return &e
+func (s State) Build() *BuildState {
+	return s.build
 }
 
-func (c *Env) SetStorage(storage storage.IStorage) {
-	c.storage = storage
-}
-
-func (c *Env) GetStorage() storage.IStorage {
-	return c.storage
-}
-
-func (c *Env) SetState(s *state.State) {
-	c.state = s
-}
-
-func (c *Env) GetState() *state.State {
-	return c.state
+func New() *State {
+	return &State{
+		build: NewBuildState(),
+	}
 }
