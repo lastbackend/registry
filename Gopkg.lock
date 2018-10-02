@@ -161,6 +161,17 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/lastbackend/dynamic"
+  packages = [
+    "pkg/log",
+    "pkg/log/formatter",
+    "pkg/log/hooks",
+    "pkg/log/logger"
+  ]
+  revision = "5aef9f6be44788760f559f97f23fa2c35025fa7d"
+
+[[projects]]
+  branch = "master"
   name = "github.com/lastbackend/lastbackend"
   packages = [
     "pkg/distribution/errors",
@@ -381,6 +392,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "490a60d4996443064aa1760a8b9a1f53d75e4122d5496a6518cc7cee7466192a"
+  inputs-digest = "726c3084229692737f280c6fbc48178bfd25300216fd2432a900ef2a06a293a8"
   solver-name = "gps-cdcl"
   solver-version = 1
