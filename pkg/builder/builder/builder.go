@@ -28,8 +28,8 @@ import (
 
 	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 	"github.com/lastbackend/lastbackend/pkg/log"
+	"github.com/lastbackend/lastbackend/pkg/runtime/cii"
 	"github.com/lastbackend/lastbackend/pkg/runtime/cri"
-	"github.com/lastbackend/lastbackend/pkg/runtime/iri"
 	"github.com/lastbackend/registry/pkg/api/types/v1"
 	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 	"github.com/lastbackend/registry/pkg/builder/envs"
@@ -53,7 +53,7 @@ type Builder struct {
 	cancel   context.CancelFunc
 	hostname string
 	cri      cri.CRI
-	iri      iri.IRI
+	cii      cii.CII
 	limit    int
 
 	opts BuilderOpts
@@ -73,7 +73,7 @@ type BuilderOpts struct {
 }
 
 // Preparing the builder environment for workers
-func New(cri cri.CRI, iri iri.IRI, opts *BuilderOpts) *Builder {
+func New(cri cri.CRI, cii cii.CII, opts *BuilderOpts) *Builder {
 
 	log.Infof("%s:new:> create builder", logBuilderPrefix)
 
@@ -88,7 +88,7 @@ func New(cri cri.CRI, iri iri.IRI, opts *BuilderOpts) *Builder {
 
 	b.limit = opts.Limit
 	b.cri = cri
-	b.iri = iri
+	b.cii = cii
 	b.opts = *opts
 
 	b.done = make(chan bool)
@@ -241,7 +241,7 @@ func (b *Builder) manage() error {
 // Configure builder
 func (b *Builder) configure() error {
 
-	localImages, err := b.iri.List(b.ctx)
+	localImages, err := b.cii.List(b.ctx)
 	if err != nil {
 		return err
 	}
@@ -271,7 +271,7 @@ func (b *Builder) configure() error {
 			continue
 		}
 
-		_, err := b.iri.Pull(b.ctx, &lbt.ImageManifest{Name: img}, os.Stdout)
+		_, err := b.cii.Pull(b.ctx, &lbt.ImageManifest{Name: img}, os.Stdout)
 		if err != nil {
 			log.Errorf("%s:configure:> pull image err: %v", logWorkerPrefix, err)
 			return err
