@@ -20,13 +20,13 @@ package builder
 
 import (
 	"fmt"
-	"github.com/lastbackend/lastbackend/pkg/runtime/cri/cri"
-	"github.com/lastbackend/lastbackend/pkg/runtime/iri/iri"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/lastbackend/lastbackend/pkg/log"
+	"github.com/lastbackend/lastbackend/pkg/runtime/cii/cii"
+	"github.com/lastbackend/lastbackend/pkg/runtime/cri/cri"
 	"github.com/lastbackend/registry/pkg/api/client"
 	"github.com/lastbackend/registry/pkg/builder/builder"
 	"github.com/lastbackend/registry/pkg/builder/envs"
@@ -51,10 +51,10 @@ func Daemon() bool {
 		log.Errorf("Cannot initialize cri: %v", err)
 	}
 
-	iriDriver := viper.GetString("runtime.iri.type")
-	_iri, err := iri.New(iriDriver, viper.GetStringMap(fmt.Sprintf("runtime.%s", iriDriver)))
+	ciiDriver := viper.GetString("runtime.cii.type")
+	_cii, err := cii.New(ciiDriver, viper.GetStringMap(fmt.Sprintf("runtime.%s", ciiDriver)))
 	if err != nil {
-		log.Errorf("Cannot initialize iri: %v", err)
+		log.Errorf("Cannot initialize cii: %v", err)
 	}
 
 	cfg := client.NewConfig()
@@ -111,7 +111,7 @@ func Daemon() bool {
 		envs.Get().SetBlobStorage(blobStorage)
 	}
 
-	b := builder.New(_cri, _iri, bo)
+	b := builder.New(_cri, _cii, bo)
 
 	if viper.IsSet("builder.ip") {
 		envs.Get().SetIP(viper.GetString("builder.ip"))

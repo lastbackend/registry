@@ -35,4 +35,3 @@ type BuildClientV1 interface {
 	Logs(ctx context.Context, opts *rv1.BuildLogsOptions) (io.ReadCloser, error)
 	Cancel(ctx context.Context) error
 }
-

@@ -31,7 +31,6 @@ import (
 
 	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/lastbackend/pkg/runtime/cri"
-	client_iri "github.com/lastbackend/lastbackend/pkg/runtime/iri/iri"
 	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/distribution/types"
@@ -39,6 +38,7 @@ import (
 	"github.com/lastbackend/registry/pkg/util/validator"
 
 	lbt "github.com/lastbackend/lastbackend/pkg/distribution/types"
+	lbcii "github.com/lastbackend/lastbackend/pkg/runtime/cii/cii"
 )
 
 const (
@@ -349,11 +349,11 @@ func (w *worker) push() error {
 
 	log.Infof("%s:push:> running push image %s process for task %s to registry %s", logWorkerPrefix, name, w.pid, registry)
 
-	iriDriver := viper.GetString("runtime.iri.type")
-	opts := viper.GetStringMap(fmt.Sprintf("runtime.%s", iriDriver))
+	ciiDriver := viper.GetString("runtime.cii.type")
+	opts := viper.GetStringMap(fmt.Sprintf("runtime.%s", ciiDriver))
 	opts["host"] = w.endpoint
 
-	_iri, err := client_iri.New(iriDriver, opts)
+	cii, err := lbcii.New(ciiDriver, opts)
 	switch err {
 	case nil:
 	case context.Canceled:
@@ -371,7 +371,7 @@ func (w *worker) push() error {
 		writer = os.Stdout
 	}
 
-	img, err := _iri.Push(w.ctx, &lbt.ImageManifest{Name: name, Tag: tag, Auth: auth}, writer)
+	img, err := cii.Push(w.ctx, &lbt.ImageManifest{Name: name, Tag: tag, Auth: auth}, writer)
 	switch err {
 	case nil:
 	case context.Canceled:
