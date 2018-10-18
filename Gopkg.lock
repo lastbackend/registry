@@ -220,7 +220,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:07814a1635caf645c85fae5d45e2b983f939a99ca47eb5de350f1a04ad8a6d5d"
+  digest = "1:0ef0de91e02c03c43ff4b5914a1bdf1771f3808e5ebe0249a690ee7a32fe76e2"
   name = "github.com/lastbackend/lastbackend"
   packages = [
     "pkg/distribution/errors",
@@ -237,7 +237,7 @@
     "pkg/runtime/cri/docker",
   ]
   pruneopts = "UT"
-  revision = "1d87e84b03e907b9cfa13f8ad2ff5e6c939a4fa9"
+  revision = "6721662400968678233db303548513d382b304eb"
 
 [[projects]]
   digest = "1:8ef506fc2bb9ced9b151dafa592d4046063d744c646c1bbe801982ce87e4bc24"
@@ -444,7 +444,7 @@
     "proxy",
   ]
   pruneopts = "UT"
-  revision = "49bb7cea24b1df9410e1712aa6433dae904ff66a"
+  revision = "04a2e542c03f1d053ab3e4d6e5abcd4b66e2be8e"
 
 [[projects]]
   branch = "master"
