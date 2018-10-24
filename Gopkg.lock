@@ -131,12 +131,12 @@
   version = "v1.4.7"
 
 [[projects]]
-  digest = "1:b98e7574fc27ec166fb31195ec72c3bd0bffd73926d3612eb4c929bc5236f75b"
+  digest = "1:15e27372d379b45b18ac917b9dafc45c45485239490ece18cca97a12f9591146"
   name = "github.com/go-ini/ini"
   packages = ["."]
   pruneopts = "UT"
-  revision = "7b294651033cd7d9e7f0d9ffa1b75ed1e198e737"
-  version = "v1.38.3"
+  revision = "9c8236e659b76e87bf02044d06fde8683008ff3e"
+  version = "v1.39.0"
 
 [[projects]]
   digest = "1:bbadccf3d3317ea03c0dac0b45b673b4b397c8f91a1d2eff550a3c51c4ad770e"
@@ -220,7 +220,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e150c2fbf9cfe214d66748cfd5f3326609c848fc2f644879eed1d7f5d3d8d964"
+  digest = "1:0ef0de91e02c03c43ff4b5914a1bdf1771f3808e5ebe0249a690ee7a32fe76e2"
   name = "github.com/lastbackend/lastbackend"
   packages = [
     "pkg/distribution/errors",
@@ -237,7 +237,7 @@
     "pkg/runtime/cri/docker",
   ]
   pruneopts = "UT"
-  revision = "78d1d7c403a0b8142756ae20f3fe29d53811b4d2"
+  revision = "6721662400968678233db303548513d382b304eb"
 
 [[projects]]
   digest = "1:8ef506fc2bb9ced9b151dafa592d4046063d744c646c1bbe801982ce87e4bc24"
@@ -427,7 +427,7 @@
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "7c1a557ab941a71c619514f229f0b27ccb0c27cf"
+  revision = "0c41d7ab0a0ee717d4590a44bcb987dfd9e183eb"
 
 [[projects]]
   branch = "master"
@@ -444,11 +444,11 @@
     "proxy",
   ]
   pruneopts = "UT"
-  revision = "146acd28ed5894421fb5aac80ca93bc1b1f46f87"
+  revision = "04a2e542c03f1d053ab3e4d6e5abcd4b66e2be8e"
 
 [[projects]]
   branch = "master"
-  digest = "1:c7fca7fb607a610caae0ea941ef3843a8022f6abb69b6cd646406253f1ed36f7"
+  digest = "1:9499e4b3284b485c77e0b08c20392d1add88a982fba2468fc01a45a025110df5"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
@@ -456,7 +456,7 @@
     "windows",
   ]
   pruneopts = "UT"
-  revision = "4497e2df6f9e69048a54498c7affbbec3294ad47"
+  revision = "fa43e7bc11baaae89f3f902b2b4d832b68234844"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
