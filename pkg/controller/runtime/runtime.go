@@ -98,7 +98,7 @@ func (r Runtime) Exporter(uri string, timeout time.Duration) {
 
 	client, err := req.NewRESTClient(endpoint, cfg)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:> create rest client for send events err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:> create rest client for exporter err: %v", logPrefix, err)
 		panic(err)
 	}
 
