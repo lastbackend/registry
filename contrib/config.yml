@@ -17,7 +17,7 @@ api:
   host: 0.0.0.0
   port: 2955
   tls:
-    insecure: false
+    insecure: true
     ca: "/opt/cert/registry/ca.pem"
     cert: "/opt/cert/registry/server.pem"
     key: "/opt/cert/registry/server-key.pem"
@@ -32,7 +32,7 @@ api:
 
 builder:
   tls:
-    insecure: false
+    insecure: true
     ca: "/opt/cert/builder/ca.pem"
     cert: "/opt/cert/builder/client.pem"
     key: "/opt/cert/builder/client-key.pem"

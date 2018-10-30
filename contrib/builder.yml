@@ -8,7 +8,7 @@ secret:
 registry:
   uri: "https://hub.lstbknd.net"
   tls:
-    insecure: false
+    insecure: true
     ca: "/opt/cert/registry/ca.pem"
     cert: "/opt/cert/registry/client.pem"
     key: "/opt/cert/registry/client-key.pem"
@@ -18,7 +18,7 @@ builder:
   port: 2954
   ip: "127.0.0.1"
   tls:
-    insecure: false
+    insecure: true
     ca: "/opt/cert/builder/ca.pem"
     server_cert: "/opt/cert/builder/server.pem"
     server_key: "/opt/cert/builder/server-key.pem"
