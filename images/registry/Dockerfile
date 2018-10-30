@@ -1,4 +1,5 @@
-FROM golang:1.11.1-alpine3.8
+# Build manifest
+FROM golang:1.11.1-alpine3.8 as build
 
 RUN apk add --no-cache ca-certificates
 
@@ -20,15 +21,21 @@ ENV GOPATH /go
 ENV GOROOT /usr/local/go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
-ADD . /go/src/github.com/lastbackend/registry
-WORKDIR /go/src/github.com/lastbackend/registry
+ADD . $GOPATH/src/github.com/lastbackend/registry
+WORKDIR $GOPATH/src/github.com/lastbackend/registry
 
 RUN make build && make install
 RUN apk del --purge .build-deps
 
-WORKDIR /go/bin
-RUN rm -rf /go/pkg \
-    && rm -rf /go/src \
+WORKDIR $GOPATH/bin
+RUN rm -rf $GOPATH/pkg \
+    && rm -rf $GOPATH/src \
     && rm -rf /var/cache/apk/*
 
-EXPOSE 2954 2955
+
+# Production manifest
+FROM alpine:latest as production
+
+COPY --from=build /usr/bin/registry /usr/bin/registry
+
+EXPOSE 2965 53

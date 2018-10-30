@@ -397,7 +397,7 @@ func BuildLogsH(w http.ResponseWriter, r *http.Request) {
 	if build.Status.Done || build.Status.Error {
 		read, write := io.Pipe()
 		defer write.Close()
-		go envs.Get().GetBlobStorage().ReadToWriter(build.Meta.ID, write)
+		go envs.Get().GetBlobStorage().Read(build.Meta.ID, write)
 		pipe(w, read)
 		return
 	}

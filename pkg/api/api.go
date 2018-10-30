@@ -19,6 +19,7 @@
 package api
 
 import (
+	"github.com/lastbackend/registry/pkg/util/blob/config"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,7 +29,6 @@ import (
 	"github.com/lastbackend/registry/pkg/api/http"
 	"github.com/lastbackend/registry/pkg/storage"
 	"github.com/lastbackend/registry/pkg/util/blob"
-	"github.com/lastbackend/registry/pkg/util/blob/azure"
 	"github.com/lastbackend/registry/pkg/util/blob/s3"
 	"github.com/spf13/viper"
 )
@@ -52,28 +52,15 @@ func Daemon() bool {
 
 	if viper.IsSet("api.blob_storage") {
 		var blobStorage blob.IBlobStorage
-		switch viper.GetString("api.blob_storage.type") {
-		case "s3":
-			blobStorage = s3.New(
-				viper.GetString("api.blob_storage.endpoint"),
-				viper.GetString("api.blob_storage.id"),
-				viper.GetString("api.blob_storage.secret"),
-				viper.GetString("api.blob_storage.bucket_name"),
-				viper.GetString("api.blob_storage.region"),
-				viper.GetBool("api.blob_storage.ssl"),
-			)
-		case "azure":
-			blobStorage = azure.New(
-				viper.GetString("api.blob_storage.endpoint"),
-				viper.GetString("api.blob_storage.account"),
-				viper.GetString("api.blob_storage.key"),
-				viper.GetString("api.blob_storage.container"),
-				viper.GetBool("api.blob_storage.ssl"),
-			)
-		default:
-			panic("unknown blog storage driver")
-		}
+		var cfg config.Config
+		viper.UnmarshalKey("api.blob_storage", &cfg)
 
+		switch viper.GetString("api.blob_storage.type") {
+		case blob.DriverS3:
+			blobStorage = s3.New(cfg)
+		default:
+			log.Fatalf("log driver not found")
+		}
 		envs.Get().SetBlobStorage(blobStorage)
 	}
 

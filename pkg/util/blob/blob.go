@@ -18,10 +18,18 @@
 
 package blob
 
-import "io"
+import (
+	"io"
+)
+
+const (
+	DriverS3    = "s3"
+	DriverAzure = "azure"
+)
 
 type IBlobStorage interface {
-	ReadToWriter(name string, writer io.WriteCloser) error
-	Write(name string, reader io.Reader) error
-	WriteFile(name string, filePath string) error
+	Read(path string, writer io.WriteCloser) error
+	Write(path string, content []byte) error
+	WriteFromReader(path string, reader io.Reader) error
+	WriteFromFile(path string) error
 }

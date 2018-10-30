@@ -23,17 +23,12 @@ api:
     key: "/opt/cert/registry/server-key.pem"
   blob_storage:
     type: "s3"
-    endpoint: "127.0.0.1:9000"
-    id: "IGAKM8N0LT1R9730AZX6"
-    secret: "6AZzUGzbwrsBR7oEVf9eoMjDriJ75UsnVpDHNzGS"
-    bucket_name: "lb-bucket"
-    ssl: false
-  #    type: "azure"
-  #    endpoint: "devcnrcustoragestandard.blob.core.windows.net"
-  #    account: "devcnrcustoragestandard"
-  #    key: "rGAinAq7+L+GRz2b65Zob+5VOmQeq2m6+CMkemzMMkHdNliycSqzI3Ggp17tTKGbJTi/+oz4iedV0uxW/y0AAA=="
-  #    container: "lb-container"
-  #    ssl: true
+    access_id: ""
+    secret_key: ""
+    region: ""
+    bucket_name: ""
+    root_dir: "/lastbackend/registry"
+    ssl: true
 
 builder:
   tls:

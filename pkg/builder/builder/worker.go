@@ -21,6 +21,7 @@ package builder
 import (
 	"context"
 	"fmt"
+	"github.com/lastbackend/registry/pkg/util/converter"
 	"github.com/spf13/viper"
 	"io"
 	"net/http"
@@ -417,7 +418,12 @@ func (w *worker) uploadLogs() error {
 	}()
 
 	if envs.Get().GetBlobStorage() != nil {
-		err = envs.Get().GetBlobStorage().Write(w.task.Meta.ID, cleaner.NewReader(req))
+		s, err := converter.GitUrlParse(w.task.Spec.Source.Url)
+		if err != nil {
+			log.Errorf("%s:upload_logs:> parse source url err: %s", err)
+		}
+		path := fmt.Sprintf("/%s/%s/%s/build/%s", s.Vendor, s.Owner, s.Name, w.task.Meta.ID)
+		err = envs.Get().GetBlobStorage().WriteFromReader(path, cleaner.NewReader(req))
 		if err != nil {
 			log.Errorf("%s:upload_logs:> write container logs to blob err: %v", logWorkerPrefix, err)
 		}
