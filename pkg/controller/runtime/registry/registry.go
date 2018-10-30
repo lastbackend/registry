@@ -23,7 +23,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/lastbackend/dynamic/pkg/log"
+	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/controller/envs"
 	"github.com/lastbackend/registry/pkg/distribution"
 	"github.com/lastbackend/registry/pkg/distribution/types"

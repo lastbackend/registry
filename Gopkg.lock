@@ -2,32 +2,6 @@
 
 
 [[projects]]
-  digest = "1:46ea9487304f4b3c787f54483ecb13a338d686dcd670db0ab1a112ed0ae2128e"
-  name = "github.com/Azure/azure-sdk-for-go"
-  packages = [
-    "storage",
-    "version",
-  ]
-  pruneopts = "UT"
-  revision = "4e8cbbfb1aeab140cd0fa97fd16b64ee18c3ca6a"
-  version = "v19.1.0"
-
-[[projects]]
-  digest = "1:64d222925bd333f4fa6d12e7c4b577a414fd79a1177efd3e86b0a21bd2c2a0f5"
-  name = "github.com/Azure/go-autorest"
-  packages = [
-    "autorest",
-    "autorest/adal",
-    "autorest/azure",
-    "autorest/date",
-    "logger",
-    "version",
-  ]
-  pruneopts = "UT"
-  revision = "9bc4033dd347c7f416fca46b2f42a043dc1fbdf6"
-  version = "v10.15.5"
-
-[[projects]]
   digest = "1:f9ae348e1f793dcf9ed930ed47136a67343dbd6809c5c91391322267f4476892"
   name = "github.com/Microsoft/go-winio"
   packages = ["."]
@@ -42,6 +16,48 @@
   pruneopts = "UT"
   revision = "ccb8e960c48f04d6935e72476ae4a51028f9e22f"
   version = "v9"
+
+[[projects]]
+  digest = "1:af6a588c8f36d7b8d2050a4471d735bddb65b44e18e0f7bb048d26280898555d"
+  name = "github.com/aws/aws-sdk-go"
+  packages = [
+    "aws",
+    "aws/awserr",
+    "aws/awsutil",
+    "aws/client",
+    "aws/client/metadata",
+    "aws/corehandlers",
+    "aws/credentials",
+    "aws/credentials/ec2rolecreds",
+    "aws/credentials/endpointcreds",
+    "aws/credentials/stscreds",
+    "aws/csm",
+    "aws/defaults",
+    "aws/ec2metadata",
+    "aws/endpoints",
+    "aws/request",
+    "aws/session",
+    "aws/signer/v4",
+    "internal/ini",
+    "internal/s3err",
+    "internal/sdkio",
+    "internal/sdkrand",
+    "internal/sdkuri",
+    "internal/shareddefaults",
+    "private/protocol",
+    "private/protocol/eventstream",
+    "private/protocol/eventstream/eventstreamapi",
+    "private/protocol/query",
+    "private/protocol/query/queryutil",
+    "private/protocol/rest",
+    "private/protocol/restxml",
+    "private/protocol/xml/xmlutil",
+    "service/s3",
+    "service/sts",
+  ]
+  pruneopts = "UT"
+  revision = "34ab03ee1a2b90b3baf97ff666397c8fb9b8714b"
+  version = "v1.15.64"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -60,15 +76,14 @@
   version = "v3.2.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:4ddc17aeaa82cb18c5f0a25d7c253a10682f518f4b2558a82869506eec223d76"
+  digest = "1:4189ee6a3844f555124d9d2656fe7af02fca961c2a9bad9074789df13a0c62e0"
   name = "github.com/docker/distribution"
   packages = [
     "digestset",
     "reference",
   ]
   pruneopts = "UT"
-  revision = "1cb4180b1a5b9c029b2f2beaeb38f0b5cf64e12e"
+  revision = "edc3ab29cdff8694dd6feb85cfeb4b5f1b38ed9c"
 
 [[projects]]
   digest = "1:d40cef2b20331a3a337ff6872f39c470ed5cd4800919f0ef4847403b3df3b172"
@@ -107,20 +122,11 @@
   revision = "master"
 
 [[projects]]
-  digest = "1:6f82cacd0af5921e99bf3f46748705239b36489464f4529a1589bc895764fb18"
+  digest = "1:57d39983d01980c1317c2c5c6dd4b5b0c4a804ad2df800f2f6cbcd6a6d05f6ca"
   name = "github.com/docker/go-units"
   packages = ["."]
   pruneopts = "UT"
-  revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
-  version = "v0.3.3"
-
-[[projects]]
-  digest = "1:6f9339c912bbdda81302633ad7e99a28dfa5a639c864061f1929510a9a64aa74"
-  name = "github.com/dustin/go-humanize"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "9f541cc9db5d55bce703bd99987c9d5cb8eea45e"
-  version = "v1.0.0"
+  revision = "9e638d38cf6977a37a8ea0078f3ee75a7cdb2dd1"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -131,20 +137,12 @@
   version = "v1.4.7"
 
 [[projects]]
-  digest = "1:15e27372d379b45b18ac917b9dafc45c45485239490ece18cca97a12f9591146"
-  name = "github.com/go-ini/ini"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "9c8236e659b76e87bf02044d06fde8683008ff3e"
-  version = "v1.39.0"
-
-[[projects]]
-  digest = "1:bbadccf3d3317ea03c0dac0b45b673b4b397c8f91a1d2eff550a3c51c4ad770e"
+  digest = "1:701239373bbf22998c5a36c76d2ff4ee309b3980e39b7a66d72cabd3aab748fa"
   name = "github.com/gogo/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
-  version = "v1.1.1"
+  revision = "100ba4e885062801d56799d78530b73b178a78f3"
+  version = "v0.4"
 
 [[projects]]
   digest = "1:c79fb010be38a59d657c48c6ba1d003a8aa651fa56b579d959d74573b7dff8e1"
@@ -198,6 +196,13 @@
   version = "v1.0"
 
 [[projects]]
+  digest = "1:e22af8c7518e1eab6f2eab2b7d7558927f816262586cd6ed9f349c97a6c285c4"
+  name = "github.com/jmespath/go-jmespath"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0b12d6b5"
+
+[[projects]]
   digest = "1:0a69a1c0db3591fcefb47f115b224592c8dfa4368b7ba9fae509d5e16cdc95c8"
   name = "github.com/konsorten/go-windows-terminal-sequences"
   packages = ["."]
@@ -207,20 +212,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6c9e0d14261733dfed114aee98a6181a7e78fca0fa8a3146a7d0806e01b87d08"
-  name = "github.com/lastbackend/dynamic"
-  packages = [
-    "pkg/log",
-    "pkg/log/formatter",
-    "pkg/log/hooks",
-    "pkg/log/logger",
-  ]
-  pruneopts = "UT"
-  revision = "5aef9f6be44788760f559f97f23fa2c35025fa7d"
-
-[[projects]]
-  branch = "master"
-  digest = "1:0ef0de91e02c03c43ff4b5914a1bdf1771f3808e5ebe0249a690ee7a32fe76e2"
+  digest = "1:d409688e7bdf9888e5121247ceb6ab2ca9865d5b9ab3b935fe251e4410226840"
   name = "github.com/lastbackend/lastbackend"
   packages = [
     "pkg/distribution/errors",
@@ -237,7 +229,7 @@
     "pkg/runtime/cri/docker",
   ]
   pruneopts = "UT"
-  revision = "6721662400968678233db303548513d382b304eb"
+  revision = "3726fcc202324c6923e2bbdf4051a4095429d869"
 
 [[projects]]
   digest = "1:8ef506fc2bb9ced9b151dafa592d4046063d744c646c1bbe801982ce87e4bc24"
@@ -257,37 +249,6 @@
   pruneopts = "UT"
   revision = "c2353362d570a7bfa228149c62842019201cfb71"
   version = "v1.8.0"
-
-[[projects]]
-  digest = "1:4e878df5f4e9fd625bf9c9aac77ef7cbfa4a74c01265505527c23470c0e40300"
-  name = "github.com/marstr/guid"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "8bd9a64bf37eb297b492a4101fb28e80ac0b290f"
-  version = "v1.1.0"
-
-[[projects]]
-  digest = "1:a59961d3a1bdcce745e237a22006f462e454297ba63f81f251e40e11801797ad"
-  name = "github.com/minio/minio-go"
-  packages = [
-    ".",
-    "pkg/credentials",
-    "pkg/encrypt",
-    "pkg/s3signer",
-    "pkg/s3utils",
-    "pkg/set",
-  ]
-  pruneopts = "UT"
-  revision = "76305dad725fda18a9abcfc6cfc5797f251ea271"
-  version = "v6.0.8"
-
-[[projects]]
-  digest = "1:78bbb1ba5b7c3f2ed0ea1eab57bdd3859aec7e177811563edc41198a760b06af"
-  name = "github.com/mitchellh/go-homedir"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "ae18d6b8b3205b561c79e8e5f69bff09736185f4"
-  version = "v1.0.0"
 
 [[projects]]
   digest = "1:53bc4cd4914cd7cd52139990d5170d6dc99067ae31c56530621b18b35fc30318"
@@ -329,8 +290,7 @@
   name = "github.com/pkg/errors"
   packages = ["."]
   pruneopts = "UT"
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
+  revision = "839d9e913e063e28dfd0e6c7b7512793e0a48be9"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -368,12 +328,12 @@
   version = "v1.1.2"
 
 [[projects]]
-  digest = "1:516e71bed754268937f57d4ecb190e01958452336fa73dbac880894164e91c1f"
+  digest = "1:08d65904057412fc0270fc4812a1c90c594186819243160dc779a402d4b6d0bc"
   name = "github.com/spf13/cast"
   packages = ["."]
   pruneopts = "UT"
-  revision = "8965335b8c7107321228e3e3702cab9832751bac"
-  version = "v1.2.0"
+  revision = "8c9545af88b134710ab1cd196795e7f2388358d7"
+  version = "v1.3.0"
 
 [[projects]]
   digest = "1:645cabccbb4fa8aab25a956cbcbdf6a6845ca736b2c64e197ca7cbb9d210b939"
@@ -417,21 +377,19 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d652c5a89f671eb69b2697f659e83a07a5305958ba9466210f88c62f8fe3c729"
+  digest = "1:001a4e7a40e50ff2ef32e2556bca50c4f77daa457db3ac6afc8bea9bb2122cfb"
   name = "golang.org/x/crypto"
   packages = [
-    "argon2",
     "bcrypt",
-    "blake2b",
     "blowfish",
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "0c41d7ab0a0ee717d4590a44bcb987dfd9e183eb"
+  revision = "4d3f4d9ffa16a13f451c3b2999e9c49e9750bf06"
 
 [[projects]]
   branch = "master"
-  digest = "1:52b788fa000c7636a9704a13a0727f5099a3ae1a78024d23c2e5f3d9df66137a"
+  digest = "1:9539b9aff76641a0aa82f69406bff0fb949a171a19c24bbedde7317e8cf5a9a4"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -444,19 +402,18 @@
     "proxy",
   ]
   pruneopts = "UT"
-  revision = "04a2e542c03f1d053ab3e4d6e5abcd4b66e2be8e"
+  revision = "c44066c5c816ec500d459a2a324a753f78531ae0"
 
 [[projects]]
   branch = "master"
-  digest = "1:9499e4b3284b485c77e0b08c20392d1add88a982fba2468fc01a45a025110df5"
+  digest = "1:d3e0b1b48b36298893e7667f91bce04d1b6996e5eb93b898db926cad94ce9514"
   name = "golang.org/x/sys"
   packages = [
-    "cpu",
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "fa43e7bc11baaae89f3f902b2b4d832b68234844"
+  revision = "7e31e0c00fa05cb5fbf4347b585621d6709e19a4"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -493,12 +450,17 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/Azure/azure-sdk-for-go/storage",
     "github.com/asaskevich/govalidator",
+    "github.com/aws/aws-sdk-go/aws",
+    "github.com/aws/aws-sdk-go/aws/awserr",
+    "github.com/aws/aws-sdk-go/aws/credentials",
+    "github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds",
+    "github.com/aws/aws-sdk-go/aws/ec2metadata",
+    "github.com/aws/aws-sdk-go/aws/session",
+    "github.com/aws/aws-sdk-go/service/s3",
     "github.com/dgrijalva/jwt-go",
     "github.com/gorilla/mux",
     "github.com/gorilla/websocket",
-    "github.com/lastbackend/dynamic/pkg/log",
     "github.com/lastbackend/lastbackend/pkg/distribution/errors",
     "github.com/lastbackend/lastbackend/pkg/distribution/types",
     "github.com/lastbackend/lastbackend/pkg/log",
@@ -507,7 +469,6 @@
     "github.com/lastbackend/lastbackend/pkg/runtime/cri",
     "github.com/lastbackend/lastbackend/pkg/runtime/cri/cri",
     "github.com/lib/pq",
-    "github.com/minio/minio-go",
     "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
