@@ -57,7 +57,7 @@ func ParseBool(str string) (bool, error) {
 // 	* git@github.com:lastbackend/registry.git
 func GitUrlParse(url string) (*source, error) {
 
-	var match []string = regexp.MustCompile(`^(?:ssh|git|http(?:s)?)(?:@|:\/\/(?:.+@)?)((\w+)\.\w+)(?:\/|:)(.+)(?:\/)(.+)(?:\..+)$`).FindStringSubmatch(url)
+	var match = regexp.MustCompile(`^(?:ssh|git|http(?:s)?)(?:@|:\/\/(?:.+@)?)((\w+)\.\w+)(?:\/|:)(.+)(?:\/)(.+)(?:\..+)$`).FindStringSubmatch(url)
 
 	if len(match) < 5 {
 		return nil, errors.New("can't parse url")

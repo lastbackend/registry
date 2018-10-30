@@ -24,6 +24,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
+	"strings"
 
 	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/distribution/types"
@@ -123,16 +125,40 @@ func (s *ImageStorage) List(ctx context.Context, f *filter.ImageFilter) ([]*type
 
 	log.V(logLevel).Debug("%s:image:list:> get images list", logPrefix)
 
-	where := types.EmptyString
+	var values = make([]interface{}, 0)
+	var where = make([]string, 0)
+	var whereCondition = types.EmptyString
 
 	if f != nil {
 
-		if f.Owner != nil {
-			where += "owner = '%s'"
+		t := reflect.TypeOf(*f)
+		v := reflect.ValueOf(*f)
+
+		for i := 0; i < t.NumField(); i++ {
+			tp := v.Field(i)
+
+			if (tp.Kind() == reflect.Ptr || tp.Kind() == reflect.Interface) && tp.IsNil() {
+				continue
+			}
+
+			name := t.Field(i).Tag.Get("db")
+
+			switch tp.Elem().Kind() {
+			case reflect.String:
+				values = append(values, tp.Elem().String())
+				where = append(where, fmt.Sprintf("%s=$%d", name, i+1))
+			case reflect.Bool:
+				where = append(where, fmt.Sprintf("%s=$%d", name, i+1))
+				if tp.Elem().Bool() == true {
+					values = append(values, "TRUE")
+				} else {
+					values = append(values, "FALSE")
+				}
+			}
 		}
 
-		if where != types.EmptyString {
-			where = fmt.Sprintf("WHERE %s", where)
+		if len(where) > 0 {
+			whereCondition = fmt.Sprintf("WHERE %s", strings.Join(where, " AND "))
 		}
 	}
 
@@ -140,9 +166,9 @@ func (s *ImageStorage) List(ctx context.Context, f *filter.ImageFilter) ([]*type
 		SELECT owner, name, description, created, updated
 		FROM images
 		%s
-		ORDER BY created DESC;`, where)
+		ORDER BY created DESC;`, whereCondition)
 
-	rows, err := getClient(ctx).QueryContext(ctx, query)
+	rows, err := getClient(ctx).QueryContext(ctx, query, values...)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:image:list:> get images list err: %v", logPrefix, err)
 		return nil, err

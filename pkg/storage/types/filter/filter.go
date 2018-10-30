@@ -29,7 +29,8 @@ func (Filter) Image() *ImageFilter {
 }
 
 type ImageFilter struct {
-	Owner *string
+	Owner   *string `db:"owner"`
+	Private *bool   `db:"private"`
 }
 
 func (Filter) Builder() *BuilderFilter {
@@ -37,7 +38,7 @@ func (Filter) Builder() *BuilderFilter {
 }
 
 type BuilderFilter struct {
-	Online *bool
+	Online *bool `db:"online"`
 }
 
 func (Filter) Build() *BuildFilter {
@@ -45,5 +46,5 @@ func (Filter) Build() *BuildFilter {
 }
 
 type BuildFilter struct {
-	Active *bool
+	Active *bool `db:"active"`
 }

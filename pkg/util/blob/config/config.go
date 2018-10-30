@@ -16,15 +16,15 @@
 // from Last.Backend LLC.
 //
 
-package util
+package config
 
-import (
-	"strings"
-)
-
-func Trim(s, suffix string) string {
-	if strings.HasSuffix(s, suffix) {
-		s = s[:len(s)-len(suffix)]
-	}
-	return s
+type Config struct {
+	AccessID      string `mapstructure:"access_id"`
+	SecretKey     string `mapstructure:"secret_key"`
+	Bucket        string `mapstructure:"bucket_name"`
+	Region        string `mapstructure:"region"`
+	Endpoint      string `mapstructure:"endpoint"`
+	RootDirectory string `mapstructure:"root_dir"`
+	SessionToken  string `mapstructure:"session_token"`
+	Secure        bool   `mapstructure:"ssl"`
 }
