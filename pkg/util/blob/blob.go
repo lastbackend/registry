@@ -30,6 +30,5 @@ const (
 type IBlobStorage interface {
 	Read(path string, writer io.WriteCloser) error
 	Write(path string, content []byte) error
-	WriteFromReader(path string, reader io.Reader) error
-	WriteFromFile(path string) error
+	WriteFromFile(path, filepath string) error
 }

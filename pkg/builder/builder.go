@@ -69,6 +69,7 @@ func Daemon() bool {
 	}
 
 	endpoint := viper.GetString("registry.uri")
+
 	c, err := client.New(client.ClientHTTP, endpoint, cfg)
 	if err != nil {
 		log.Fatalf("Init client err: %s", err)

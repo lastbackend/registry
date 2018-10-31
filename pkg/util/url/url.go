@@ -20,6 +20,7 @@ package url
 
 import (
 	"errors"
+	"github.com/lastbackend/registry/pkg/distribution/types"
 	"net/url"
 	"regexp"
 	"strings"
@@ -54,6 +55,38 @@ func Parse(rawURL string) (*url.URL, error) {
 	u.Scheme = strings.ToLower(u.Scheme)
 
 	return u, nil
+}
+
+func Decode(url string) *types.Source {
+	var src = new(types.Source)
+	var namespace string
+
+	s := strings.Split(url, "@")
+
+	if len(s) == 0 {
+		return src
+	}
+
+	if len(s) == 1 {
+		namespace = s[0]
+	}
+
+	if len(s) == 2 {
+		namespace = s[1]
+	}
+
+	parts := urlRegexp.FindStringSubmatch(namespace)
+
+	if len(parts) <= 1 {
+		return src
+	}
+
+	src.Hub = parts[1]
+	src.Owner = parts[2]
+	src.Name = parts[3]
+	src.Branch = parts[4]
+
+	return src
 }
 
 func check(host string) error {

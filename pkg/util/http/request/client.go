@@ -63,7 +63,6 @@ func NewRESTClient(uri string, cfg *Config) (*RESTClient, error) {
 		if err := withTLSClientConfig(cfg)(c.Client); err != nil {
 			return nil, err
 		}
-		c.base.Scheme = "https"
 	}
 
 	return c, nil
