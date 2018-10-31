@@ -21,8 +21,6 @@ package builder
 import (
 	"context"
 	"fmt"
-	"github.com/lastbackend/genesis/pkg/util/url"
-	"github.com/spf13/viper"
 	"io"
 	"net/http"
 	"os"
@@ -36,7 +34,9 @@ import (
 	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/util/cleaner"
+	"github.com/lastbackend/registry/pkg/util/url"
 	"github.com/lastbackend/registry/pkg/util/validator"
+	"github.com/spf13/viper"
 
 	lbt "github.com/lastbackend/lastbackend/pkg/distribution/types"
 	lbcii "github.com/lastbackend/lastbackend/pkg/runtime/cii/cii"
