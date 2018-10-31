@@ -397,7 +397,11 @@ func BuildLogsH(w http.ResponseWriter, r *http.Request) {
 	if build.Status.Done || build.Status.Error {
 		read, write := io.Pipe()
 		defer write.Close()
-		go envs.Get().GetBlobStorage().Read(build.Meta.ID, write)
+
+		path := fmt.Sprintf("/%s/%s/%s/build/%s",
+			build.Spec.Source.Hub, build.Spec.Source.Owner, build.Spec.Source.Name, build.Meta.ID)
+
+		go envs.Get().GetBlobStorage().Read(path, write)
 		pipe(w, read)
 		return
 	}

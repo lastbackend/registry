@@ -21,21 +21,18 @@ package s3
 import (
 	"bytes"
 	"fmt"
-	"github.com/lastbackend/registry/pkg/util/blob/config"
-	"github.com/lastbackend/registry/pkg/util/generator"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"io"
-	"io/ioutil"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/lastbackend/registry/pkg/util/blob/config"
 )
 
 const (
@@ -94,11 +91,15 @@ func New(params config.Config) *Driver {
 }
 
 func (d *Driver) Read(path string, writer io.WriteCloser) error {
-	reader, err := d.reader(d.makePath(path), 0)
+	resp, err := d.client.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(d.bucketName),
+		Key:    aws.String(d.makePath(path)),
+	})
 	if err != nil {
 		return err
 	}
-	io.Copy(writer, reader)
+	defer resp.Body.Close()
+	io.Copy(writer, resp.Body)
 	return nil
 }
 
@@ -106,79 +107,16 @@ func (d *Driver) Write(path string, contents []byte) error {
 	return d.write(path, bytes.NewReader(contents))
 }
 
-func (d *Driver) WriteFromReader(path string, reader io.Reader) error {
-
-	var buffer = make([]byte, BUFFER_SIZE)
-	var u = generator.GetUUIDV4()
-
-	for {
-		select {
-		default:
-
-			n, err := reader.Read(buffer)
-			if err != nil && io.EOF == err {
-				return nil
-			}
-			if err != nil && io.EOF != err {
-				return err
-			}
-
-			partNumber := aws.Int64(int64(n))
-
-			_, err = func(p []byte) (n int, err error) {
-				d.write(path, bytes.NewReader(p))
-
-				d.client.UploadPart(&s3.UploadPartInput{
-					Bucket:     aws.String(d.bucketName),
-					Key:        aws.String(d.makePath(path)),
-					PartNumber: partNumber,
-					UploadId:   aws.String(u),
-					Body:       bytes.NewReader(p),
-				})
-
-				return n, nil
-			}(buffer[0:n])
-
-			if err != nil {
-				return err
-			}
-
-			for i := 0; i < n; i++ {
-				buffer[i] = 0
-			}
-		}
-	}
-
-	return nil
-}
-
-func (d *Driver) WriteFromFile(path string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+func (d *Driver) WriteFromFile(path, filepath string) error {
+	if _, err := os.Stat(filepath); os.IsNotExist(err) {
 		return fmt.Errorf("file %s not exists", path)
 	}
-	f, err := os.Open(path)
+	file, err := os.Open(filepath)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	return d.write(path, f)
-}
-
-func (d *Driver) reader(path string, offset int64) (io.ReadCloser, error) {
-	resp, err := d.client.GetObject(&s3.GetObjectInput{
-		Bucket: aws.String(d.bucketName),
-		Key:    aws.String(d.makePath(path)),
-		Range:  aws.String("bytes=" + strconv.FormatInt(offset, 10) + "-"),
-	})
-
-	if err != nil {
-		if s3Err, ok := err.(awserr.Error); ok && s3Err.Code() == "InvalidRange" {
-			return ioutil.NopCloser(bytes.NewReader(nil)), nil
-		}
-
-		return nil, err
-	}
-	return resp.Body, nil
+	defer file.Close()
+	return d.write(path, file)
 }
 
 func (d *Driver) makePath(path string) string {
@@ -194,7 +132,7 @@ func (d *Driver) getACL() *string {
 }
 
 func (d *Driver) write(path string, reader io.ReadSeeker) error {
-	_, err := d.client.PutObject(&s3.PutObjectInput{
+	resp, err := d.client.PutObject(&s3.PutObjectInput{
 		Bucket:      aws.String(d.bucketName),
 		Key:         aws.String(d.makePath(path)),
 		ContentType: d.getContentType(),
@@ -203,5 +141,6 @@ func (d *Driver) write(path string, reader io.ReadSeeker) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("response %s", awsutil.StringValue(resp))
 	return nil
 }

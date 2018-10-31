@@ -21,7 +21,7 @@ package builder
 import (
 	"context"
 	"fmt"
-	"github.com/lastbackend/registry/pkg/util/converter"
+	"github.com/lastbackend/genesis/pkg/util/url"
 	"github.com/spf13/viper"
 	"io"
 	"net/http"
@@ -51,10 +51,6 @@ const (
 	errorUploadFailed = "push process failed"
 )
 
-const (
-	defaultDockerHost = "172.17.0.1"
-)
-
 type worker struct {
 	ctx        context.Context
 	cancelFunc context.CancelFunc
@@ -65,7 +61,7 @@ type worker struct {
 	dcid     string
 	gcid     string
 	step     string
-	logPath  string
+	logDir   string
 
 	task *types.Task
 
@@ -86,7 +82,7 @@ func newWorker(ctx context.Context, id string, cri cri.CRI) *worker {
 	pid := id
 	w.ctx, w.cancelFunc = context.WithCancel(ctx)
 	w.pid = pid
-	w.logPath = os.TempDir()
+	w.logDir = os.TempDir()
 	w.cri = cri
 
 	return w
@@ -398,32 +394,40 @@ func (w *worker) finish() error {
 
 func (w *worker) uploadLogs() error {
 
-	req, err := w.cri.Logs(w.ctx, w.gcid, true, true, true)
-	switch err {
-	case nil:
-	case context.Canceled:
-		return nil
-	default:
-		err := fmt.Errorf("running logs stream: %s", err)
-		log.Errorf("%s:upload_logs:> logs container err: %v", logWorkerPrefix, err)
+	if !strings.HasSuffix(w.logDir, string(os.PathSeparator)) {
+		w.logDir += string(os.PathSeparator)
+	}
+
+	if err := os.MkdirAll(w.logDir, os.ModePerm); err != nil {
+		log.Errorf("%s:upload_logs:> create directories [%s] err: %v", logWorkerPrefix, w.logDir, err)
 		return err
 	}
+
+	filePath := fmt.Sprintf("%s%s", w.logDir, w.task.Meta.ID)
+
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	if err != nil {
+		log.Errorf("%s:upload_logs:> open file [%s] err: %v", logWorkerPrefix, filePath, err)
+		return err
+	}
+	// close fi on exit and check for its returned error
 	defer func() {
-		if req != nil {
-			if err := req.Close(); err != nil {
-				log.Errorf("%s:upload_logs:> close log stream err: %s", err)
-				return
-			}
+		if err := file.Close(); err != nil {
+			log.Errorf("%s:upload_logs:> close file [%s] err: %v", logWorkerPrefix, filePath, err)
+		}
+		err := os.Remove(filePath)
+		if err != nil {
+			log.Errorf("%s:upload_logs:> remove file [%s] err: %v", logWorkerPrefix, filePath, err)
 		}
 	}()
 
+	w.logging(file)
+
 	if envs.Get().GetBlobStorage() != nil {
-		s, err := converter.GitUrlParse(w.task.Spec.Source.Url)
-		if err != nil {
-			log.Errorf("%s:upload_logs:> parse source url err: %s", err)
-		}
-		path := fmt.Sprintf("/%s/%s/%s/build/%s", s.Vendor, s.Owner, s.Name, w.task.Meta.ID)
-		err = envs.Get().GetBlobStorage().WriteFromReader(path, cleaner.NewReader(req))
+		s := url.Decode(w.task.Spec.Source.Url)
+
+		path := fmt.Sprintf("/%s/%s/%s/build/%s", s.Hub, s.Owner, s.Name, w.task.Meta.ID)
+		err := envs.Get().GetBlobStorage().WriteFromFile(path, filePath)
 		if err != nil {
 			log.Errorf("%s:upload_logs:> write container logs to blob err: %v", logWorkerPrefix, err)
 		}

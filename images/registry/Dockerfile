@@ -1,5 +1,5 @@
 # Build manifest
-FROM golang:1.11.1-alpine3.8 as build
+FROM golang:1.11-alpine3.8 as build
 
 RUN apk add --no-cache ca-certificates
 
@@ -33,7 +33,9 @@ RUN rm -rf $GOPATH/pkg \
 
 
 # Production manifest
-FROM alpine:latest as production
+FROM alpine:3.8 as production
+
+RUN apk add --no-cache ca-certificates
 
 COPY --from=build /usr/bin/registry /usr/bin/registry
 
