@@ -19,7 +19,9 @@
 package request
 
 type BuildListOptions struct {
-	Active *bool `json:"active"`
+	Active *bool  `json:"active"`
+	Page   *int64 `json:"page"`
+	Limit  *int64 `json:"limit"`
 }
 
 type BuildCreateOptions struct {

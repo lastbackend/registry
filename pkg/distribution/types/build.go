@@ -43,12 +43,17 @@ const (
 	BuildStepDone   = "done"
 )
 
-type BuildList []*Build
-
 type Build struct {
 	Meta   BuildMeta   `json:"meta"`
 	Status BuildStatus `json:"status"`
 	Spec   BuildSpec   `json:"spec"`
+}
+
+type BuildList struct {
+	Total int64    `json:"total"`
+	Page  int64    `json:"page"`
+	Limit int64    `json:"limit"`
+	Items []*Build `json:"items"`
 }
 
 type BuildMeta struct {
@@ -293,5 +298,7 @@ type BuildUpdateInfoOptions struct {
 }
 
 type BuildListOptions struct {
-	Active *bool `json:"active"`
+	Active *bool
+	Page   *int64
+	Limit  *int64
 }

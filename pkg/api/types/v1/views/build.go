@@ -26,7 +26,12 @@ type Build struct {
 	Spec   *BuildSpec   `json:"spec"`
 }
 
-type BuildList []*Build
+type BuildList struct {
+	Total int64    `json:"total"`
+	Page  int64    `json:"page"`
+	Limit int64    `json:"limit"`
+	Items []*Build `json:"items"`
+}
 
 type BuildMeta struct {
 	ID      string            `json:"id"`

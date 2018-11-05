@@ -21,6 +21,8 @@ package pgsql
 import (
 	"context"
 	"errors"
+	"reflect"
+	"strings"
 
 	"database/sql"
 	"encoding/json"
@@ -92,58 +94,110 @@ func (s *BuildStorage) Get(ctx context.Context, id string) (*types.Build, error)
 
 }
 
-func (s *BuildStorage) List(ctx context.Context, image string, f *filter.BuildFilter) ([]*types.Build, error) {
+func (s *BuildStorage) List(ctx context.Context, image string, f *filter.BuildFilter) (*types.BuildList, error) {
 	log.V(logLevel).Debugf("%s:build:list:> get builds list by image", logPrefix)
 
-	where := "WHERE ib.image_id = $1"
+	var values = make([]interface{}, 0)
+	var where = make([]string, 0)
 
+	var whereCondition = types.EmptyString
+
+	values = append(values, image)
+	where = append(where, "image_id=$1")
 	if f != nil {
 
-		if f.Active != nil {
-			if *f.Active {
-				where += "AND ib.state_processing IS TRUE"
-			} else {
-				where += "AND ib.state_processing IS FALSE"
+		t := reflect.TypeOf(*f)
+		v := reflect.ValueOf(*f)
+
+		for i := 0; i < t.NumField(); i++ {
+			tp := v.Field(i)
+
+			if (tp.Kind() == reflect.Ptr || tp.Kind() == reflect.Interface) && tp.IsNil() {
+				continue
+			}
+
+			name := t.Field(i).Tag.Get("db")
+
+			switch tp.Elem().Kind() {
+			case reflect.String:
+				values = append(values, tp.Elem().String())
+				where = append(where, fmt.Sprintf("%s=$%d", name, len(values)+1))
+			case reflect.Bool:
+				where = append(where, fmt.Sprintf("%s=$%d", name, len(values)+1))
+				if tp.Elem().Bool() == true {
+					values = append(values, "TRUE")
+				} else {
+					values = append(values, "FALSE")
+				}
 			}
 		}
 
-		if where != types.EmptyString {
-			where = fmt.Sprintf(" %s", where)
+		if len(where) > 0 {
+			whereCondition = fmt.Sprintf("WHERE %s", strings.Join(where, " AND "))
 		}
 	}
 
-	var query = fmt.Sprintf(`
-		SELECT COALESCE(to_json(json_agg(builds)), '[]')
+	var filterCondition = types.EmptyString
+	var page int64 = 0
+	var limit int64 = 0
+
+	if f.Limit != nil && f.Page != nil {
+		page = *f.Page
+		limit = *f.Limit
+
+		if page == 0 {
+			page = 1
+		}
+		if limit == 0 {
+			limit = 10
+		}
+
+		filterCondition = fmt.Sprintf(`
+			OFFSET %d
+			LIMIT %d`, (page-1)*limit, limit)
+	}
+
+	query := fmt.Sprintf(`
+		SELECT json_build_object(
+			'total', (SELECT COUNT(*) 
+                FROM images_builds 
+								WHERE image_id = $1),
+			'items', COALESCE(json_agg(
+				json_build_object(
+		    	'meta', json_build_object(
+		    	  'id', tmp.id,
+		    	  'builder', tmp.builder_id,
+		    	  'number', tmp.number,
+		    	  'created', tmp.created,
+		    	  'updated', tmp.updated
+		    	),
+		    	'status', json_build_object(
+		    	  'size', tmp.size,
+		    	  'step', tmp.state_step,
+		    	  'status', tmp.state_status,
+		    	  'message', tmp.state_message,
+		    	  'processing', tmp.state_processing,
+		    	  'done', tmp.state_done,
+		    	  'error', tmp.state_error,
+		    	  'canceled', tmp.state_canceled,
+		    	  'started', tmp.state_started,
+		    	  'finished', tmp.state_finished
+		    	),
+		   		'spec', json_build_object(
+		    	  'image', tmp.image,
+		    	  'source', tmp.source,
+		    	  'config', tmp.config
+		   		)
+				)
+			), '[]')
+		)
 		FROM (
-		 SELECT
-		   ib.id,
-		   json_build_object(
-		       'id', ib.id,
-		       'builder', ib.builder_id,
-		       'number', ib.number,
-		       'created', ib.created,
-		       'updated', ib.updated
-		   ) AS meta,
-		   json_build_object(
-		       'size', ib.size,
-		       'step', ib.state_step,
-		       'status', ib.state_status,
-		       'message', ib.state_message,
-		       'processing', ib.state_processing,
-		       'done', ib.state_done,
-		       'error', ib.state_error,
-		       'canceled', ib.state_canceled,
-		       'started', ib.state_started,
-		       'finished', ib.state_finished
-		   ) AS status,
-		   json_build_object(
-		       'image', ib.image,
-		       'source', ib.source,
-		       'config', ib.config
-		   ) AS spec
-		 FROM images_builds AS ib
-		 %s
-		 ORDER BY ib.created DESC) builds;`, where)
+			SELECT *
+			FROM images_builds
+			%s
+		  ORDER BY created DESC
+		  %s
+		) AS tmp;`, whereCondition, filterCondition)
 
 	var buf string
 
@@ -157,14 +211,16 @@ func (s *BuildStorage) List(ctx context.Context, image string, f *filter.BuildFi
 		return nil, err
 	}
 
-	b := make([]*types.Build, 0)
+	b := new(types.BuildList)
 
 	if err := json.Unmarshal([]byte(buf), &b); err != nil {
 		return nil, err
 	}
 
-	return b, nil
+	b.Page = page
+	b.Limit = limit
 
+	return b, nil
 }
 
 func (s *BuildStorage) Insert(ctx context.Context, build *types.Build) error {

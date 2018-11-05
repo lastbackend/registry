@@ -46,5 +46,7 @@ func (Filter) Build() *BuildFilter {
 }
 
 type BuildFilter struct {
-	Active *bool `db:"active"`
+	Active *bool  `db:"state_processing"`
+	Page   *int64 `db:"page"`
+	Limit  *int64 `db:"limit"`
 }

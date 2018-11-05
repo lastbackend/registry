@@ -42,7 +42,7 @@ func (s *BuildStorage) GetByTask(ctx context.Context, id string) (*types.Build, 
 	return nil, nil
 }
 
-func (s *BuildStorage) List(ctx context.Context, image string, f *filter.BuildFilter) ([]*types.Build, error) {
+func (s *BuildStorage) List(ctx context.Context, image string, f *filter.BuildFilter) (*types.BuildList, error) {
 	log.V(logLevel).Debugf("%s:build:list> get builds list", logPrefix)
 	return nil, nil
 }

@@ -140,6 +140,8 @@ func BuildListH(w http.ResponseWriter, r *http.Request) {
 		owner  = utils.Vars(r)[`owner`]
 		name   = utils.Vars(r)[`name`]
 		active = r.URL.Query().Get("active")
+		page   = utils.QueryInt(r, "page")
+		limit  = utils.QueryInt(r, "limit")
 	)
 
 	img, err := im.Get(owner, name)
@@ -164,6 +166,13 @@ func BuildListH(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		opts.Active = &a
+	}
+
+	if page != 0 {
+		opts.Page = &page
+	}
+	if limit != 0 {
+		opts.Limit = &limit
 	}
 
 	items, err := bm.List(img, opts)
