@@ -20,7 +20,7 @@ ENV GOPATH /go
 ENV GOROOT /usr/local/go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
-ADD .. $GOPATH/src/github.com/lastbackend/registry
+ADD . $GOPATH/src/github.com/lastbackend/registry
 WORKDIR $GOPATH/src/github.com/lastbackend/registry
 
 RUN make build && make install
