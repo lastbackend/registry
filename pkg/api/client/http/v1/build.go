@@ -102,6 +102,12 @@ func (bc BuildClient) List(ctx context.Context, opts *rv1.BuildListOptions) (*vv
 		if opts.Active != nil {
 			req.Param("active", strconv.FormatBool(*opts.Active))
 		}
+		if opts.Page != nil {
+			req.Param("page", strconv.FormatInt(*opts.Page, 10))
+		}
+		if opts.Limit != nil {
+			req.Param("limit", strconv.FormatInt(*opts.Limit, 10))
+		}
 	}
 
 	err := req.
@@ -115,8 +121,8 @@ func (bc BuildClient) List(ctx context.Context, opts *rv1.BuildListOptions) (*vv
 	}
 
 	if s == nil {
-		list := make(vv1.BuildList, 0)
-		s = &list
+		s = new(vv1.BuildList)
+		s.Items = make([]*vv1.Build, 0)
 	}
 
 	return s, nil

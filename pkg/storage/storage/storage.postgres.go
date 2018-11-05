@@ -28,7 +28,7 @@ import (
 type Build interface {
 	Get(ctx context.Context, id string) (*types.Build, error)
 	GetByPID(ctx context.Context, pid string) (*types.Build, error)
-	List(ctx context.Context, image string, f *filter.BuildFilter) ([]*types.Build, error)
+	List(ctx context.Context, image string, f *filter.BuildFilter) (*types.BuildList, error)
 	Insert(ctx context.Context, build *types.Build) error
 	Update(ctx context.Context, build *types.Build) error
 

@@ -35,7 +35,7 @@ const (
 
 type IBuild interface {
 	Get(id string) (*types.Build, error)
-	List(image *types.Image, opts *types.BuildListOptions) ([]*types.Build, error)
+	List(image *types.Image, opts *types.BuildListOptions) (*types.BuildList, error)
 	Create(opts *types.BuildCreateOptions) (*types.Build, error)
 	UpdateStatus(build *types.Build, opts *types.BuildUpdateStatusOptions) error
 	UpdateInfo(build *types.Build, opts *types.BuildUpdateInfoOptions) error
@@ -60,7 +60,7 @@ func (b Build) Get(id string) (*types.Build, error) {
 	return build, nil
 }
 
-func (b Build) List(image *types.Image, opts *types.BuildListOptions) ([]*types.Build, error) {
+func (b Build) List(image *types.Image, opts *types.BuildListOptions) (*types.BuildList, error) {
 
 	if image == nil {
 		return nil, errors.New("invalid argument")
@@ -73,15 +73,23 @@ func (b Build) List(image *types.Image, opts *types.BuildListOptions) ([]*types.
 		f.Active = opts.Active
 	}
 
-	builds, err := b.storage.Build().List(b.context, image.Meta.ID, f)
+	if opts.Page != nil {
+		f.Page = opts.Page
+	}
+
+	if opts.Limit != nil {
+		f.Limit = opts.Limit
+	}
+
+	item, err := b.storage.Build().List(b.context, image.Meta.ID, f)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:build:list:> get builds list err: %v", logBuildPrefix, err)
 		return nil, err
 	}
 
-	log.V(logLevel).Debugf("%s:build:list:> found builds count: %d", logBuildPrefix, len(builds))
+	log.V(logLevel).Debugf("%s:build:list:> found builds count: %d", logBuildPrefix, item.Total)
 
-	return builds, nil
+	return item, nil
 }
 
 func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {

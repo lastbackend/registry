@@ -43,15 +43,23 @@ func (obj *Build) ToJson() ([]byte, error) {
 	return json.Marshal(obj)
 }
 
-func (bv *BuildView) NewList(list []*types.Build) *BuildList {
+func (bv *BuildView) NewList(list *types.BuildList) *BuildList {
 	if list == nil {
 		return nil
 	}
-	il := make(BuildList, 0)
-	for _, item := range list {
-		il = append(il, bv.New(item))
+
+	bl := new(BuildList)
+	bl.Items = make([]*Build, 0)
+
+	bl.Limit = list.Limit
+	bl.Page = list.Page
+	bl.Total = list.Total
+
+	for _, v := range list.Items {
+		bl.Items = append(bl.Items, bv.New(v))
 	}
-	return &il
+
+	return bl
 }
 
 func (obj *BuildList) ToJson() ([]byte, error) {
