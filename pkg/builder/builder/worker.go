@@ -173,6 +173,11 @@ func (w *worker) configure() error {
 		},
 		Labels:          map[string]string{lbt.ContainerTypeLBR: w.pid},
 		PublishAllPorts: true,
+		Resources: lbt.SpecTemplateContainerResources{
+			Request: lbt.SpecTemplateContainerResource{
+				RAM: 512 * 1024 * 1024, // TODO: set from config
+			},
+		},
 	}
 
 	// manual addition the CA certificates certificate to dind
@@ -261,6 +266,11 @@ func (w *worker) build() error {
 		Envs:   []string{fmt.Sprintf("%s=%s", "DOCKER_HOST", w.endpoint)},
 		Exec: lbt.SpecTemplateContainerExec{
 			Command: []string{"build", "-f", dockerfile, "-t", image, gituri},
+		},
+		Resources: lbt.SpecTemplateContainerResources{
+			Request: lbt.SpecTemplateContainerResource{
+				RAM: 512 * 1024 * 1024, // TODO: set from config
+			},
 		},
 	}
 
