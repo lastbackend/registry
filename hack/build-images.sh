@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-docker build -t lastbackend/registry -f ./images/registry/Dockerfile .
+docker build -t index.lstbknd.net/lastbackend/registry -f ./images/registry/Dockerfile .

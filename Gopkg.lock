@@ -18,7 +18,7 @@
   version = "v9"
 
 [[projects]]
-  digest = "1:af6a588c8f36d7b8d2050a4471d735bddb65b44e18e0f7bb048d26280898555d"
+  digest = "1:119696c1a1ad4867b0e4d57fe5fbf8426fb06a5ce3565e831cec8d5e8cd1725d"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -56,8 +56,8 @@
     "service/sts",
   ]
   pruneopts = "UT"
-  revision = "34ab03ee1a2b90b3baf97ff666397c8fb9b8714b"
-  version = "v1.15.64"
+  revision = "fa9217848bf00ff03c3c097e9c109cbe833ea130"
+  version = "v1.15.69"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -122,11 +122,12 @@
   revision = "master"
 
 [[projects]]
-  digest = "1:57d39983d01980c1317c2c5c6dd4b5b0c4a804ad2df800f2f6cbcd6a6d05f6ca"
+  digest = "1:6f82cacd0af5921e99bf3f46748705239b36489464f4529a1589bc895764fb18"
   name = "github.com/docker/go-units"
   packages = ["."]
   pruneopts = "UT"
-  revision = "9e638d38cf6977a37a8ea0078f3ee75a7cdb2dd1"
+  revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
+  version = "v0.3.3"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -137,12 +138,12 @@
   version = "v1.4.7"
 
 [[projects]]
-  digest = "1:701239373bbf22998c5a36c76d2ff4ee309b3980e39b7a66d72cabd3aab748fa"
+  digest = "1:bbadccf3d3317ea03c0dac0b45b673b4b397c8f91a1d2eff550a3c51c4ad770e"
   name = "github.com/gogo/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "100ba4e885062801d56799d78530b73b178a78f3"
-  version = "v0.4"
+  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
+  version = "v1.1.1"
 
 [[projects]]
   digest = "1:c79fb010be38a59d657c48c6ba1d003a8aa651fa56b579d959d74573b7dff8e1"
@@ -212,7 +213,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d409688e7bdf9888e5121247ceb6ab2ca9865d5b9ab3b935fe251e4410226840"
+  digest = "1:4d6dc13acb56edd76ebddd4760abfb88d7a759ce1308f5d12ff968087e1b915c"
   name = "github.com/lastbackend/lastbackend"
   packages = [
     "pkg/distribution/errors",
@@ -227,9 +228,10 @@
     "pkg/runtime/cri",
     "pkg/runtime/cri/cri",
     "pkg/runtime/cri/docker",
+    "pkg/util/converter",
   ]
   pruneopts = "UT"
-  revision = "3726fcc202324c6923e2bbdf4051a4095429d869"
+  revision = "b347926eef7888de413662a0a0e56ab3a596d1b2"
 
 [[projects]]
   digest = "1:8ef506fc2bb9ced9b151dafa592d4046063d744c646c1bbe801982ce87e4bc24"
@@ -290,7 +292,8 @@
   name = "github.com/pkg/errors"
   packages = ["."]
   pruneopts = "UT"
-  revision = "839d9e913e063e28dfd0e6c7b7512793e0a48be9"
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -309,12 +312,12 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:3f53e9e4dfbb664cd62940c9c4b65a2171c66acd0b7621a1a6b8e78513525a52"
+  digest = "1:69b1cc331fca23d702bd72f860c6a647afd0aa9fcbc1d0659b1365e26546dd70"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ad15b42461921f1fb3529b058c6786c6a45d5162"
-  version = "v1.1.1"
+  revision = "bcd833dfe83d3cebad139e4a29ed79cb2318bf95"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:6a4a11ba764a56d2758899ec6f3848d24698d48442ebce85ee7a3f63284526cd"
@@ -389,7 +392,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:9539b9aff76641a0aa82f69406bff0fb949a171a19c24bbedde7317e8cf5a9a4"
+  digest = "1:3e2b30e6e433126cf8751d44ab09b89c4486be2bf2c8e8d99932413fc9d2966e"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -402,18 +405,18 @@
     "proxy",
   ]
   pruneopts = "UT"
-  revision = "c44066c5c816ec500d459a2a324a753f78531ae0"
+  revision = "10aee181995363b41f712a55844a0dd52ea04646"
 
 [[projects]]
   branch = "master"
-  digest = "1:d3e0b1b48b36298893e7667f91bce04d1b6996e5eb93b898db926cad94ce9514"
+  digest = "1:509feef845f6af582cb82caad5eb176016b30714facdc754d84869ca31305b59"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "7e31e0c00fa05cb5fbf4347b585621d6709e19a4"
+  revision = "7155702f2d47d94b134229da97195d0130cab001"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -468,6 +471,7 @@
     "github.com/lastbackend/lastbackend/pkg/runtime/cii/cii",
     "github.com/lastbackend/lastbackend/pkg/runtime/cri",
     "github.com/lastbackend/lastbackend/pkg/runtime/cri/cri",
+    "github.com/lastbackend/lastbackend/pkg/util/converter",
     "github.com/lib/pq",
     "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
