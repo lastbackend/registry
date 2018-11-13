@@ -123,8 +123,10 @@ func (r Runtime) Exporter(uri string, timeout time.Duration) {
 				if i > 10 {
 					break
 				}
-				rq.Builds[key] = request.BuildEvent{
+				be := request.BuildEvent{
 					ID:         b.Meta.ID,
+					Number:     b.Meta.Number,
+					Branch:     b.Spec.Source.Branch,
 					Image:      fmt.Sprintf("%s/%s:%s", b.Spec.Image.Owner, b.Spec.Image.Name, b.Spec.Image.Tag),
 					Source:     fmt.Sprintf("%s/%s/%s#%s", b.Spec.Source.Hub, b.Spec.Source.Owner, b.Spec.Source.Name, b.Spec.Source.Branch),
 					Size:       b.Status.Size,
@@ -138,6 +140,16 @@ func (r Runtime) Exporter(uri string, timeout time.Duration) {
 					Finished:   &b.Status.Finished,
 					Started:    &b.Status.Started,
 				}
+
+				if b.Spec.Source.Commit != nil {
+					be.Commit.Message = b.Spec.Source.Commit.Message
+					be.Commit.Username = b.Spec.Source.Commit.Username
+					be.Commit.Hash = b.Spec.Source.Commit.Hash
+					be.Commit.Date = b.Spec.Source.Commit.Date
+					be.Commit.Email = b.Spec.Source.Commit.Email
+				}
+
+				rq.Builds[key] = be
 			}
 
 			body, err := json.Marshal(rq)

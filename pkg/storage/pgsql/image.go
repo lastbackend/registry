@@ -33,23 +33,27 @@ import (
 	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )
 
+const (
+	logImagePrefix = "storage:pgsql:image"
+)
+
 type ImageStorage struct {
 	storage.Image
 }
 
 func (s *ImageStorage) Get(ctx context.Context, owner, name string) (*types.Image, error) {
 
-	log.V(logLevel).Debugf("%s:image:get:> get image `%s/%s`", logPrefix, owner, name)
+	log.V(logLevel).Debugf("%s:get:> get image `%s/%s`", logImagePrefix, owner, name)
 
 	if len(owner) == 0 {
 		err := errors.New("owner can not be empty")
-		log.V(logLevel).Errorf("%s:image:get:> get image err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:get:> get image err: %v", logImagePrefix, err)
 		return nil, err
 	}
 
 	if len(name) == 0 {
 		err := errors.New("name can not be empty")
-		log.V(logLevel).Errorf("%s:image:get:> get image err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:get:> get image err: %v", logImagePrefix, err)
 		return nil, err
 	}
 
@@ -108,7 +112,7 @@ func (s *ImageStorage) Get(ctx context.Context, owner, name string) (*types.Imag
 	case sql.ErrNoRows:
 		return nil, nil
 	default:
-		log.V(logLevel).Errorf("%s:image:get:> get image err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:get:> get image err: %v", logImagePrefix, err)
 		return nil, err
 	}
 
@@ -123,7 +127,7 @@ func (s *ImageStorage) Get(ctx context.Context, owner, name string) (*types.Imag
 
 func (s *ImageStorage) List(ctx context.Context, f *filter.ImageFilter) ([]*types.Image, error) {
 
-	log.V(logLevel).Debug("%s:image:list:> get images list", logPrefix)
+	log.V(logLevel).Debugf("%s:list:> get images list", logImagePrefix)
 
 	var values = make([]interface{}, 0)
 	var where = make([]string, 0)
@@ -170,7 +174,7 @@ func (s *ImageStorage) List(ctx context.Context, f *filter.ImageFilter) ([]*type
 
 	rows, err := getClient(ctx).QueryContext(ctx, query, values...)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:image:list:> get images list err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:list:> get images list err: %v", logImagePrefix, err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -187,7 +191,7 @@ func (s *ImageStorage) List(ctx context.Context, f *filter.ImageFilter) ([]*type
 			&item.Meta.Created,
 		)
 		if err != nil {
-			log.V(logLevel).Errorf("%s:image:list:> get games err: %v", logPrefix, err)
+			log.V(logLevel).Errorf("%s:list:> get games err: %v", logImagePrefix, err)
 			return nil, err
 		}
 
@@ -199,11 +203,11 @@ func (s *ImageStorage) List(ctx context.Context, f *filter.ImageFilter) ([]*type
 
 func (s *ImageStorage) Insert(ctx context.Context, image *types.Image) error {
 
-	log.V(logLevel).Debugf("%s:image:insert:> insert image: %#v", logPrefix, image)
+	log.V(logLevel).Debugf("%s:insert:> insert image: %#v", logImagePrefix, image)
 
 	if image == nil {
 		err := errors.New("image can not be empty")
-		log.V(logLevel).Errorf("%s:image:insert:> insert image err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:insert:> insert image err: %v", logImagePrefix, err)
 		return err
 	}
 
@@ -220,7 +224,7 @@ func (s *ImageStorage) Insert(ctx context.Context, image *types.Image) error {
 	).
 		Scan(&image.Meta.ID, &image.Meta.Created, &image.Meta.Updated)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:image:insert:> insert image err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:insert:> insert image err: %v", logImagePrefix, err)
 		return err
 	}
 
@@ -229,7 +233,7 @@ func (s *ImageStorage) Insert(ctx context.Context, image *types.Image) error {
 
 func (s *ImageStorage) Update(ctx context.Context, image *types.Image) error {
 
-	log.V(logLevel).Debugf("%s:image:update:> update image %#v", logPrefix, image)
+	log.V(logLevel).Debugf("%s:update:> update image %#v", logImagePrefix, image)
 
 	const query = `
 		UPDATE images
@@ -247,7 +251,7 @@ func (s *ImageStorage) Update(ctx context.Context, image *types.Image) error {
 	).
 		Scan(&image.Meta.Updated)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:image:update:> update image query err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:update:> update image query err: %v", logImagePrefix, err)
 		return err
 	}
 
@@ -256,7 +260,7 @@ func (s *ImageStorage) Update(ctx context.Context, image *types.Image) error {
 
 func (s *ImageStorage) Remove(ctx context.Context, image *types.Image) error {
 
-	log.V(logLevel).Debugf("%s:image:remove:> remove image %s/%s", logPrefix, image.Meta.Owner, image.Meta.Name)
+	log.V(logLevel).Debugf("%s:remove:> remove image %s/%s", logImagePrefix, image.Meta.Owner, image.Meta.Name)
 
 	const query = `
 		DELETE FROM images 
@@ -264,12 +268,12 @@ func (s *ImageStorage) Remove(ctx context.Context, image *types.Image) error {
 
 	result, err := getClient(ctx).ExecContext(ctx, query, image.Meta.ID)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:image:remove:> remove image query err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:remove:> remove image query err: %v", logImagePrefix, err)
 		return err
 	}
 
 	if _, err := result.RowsAffected(); err != nil {
-		log.V(logLevel).Errorf("%s:image:remove:> check query affected err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:remove:> check query affected err: %v", logImagePrefix, err)
 		return err
 	}
 

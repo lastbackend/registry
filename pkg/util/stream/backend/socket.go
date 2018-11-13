@@ -222,7 +222,7 @@ func (s *Socket) listen() {
 				case websocket.CloseNormalClosure,
 					websocket.CloseGoingAway,
 					websocket.CloseNoStatusReceived:
-					log.Debug("Web socket closed by client:", err)
+					log.Debugf("Web socket closed by client: %v", err)
 					s.end <- nil
 					return
 				}

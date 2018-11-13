@@ -26,19 +26,30 @@ type EventOptions struct {
 }
 
 type BuildEvent struct {
-	ID         string     `json:"id"`
-	Image      string     `json:"image"`
-	Source     string     `json:"source"`
-	Size       int64      `json:"size"`
-	Step       string     `json:"step"`
-	Status     string     `json:"status"`
-	Message    string     `json:"message"`
-	Processing bool       `json:"processing"`
-	Done       bool       `json:"done"`
-	Error      bool       `json:"error"`
-	Canceled   bool       `json:"canceled"`
-	Finished   *time.Time `json:"finished"`
-	Started    *time.Time `json:"started"`
+	ID         string      `json:"id"`
+	Number     int64       `json:"number"`
+	Commit     BuildCommit `json:"commit"`
+	Branch     string      `json:"branch"`
+	Image      string      `json:"image"`
+	Source     string      `json:"source"`
+	Size       int64       `json:"size"`
+	Step       string      `json:"step"`
+	Status     string      `json:"status"`
+	Message    string      `json:"message"`
+	Processing bool        `json:"processing"`
+	Done       bool        `json:"done"`
+	Error      bool        `json:"error"`
+	Canceled   bool        `json:"canceled"`
+	Finished   *time.Time  `json:"finished"`
+	Started    *time.Time  `json:"started"`
+}
+
+type BuildCommit struct {
+	Hash     string    `json:"hash"`
+	Username string    `json:"username"`
+	Message  string    `json:"message"`
+	Email    string    `json:"email"`
+	Date     time.Time `json:"date"`
 }
 
 type ResourcesEvent struct {
