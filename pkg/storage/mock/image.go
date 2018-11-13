@@ -37,7 +37,7 @@ func (s *ImageStorage) Get(ctx context.Context, owner, name string) (*types.Imag
 }
 
 func (s *ImageStorage) List(ctx context.Context, f *filter.ImageFilter) ([]*types.Image, error) {
-	log.V(logLevel).Debug("%s:image:list> get repositories list", logPrefix)
+	log.V(logLevel).Debugf("%s:image:list> get repositories list", logPrefix)
 	return nil, nil
 }
 

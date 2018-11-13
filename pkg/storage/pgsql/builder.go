@@ -31,16 +31,21 @@ import (
 	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )
 
+const (
+	logBuilderPrefix = "storage:pgsql:builder"
+)
+
+
 type BuilderStorage struct {
 	storage.Builder
 }
 
 func (s *BuilderStorage) Get(ctx context.Context, builder string) (*types.Builder, error) {
-	log.V(logLevel).Debugf("%s:builder:get:> get builder `%s`", logPrefix, builder)
+	log.V(logLevel).Debugf("%s:get:> get builder `%s`", logBuilderPrefix, builder)
 
 	if len(builder) == 0 {
-		err := errors.New("hostname can not be empty")
-		log.V(logLevel).Errorf("%s:builder:get:> get image err: %v", logPrefix, err)
+		err := errors.New("builder can not be empty")
+		log.V(logLevel).Errorf("%s:get:> get image err: %v", logBuilderPrefix, err)
 		return nil, err
 	}
 
@@ -78,7 +83,7 @@ func (s *BuilderStorage) Get(ctx context.Context, builder string) (*types.Builde
 	case sql.ErrNoRows:
 		return nil, nil
 	default:
-		log.V(logLevel).Errorf("%s:builder:get:> get builder err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:get:> get builder err: %v", logBuilderPrefix, err)
 		return nil, err
 	}
 
@@ -93,7 +98,7 @@ func (s *BuilderStorage) Get(ctx context.Context, builder string) (*types.Builde
 
 func (s *BuilderStorage) List(ctx context.Context, f *filter.BuilderFilter) ([]*types.Builder, error) {
 
-	log.V(logLevel).Debug("%s:builder:list:> get builders list", logPrefix)
+	log.V(logLevel).Debugf("%s:list:> get builders list", logBuilderPrefix)
 
 	where := types.EmptyString
 
@@ -145,7 +150,7 @@ func (s *BuilderStorage) List(ctx context.Context, f *filter.BuilderFilter) ([]*
 	case sql.ErrNoRows:
 		return nil, nil
 	default:
-		log.V(logLevel).Errorf("%s:builder:list:> get builders list err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:list:> get builders list err: %v", logBuilderPrefix, err)
 		return nil, err
 	}
 
@@ -160,11 +165,11 @@ func (s *BuilderStorage) List(ctx context.Context, f *filter.BuilderFilter) ([]*
 
 func (s *BuilderStorage) Insert(ctx context.Context, builder *types.Builder) error {
 
-	log.V(logLevel).Debugf("%s:builder:insert:> insert builder: %#v", logPrefix, builder)
+	log.V(logLevel).Debugf("%s:insert:> insert builder: %#v", logBuilderPrefix, builder)
 
 	if builder == nil {
 		err := errors.New("builder can not be empty")
-		log.V(logLevel).Errorf("%s:builder:insert:> insert builder err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:insert:> insert builder err: %v", logBuilderPrefix, err)
 		return err
 	}
 
@@ -175,7 +180,7 @@ func (s *BuilderStorage) Insert(ctx context.Context, builder *types.Builder) err
 
 	ssl, err := json.Marshal(builder.Spec.Network.SSL)
 	if err != nil {
-		log.Errorf("%s:insert:> prepare ssl struct to database write: %s", logPrefix, err)
+		log.Errorf("%s:insert:> prepare ssl struct to database write: %s", logBuilderPrefix, err)
 		ssl = []byte("{}")
 	}
 
@@ -189,7 +194,7 @@ func (s *BuilderStorage) Insert(ctx context.Context, builder *types.Builder) err
 	).
 		Scan(&builder.Meta.ID, &builder.Meta.Created, &builder.Meta.Updated)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:builder:insert:> insert builder err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:insert:> insert builder err: %v", logBuilderPrefix, err)
 		return err
 	}
 
@@ -197,7 +202,7 @@ func (s *BuilderStorage) Insert(ctx context.Context, builder *types.Builder) err
 }
 
 func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) error {
-	log.V(logLevel).Debugf("%s:builder:update:> update builder %#v", logPrefix, builder)
+	log.V(logLevel).Debugf("%s:update:> update builder %#v", logBuilderPrefix, builder)
 
 	const query = `
 		UPDATE builders
@@ -213,7 +218,7 @@ func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) err
 
 	ssl, err := json.Marshal(builder.Spec.Network.SSL)
 	if err != nil {
-		log.Errorf("%s:insert:> prepare ssl struct to database write: %s", logPrefix, err)
+		log.Errorf("%s:insert:> prepare ssl struct to database write: %s", logBuilderPrefix, err)
 		ssl = []byte("{}")
 	}
 
@@ -227,7 +232,7 @@ func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) err
 	).
 		Scan(&builder.Meta.Updated)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:builder:update:> exec query err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:update:> exec query err: %v", logBuilderPrefix, err)
 		return err
 	}
 
@@ -236,7 +241,7 @@ func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) err
 
 func (s *BuilderStorage) MarkOffline(ctx context.Context) error {
 
-	log.V(logLevel).Debugf("%s:builder:mark_offline:> mark offline builders", logPrefix)
+	log.V(logLevel).Debugf("%s:mark_offline:> mark offline builders", logBuilderPrefix)
 
 	const query = `
 		UPDATE builders
@@ -246,12 +251,12 @@ func (s *BuilderStorage) MarkOffline(ctx context.Context) error {
 
 	result, err := getClient(ctx).ExecContext(ctx, query)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:builder:mark_offline:> makr offline builders query err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:mark_offline:> makr offline builders query err: %v", logBuilderPrefix, err)
 		return err
 	}
 
 	if _, err := result.RowsAffected(); err != nil {
-		log.V(logLevel).Errorf("%s:builder:mark_offline:> check query affected err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:mark_offline:> check query affected err: %v", logBuilderPrefix, err)
 		return err
 	}
 

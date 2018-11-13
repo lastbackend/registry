@@ -33,12 +33,16 @@ import (
 	"github.com/lastbackend/registry/pkg/storage/types/filter"
 )
 
+const (
+	logBuildPrefix = "storage:pgsql:build"
+)
+
 type BuildStorage struct {
 	storage.Build
 }
 
 func (s *BuildStorage) Get(ctx context.Context, id string) (*types.Build, error) {
-	log.V(logLevel).Debugf("%s:build:get:> get build `%s`", logPrefix, id)
+	log.V(logLevel).Debugf("%s:get:> get build `%s`", logBuildPrefix, id)
 
 	const query = `
 		SELECT to_json(
@@ -80,7 +84,7 @@ func (s *BuildStorage) Get(ctx context.Context, id string) (*types.Build, error)
 	case sql.ErrNoRows:
 		return nil, nil
 	default:
-		log.V(logLevel).Errorf("%s:build:get:> get build %s query err: %v", logPrefix, id, err)
+		log.V(logLevel).Errorf("%s:get:> get build %s query err: %v", logBuildPrefix, id, err)
 		return nil, err
 	}
 
@@ -95,7 +99,7 @@ func (s *BuildStorage) Get(ctx context.Context, id string) (*types.Build, error)
 }
 
 func (s *BuildStorage) List(ctx context.Context, image string, f *filter.BuildFilter) (*types.BuildList, error) {
-	log.V(logLevel).Debugf("%s:build:list:> get builds list by image", logPrefix)
+	log.V(logLevel).Debugf("%s:list:> get builds list by image", logBuildPrefix)
 
 	var values = make([]interface{}, 0)
 	var where = make([]string, 0)
@@ -207,7 +211,7 @@ func (s *BuildStorage) List(ctx context.Context, image string, f *filter.BuildFi
 	case sql.ErrNoRows:
 		return nil, nil
 	default:
-		log.V(logLevel).Errorf("%s:build:list:> get builds list query err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:list:> get builds list query err: %v", logBuildPrefix, err)
 		return nil, err
 	}
 
@@ -225,29 +229,29 @@ func (s *BuildStorage) List(ctx context.Context, image string, f *filter.BuildFi
 
 func (s *BuildStorage) Insert(ctx context.Context, build *types.Build) error {
 
-	log.V(logLevel).Debugf("%s:build:insert:> insert build: %#v", logPrefix, build)
+	log.V(logLevel).Debugf("%s:insert:> insert build: %#v", logBuildPrefix, build)
 
 	if build == nil {
 		err := errors.New("build can not be empty")
-		log.V(logLevel).Errorf("%s:build:insert:> insert build err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:insert:> insert build err: %v", logBuildPrefix, err)
 		return err
 	}
 
 	source, err := json.Marshal(build.Spec.Source)
 	if err != nil {
-		log.Errorf("%s:build:insert:> prepare source struct to database write: %v", logPrefix, err)
+		log.Errorf("%s:insert:> prepare source struct to database write: %v", logBuildPrefix, err)
 		source = []byte("{}")
 	}
 
 	config, err := json.Marshal(build.Spec.Config)
 	if err != nil {
-		log.Errorf("%s:build:insert:> prepare config struct to database write: %v", logPrefix, err)
+		log.Errorf("%s:insert:> prepare config struct to database write: %v", logBuildPrefix, err)
 		config = []byte("{}")
 	}
 
 	image, err := json.Marshal(build.Spec.Image)
 	if err != nil {
-		log.Errorf("%s:build:insert:> prepare image struct to database write: %v", logPrefix, err)
+		log.Errorf("%s:insert:> prepare image struct to database write: %v", logBuildPrefix, err)
 		image = []byte("{}")
 	}
 
@@ -276,14 +280,14 @@ func (s *BuildStorage) Insert(ctx context.Context, build *types.Build) error {
 		Scan(&build.Meta.ID, &build.Meta.Number, &build.Meta.Created, &build.Meta.Updated,
 			&build.Meta.Created, &build.Meta.Updated)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:build:insert:> insert build err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:insert:> insert build err: %v", logBuildPrefix, err)
 		return err
 	}
 	return nil
 }
 
 func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
-	log.V(logLevel).Debugf("%s:build:update:> update build %#v", logPrefix, build)
+	log.V(logLevel).Debugf("%s:update:> update build %#v", logBuildPrefix, build)
 
 	const query = `
 		UPDATE images_builds
@@ -317,7 +321,7 @@ func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
 		build.Status.Done, build.Status.Error, build.Status.Canceled, build.Status.Size, build.Spec.Image.Hash,
 		build.Meta.Builder).Scan(&build.Meta.Updated)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:build:update:> exec query err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:update:> exec query err: %v", logBuildPrefix, err)
 		return err
 	}
 
@@ -326,7 +330,7 @@ func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
 
 func (s *BuildStorage) Remove(ctx context.Context, build *types.Build) error {
 
-	log.V(logLevel).Debugf("%s:build:remove:> remove build %s", logPrefix, build.Meta.ID)
+	log.V(logLevel).Debugf("%s:remove:> remove build %s", logBuildPrefix, build.Meta.ID)
 
 	const query = `
 		DELETE FROM images_builds 
@@ -334,12 +338,12 @@ func (s *BuildStorage) Remove(ctx context.Context, build *types.Build) error {
 
 	result, err := getClient(ctx).ExecContext(ctx, query, build.Meta.ID)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:build:remove:> remove build query err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:remove:> remove build query err: %v", logBuildPrefix, err)
 		return err
 	}
 
 	if _, err := result.RowsAffected(); err != nil {
-		log.V(logLevel).Errorf("%s:build:remove:> check query affected err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:remove:> check query affected err: %v", logBuildPrefix, err)
 		return err
 	}
 
@@ -348,7 +352,7 @@ func (s *BuildStorage) Remove(ctx context.Context, build *types.Build) error {
 
 func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*types.Build, error) {
 
-	log.V(logLevel).Debugf("%s:build:attach:> attach build", logPrefix)
+	log.V(logLevel).Debugf("%s:attach:> attach build", logBuildPrefix)
 
 	const query = `
 		UPDATE images_builds
@@ -389,7 +393,7 @@ func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*typ
 	case sql.ErrNoRows:
 		return nil, nil
 	default:
-		log.V(logLevel).Errorf("%s:build:attach:> attach build query err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:attach:> attach build query err: %v", logBuildPrefix, err)
 		return nil, err
 	}
 
@@ -402,7 +406,7 @@ func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*typ
 
 func (s *BuildStorage) Unfreeze(ctx context.Context) error {
 
-	log.V(logLevel).Debugf("%s:build:unfreeze:> unfreeze builds", logPrefix)
+	log.V(logLevel).Debugf("%s:unfreeze:> unfreeze builds", logBuildPrefix)
 
 	const query = `
    UPDATE images_builds
@@ -422,12 +426,12 @@ func (s *BuildStorage) Unfreeze(ctx context.Context) error {
 
 	result, err := getClient(ctx).ExecContext(ctx, query)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:build:unfreeze:> unfreeze builds query err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:unfreeze:> unfreeze builds query err: %v", logBuildPrefix, err)
 		return err
 	}
 
 	if _, err := result.RowsAffected(); err != nil {
-		log.V(logLevel).Errorf("%s:build:unfreeze:> check query affected err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:unfreeze:> check query affected err: %v", logBuildPrefix, err)
 		return err
 	}
 

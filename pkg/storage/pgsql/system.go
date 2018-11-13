@@ -9,7 +9,7 @@
 // the property of Last.Backend LLC and its suppliers,
 // if any.  The intellectual and technical concepts contained
 // herein are proprietary to Last.Backend LLC
-// and its suppliers and may be covered by Russian Federation and Foreign Patents,
+// and its suppliers and may be covered by Russian Federation and Foreign logSystemPrefixatents,
 // patents in process, and are protected by trade secret or copyright law.
 // Dissemination of this information or reproduction of this material
 // is strictly forbidden unless prior written permission is obtained
@@ -27,13 +27,17 @@ import (
 	"github.com/lastbackend/registry/pkg/storage/storage"
 )
 
+const (
+	logSystemPrefix = "storage:pgsql:system"
+)
+
 type SystemStorage struct {
 	storage.Build
 }
 
 func (s *SystemStorage) Get(ctx context.Context) (*types.System, error) {
 
-	log.V(logLevel).Debugf("%s:system:get:> get system info", logPrefix)
+	log.V(logLevel).Debugf("%s:get:> get system info", logSystemPrefix)
 
 	const query = `
 		SELECT access_token, auth_server, updated, created
@@ -53,7 +57,7 @@ func (s *SystemStorage) Get(ctx context.Context) (*types.System, error) {
 	case sql.ErrNoRows:
 		return nil, nil
 	default:
-		log.V(logLevel).Errorf("%s:system:get:> get system err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:get:> get system err: %v", logSystemPrefix, err)
 		return nil, err
 	}
 
@@ -61,7 +65,7 @@ func (s *SystemStorage) Get(ctx context.Context) (*types.System, error) {
 }
 
 func (s *SystemStorage) Update(ctx context.Context, system *types.System) error {
-	log.V(logLevel).Debugf("%s:system:update:> update system %#v", logPrefix, system)
+	log.V(logLevel).Debugf("%s:update:> update system %#v", logSystemPrefix, system)
 
 	const query = `
 		UPDATE systems
@@ -76,7 +80,7 @@ func (s *SystemStorage) Update(ctx context.Context, system *types.System) error 
 		system.AuthServer,
 	).Scan(&system.Updated)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:system:update:> exec query err: %v", logPrefix, err)
+		log.V(logLevel).Errorf("%s:update:> exec query err: %v", logSystemPrefix, err)
 		return err
 	}
 
