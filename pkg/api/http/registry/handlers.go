@@ -21,6 +21,7 @@ package registry
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/lastbackend/registry/pkg/util/http/utils"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -136,6 +137,7 @@ func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
 		// The scope field may be empty to request a refresh token without providing any resource permissions
 		// to the returned bearer token.
 		scope   = r.URL.Query()["scope"]
+		acc     = utils.QueryString(r, "account")
 		account = new(types.RegistryUser)
 		scopes  = new(types.Scopes)
 		rgm     = distribution.NewRegistryModel(r.Context(), envs.Get().GetStorage())
@@ -162,14 +164,6 @@ func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
 		token = match[1]
 	}
 
-	if len(scope) == 0 {
-		log.V(logLevel).Errorf("%s:auth:> check scope", logPrefix)
-		errors.New("registry").Unauthorized().Http(w)
-		return
-	}
-
-	log.V(logLevel).Debugf("%s:auth:> check scope", logPrefix)
-
 	system, err := sm.Get()
 	if err != nil {
 		log.V(logLevel).Errorf("%s:update:> update registry err: %v", logPrefix, err)
@@ -177,14 +171,8 @@ func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, scopeStr := range scope {
-
-		s, err := rgm.ParseScope(scopeStr)
-		if err != nil {
-			log.V(logLevel).Errorf("%s:auth:> error checking for service variable existence err: %s", logPrefix, err)
-			errors.New("registry").Unauthorized().Http(w)
-			return
-		}
+	switch true {
+	case len(acc) != 0 && len(scope) == 0:
 
 		u, err := url.Parse(system.AuthServer)
 		if err != nil {
@@ -204,8 +192,8 @@ func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
 
 		q := req.URL.Query()
 
-		q.Add("type", "repository")
-		q.Add("name", s.Name)
+		q.Add("type", "login")
+		q.Add("name", acc)
 		req.URL.RawQuery = q.Encode()
 
 		resp, err := http.DefaultClient.Do(req)
@@ -221,30 +209,97 @@ func RegistryAuthH(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.V(logLevel).Errorf("%s:auth:> read response body: %v", logPrefix, err)
-			errors.HTTP.InternalServerError(w)
+	case len(scope) != 0:
+
+		log.V(logLevel).Debugf("%s:auth:> check scope", logPrefix)
+
+		for _, scopeStr := range scope {
+
+			s, err := rgm.ParseScope(scopeStr)
+			if err != nil {
+				log.V(logLevel).Errorf("%s:auth:> error checking for service variable existence err: %s", logPrefix, err)
+				errors.New("registry").Unauthorized().Http(w)
+				return
+			}
+
+			u, err := url.Parse(system.AuthServer)
+			if err != nil {
+				log.V(logLevel).Errorf("%s:auth:> auth server url incorrect: %v", logPrefix)
+				errors.HTTP.InternalServerError(w)
+				return
+			}
+
+			req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+			if err != nil {
+				log.V(logLevel).Errorf("%s:auth:> create http request err: %v", logPrefix, err)
+				return
+			}
+
+			req.Header.Set("Authorization", r.Header.Get("Authorization"))
+			req.Header.Set("X-Registry-Auth", system.AccessToken)
+
+			q := req.URL.Query()
+
+			q.Add("type", "repository")
+			q.Add("name", s.Name)
+			req.URL.RawQuery = q.Encode()
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				log.V(logLevel).Errorf("%s:auth:> calling http query err: %v", logPrefix, err)
+				errors.HTTP.InternalServerError(w)
+				return
+			}
+
+			if resp.StatusCode == http.StatusBadGateway {
+				log.V(logLevel).Errorf("%s:auth:> bad gateway", logPrefix)
+				errors.HTTP.BadGateway(w)
+				return
+			}
+
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				log.V(logLevel).Errorf("%s:auth:> read response body: %v", logPrefix, err)
+				errors.HTTP.InternalServerError(w)
+				return
+			}
+
+			res := make([]string, 0)
+
+			err = json.Unmarshal(body, &res)
+			if err != nil {
+				var e *errors.Http
+				err = json.Unmarshal(body, &e)
+				if err != nil {
+					log.V(logLevel).Errorf("%s:auth:> parse json: %s", logPrefix, string(body))
+					errors.New("registry").IncorrectJSON(err)
+					return
+				}
+
+				log.V(logLevel).Errorf("%s:auth:> http error: %s", logPrefix, e.Message)
+				switch e.Code {
+				case http.StatusUnauthorized:
+					errors.New("registry").Unauthorized().Http(w)
+				default:
+					errors.HTTP.InternalServerError(w)
+				}
+				return
+			}
+
+			resp.Body.Close()
+
+			s.Actions = res
+			*scopes = append(*scopes, s)
+		}
+
+		if scopes == nil || len(*scopes) == 0 {
+			errors.HTTP.Unauthorized(w)
 			return
 		}
 
-		res := make([]string, 0)
-
-		err = json.Unmarshal(body, &res)
-		if err != nil {
-			log.V(logLevel).Errorf("%s:auth:> parse json: %v", logPrefix)
-			errors.New("registry").IncorrectJSON(err)
-			return
-		}
-
-		resp.Body.Close()
-
-		s.Actions = res
-		*scopes = append(*scopes, s)
-	}
-
-	if scopes == nil || len(*scopes) == 0 {
-		errors.HTTP.Unauthorized(w)
+	default:
+		log.V(logLevel).Errorf("%s:auth:> invalid authorization", logPrefix)
+		errors.New("registry").Unauthorized().Http(w)
 		return
 	}
 
