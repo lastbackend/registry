@@ -20,6 +20,7 @@ package distribution
 
 import (
 	"context"
+	"fmt"
 	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/distribution/types"
@@ -33,6 +34,7 @@ const (
 type ISystem interface {
 	Get() (*types.System, error)
 	Update(system *types.System, opts *types.SystemUpdateOptions) error
+	UpdateController(system *types.System, opts *types.SystemSetControllerOptions) error
 }
 
 type System struct {
@@ -40,10 +42,10 @@ type System struct {
 	storage storage.IStorage
 }
 
-func (i System) Get() (*types.System, error) {
+func (s System) Get() (*types.System, error) {
 	log.V(logLevel).Debugf("%s:get:> get system", logSystemPrefix)
 
-	sys, err := i.storage.System().Get(i.context)
+	sys, err := s.storage.System().Get(s.context)
 	if err != nil {
 		log.V(logLevel).Debugf("%s:get:> get system err: %v", logSystemPrefix, err)
 		return nil, err
@@ -52,7 +54,7 @@ func (i System) Get() (*types.System, error) {
 	return sys, nil
 }
 
-func (i System) Update(system *types.System, opts *types.SystemUpdateOptions) error {
+func (s System) Update(system *types.System, opts *types.SystemUpdateOptions) error {
 
 	if system == nil {
 		return errors.New("invalid argument")
@@ -72,8 +74,40 @@ func (i System) Update(system *types.System, opts *types.SystemUpdateOptions) er
 		system.AuthServer = *opts.AuthServer
 	}
 
-	if err := i.storage.System().Update(i.context, system); err != nil {
+	if err := s.storage.System().Update(s.context, system); err != nil {
 		log.V(logLevel).Errorf("%s:update:> update image err: %v", logSystemPrefix, err)
+		return err
+	}
+
+	return nil
+}
+
+func (s System) UpdateController(system *types.System, opts *types.SystemSetControllerOptions) error {
+
+	if system == nil {
+		return errors.New("invalid argument")
+	}
+
+	if opts == nil {
+		opts = new(types.SystemSetControllerOptions)
+	}
+
+	if len(opts.Hostname) == 0 {
+		log.V(logLevel).Warnf("%s:update_controller:> hostname is empty", logSystemPrefix)
+		return nil
+	}
+
+	if opts.Pid == 0 {
+		log.V(logLevel).Warnf("%s:update_controller:> pin id zero", logSystemPrefix)
+		return nil
+	}
+
+	log.V(logLevel).Debugf("%s:update_controller:> update controller %s", logSystemPrefix, opts.Hostname)
+
+	system.CtrlMaster = fmt.Sprintf("%d:%s", opts.Pid, opts.Hostname)
+
+	if err := s.storage.System().UpdateControllerMaster(s.context, system); err != nil {
+		log.V(logLevel).Errorf("%s:update_controller:> update controller err: %v", logSystemPrefix, err)
 		return err
 	}
 

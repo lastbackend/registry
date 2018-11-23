@@ -41,6 +41,15 @@ type BuilderFilter struct {
 	Online *bool `db:"online"`
 }
 
+func (Filter) Controller() *ControllerFilter {
+	return new(ControllerFilter)
+}
+
+type ControllerFilter struct {
+	Online *bool `db:"online"`
+	Master *bool `db:"master"`
+}
+
 func (Filter) Build() *BuildFilter {
 	return new(BuildFilter)
 }

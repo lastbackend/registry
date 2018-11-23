@@ -29,21 +29,44 @@ import (
 
 const (
 	logLevel                     = 3
-	logPrefix                    = "runtime:builder"
+	logPrefix                    = "runtime:builder_controller"
 	delayForCheckOfflineBuilders = 30 * time.Second
 )
 
-func Inspector(ctx context.Context) {
-	log.V(logLevel).Infof("%s:> run inspector for builder", logPrefix)
+type BuilderController struct {
+	done chan bool
+}
 
+func New() *BuilderController {
+	return new(BuilderController)
+}
+
+func (bc BuilderController) Start(ctx context.Context) {
+	log.V(logLevel).Infof("%s:> run builder controller", logPrefix)
+	go bc.inspector(ctx)
+	<-bc.done
+}
+
+func (bc BuilderController) Stop() {
+	log.V(logLevel).Infof("%s:> stop builder controller", logPrefix)
+	bc.done <- true
+}
+
+func (bc BuilderController) inspector(ctx context.Context) {
 	for range time.Tick(delayForCheckOfflineBuilders) {
-		var (
-			bm = distribution.NewBuilderModel(ctx, envs.Get().GetStorage())
-		)
+		select {
+		case <-bc.done:
+			return
+		default:
 
-		if err := bm.MarkOffline(); err != nil {
-			log.V(logLevel).Errorf("%s:inspector:> check and mark builder machine err: %v", logPrefix, err)
-			continue
+			var (
+				bm = distribution.NewBuilderModel(ctx, envs.Get().GetStorage())
+			)
+
+			if err := bm.MarkOffline(); err != nil {
+				log.V(logLevel).Errorf("%s:inspector:> check and mark BuilderController machine err: %v", logPrefix, err)
+				continue
+			}
 		}
 	}
 }

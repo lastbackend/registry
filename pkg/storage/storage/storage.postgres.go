@@ -56,4 +56,5 @@ type Image interface {
 type System interface {
 	Get(ctx context.Context) (*types.System, error)
 	Update(ctx context.Context, system *types.System) error
+	UpdateControllerMaster(ctx context.Context, system *types.System) error
 }

@@ -154,6 +154,7 @@ func New() (*Storage, error) {
 	s.BuildStorage = newBuildStorage()
 	s.BuilderStorage = newBuilderStorage()
 	s.ImageStorage = newImageStorage()
+	s.SystemStorage = newSystemStorage()
 
 	return s, nil
 }

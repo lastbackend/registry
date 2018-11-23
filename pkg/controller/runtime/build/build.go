@@ -31,28 +31,49 @@ import (
 
 const (
 	logLevel                  = 3
-	logPrefix                 = "runtime:build"
+	logPrefix                 = "runtime:build_controller"
 	delayForCheckUnfreezeTime = 1 * time.Minute
 )
 
-func Inspector(ctx context.Context) {
-	log.V(logLevel).Infof("%s:> run inspector for build", logPrefix)
+type BuildController struct {
+	done chan bool
+}
 
+func New() *BuildController {
+	return new(BuildController)
+}
+
+func (bc BuildController) Start(ctx context.Context) {
+	log.V(logLevel).Infof("%s:> start build controller", logPrefix)
+	go bc.inspector(ctx)
+	go bc.watch(ctx)
+	<-bc.done
+}
+
+func (bc BuildController) Stop() {
+	log.V(logLevel).Infof("%s:> stop build controller", logPrefix)
+	bc.done <- true
+}
+
+func (bc BuildController) inspector(ctx context.Context) {
 	for range time.Tick(delayForCheckUnfreezeTime) {
-		var (
-			bm = distribution.NewBuildModel(ctx, envs.Get().GetStorage())
-		)
+		select {
+		case <-bc.done:
+			return
+		default:
+			var (
+				bm = distribution.NewBuildModel(ctx, envs.Get().GetStorage())
+			)
 
-		if err := bm.Unfreeze(); err != nil {
-			log.V(logLevel).Errorf("%s:inspector:> check and unfreeze dangling builds err: %v", logPrefix, err)
-			continue
+			if err := bm.Unfreeze(); err != nil {
+				log.V(logLevel).Errorf("%s:inspector:> check and unfreeze dangling builds err: %v", logPrefix, err)
+				continue
+			}
 		}
 	}
 }
 
-func Watch(ctx context.Context) {
-	log.V(logLevel).Infof("%s:> run build watcher", logPrefix)
-
+func (bc BuildController) watch(ctx context.Context) {
 	var bm = distribution.NewBuildModel(ctx, envs.Get().GetStorage())
 	var evs = make(chan string)
 
@@ -66,6 +87,8 @@ func Watch(ctx context.Context) {
 
 	for {
 		select {
+		case <-bc.done:
+			return
 		case e := <-evs:
 			{
 
@@ -74,8 +97,6 @@ func Watch(ctx context.Context) {
 					log.Errorf("%s:subscribe:> parse event from db err: %v", logPrefix, err)
 					continue
 				}
-
-				log.Debugf("%s:subscribe:> event %s:%s:%s", logPrefix, event.Channel, event.Entity, event.Operation)
 
 				build, err := bm.Get(event.Entity)
 				if err != nil {

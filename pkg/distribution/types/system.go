@@ -20,11 +20,16 @@ package types
 
 import "time"
 
+const KindController = "controller"
+
 type System struct {
-	AccessToken string
-	AuthServer  string
-	Created     time.Time
-	Updated     time.Time
+	AccessToken   string
+	AuthServer    string
+	CtrlMaster    string
+	CtrlUpdated   time.Time
+	CtrlLastEvent time.Time
+	Created       time.Time
+	Updated       time.Time
 }
 
 // *********************************************
@@ -34,4 +39,9 @@ type System struct {
 type SystemUpdateOptions struct {
 	AccessToken *string
 	AuthServer  *string
+}
+
+type SystemSetControllerOptions struct {
+	Hostname string
+	Pid      int
 }

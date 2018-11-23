@@ -55,12 +55,7 @@ func Daemon() bool {
 
 	// Initialize Runtime
 	r := runtime.NewRuntime()
-	go r.Inspector()
-	go r.Watcher()
-
-	if viper.IsSet("exporter.uri") {
-		go r.Exporter(viper.GetString("exporter.uri"), viper.GetDuration("exporter.timeout"))
-	}
+	go r.Loop()
 
 	// Handle SIGINT and SIGTERM.
 	signal.Notify(sigs, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
