@@ -16,36 +16,4 @@
 // from Last.Backend LLC.
 //
 
-package types
-
-import "time"
-
-const KindController = "controller"
-
-type System struct {
-	AccessToken   string
-	AuthServer    string
-	CtrlMaster    string
-	CtrlUpdated   *time.Time
-	CtrlLastEvent *time.Time
-	Created       time.Time
-	Updated       time.Time
-}
-
-// *********************************************
-// System distribution options
-// *********************************************
-
-type SystemUpdateOptions struct {
-	AccessToken *string
-	AuthServer  *string
-}
-
-type SystemUpdateControllerOptions struct {
-	Hostname string
-	Pid      int
-}
-
-type SystemUpdateControllerLastEventOptions struct {
-	LastEvent time.Time
-}
+package system

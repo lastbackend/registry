@@ -9,26 +9,31 @@ REVOKE usage ON schema public FROM public;
 ---------------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION strip_all_triggers()
-  RETURNS TEXT AS $$ DECLARE
+  RETURNS TEXT AS
+$$
+DECLARE
   triggNameRecord  RECORD;
   triggTableRecord RECORD;
 BEGIN
   FOR triggNameRecord IN SELECT DISTINCT (trigger_name)
                          FROM information_schema.triggers
-                         WHERE trigger_schema = 'public' LOOP
-    FOR triggTableRecord IN SELECT DISTINCT (event_object_table)
-                            FROM information_schema.triggers
-                            WHERE trigger_name = triggNameRecord.trigger_name LOOP
-      RAISE NOTICE 'Dropping trigger: % on table: %', triggNameRecord.trigger_name, triggTableRecord.event_object_table;
-      EXECUTE 'DROP TRIGGER ' || triggNameRecord.trigger_name || ' ON ' || triggTableRecord.event_object_table || ';';
+                         WHERE trigger_schema = 'public'
+    LOOP
+      FOR triggTableRecord IN SELECT DISTINCT (event_object_table)
+                              FROM information_schema.triggers
+                              WHERE trigger_name = triggNameRecord.trigger_name
+        LOOP
+          RAISE NOTICE 'Dropping trigger: % on table: %', triggNameRecord.trigger_name, triggTableRecord.event_object_table;
+          EXECUTE 'DROP TRIGGER ' || triggNameRecord.trigger_name || ' ON ' || triggTableRecord.event_object_table ||
+                  ';';
+        END LOOP;
     END LOOP;
-  END LOOP;
 
   RETURN 'done';
 END;
 $$
-LANGUAGE plpgsql
-SECURITY DEFINER;
+  LANGUAGE plpgsql
+  SECURITY DEFINER;
 
 SELECT strip_all_triggers();
 
@@ -60,65 +65,72 @@ CREATE EXTENSION "uuid-ossp" WITH SCHEMA public;
 ----------------------------------------- Creates infrastructure tables ---------------------------
 ---------------------------------------------------------------------------------------------------
 
-CREATE TABLE builders (
-  id       UUID PRIMARY KEY             NOT NULL    DEFAULT uuid_generate_v4(),
-  hostname VARCHAR(512)                 NOT NULL,
-  ip       VARCHAR(512)                 NOT NULL,
-  port     INTEGER                      NOT NULL,
-  online   BOOLEAN                                  DEFAULT FALSE,
-  tls      BOOLEAN                                  DEFAULT FALSE,
-  ssl      JSONB                                    DEFAULT NULL,
-  created  TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc'),
-  updated  TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc')
+CREATE TABLE builders
+(
+  id       UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+  hostname VARCHAR(512)     NOT NULL,
+  ip       VARCHAR(512)     NOT NULL,
+  port     INTEGER          NOT NULL,
+  tls      BOOLEAN                   DEFAULT FALSE,
+  ssl      JSONB                     DEFAULT NULL,
+  created  TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc'),
+  updated  TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc')
 );
 
-CREATE TABLE images (
-  id          UUID PRIMARY KEY             NOT NULL    DEFAULT uuid_generate_v4(),
-  owner       VARCHAR(256)                 NOT NULL,
-  name        VARCHAR(256)                 NOT NULL,
-  private     BOOLEAN                                  DEFAULT FALSE,
-  description TEXT                                     DEFAULT '',
-  stats       JSONB                                    DEFAULT '{}',
-  created     TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc'),
-  updated     TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc')
+CREATE TABLE images
+(
+  id          UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+  owner       VARCHAR(256)     NOT NULL,
+  name        VARCHAR(256)     NOT NULL,
+  private     BOOLEAN                   DEFAULT FALSE,
+  description TEXT                      DEFAULT '',
+  stats       JSONB                     DEFAULT '{}',
+  created     TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc'),
+  updated     TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc')
 );
 
-CREATE TABLE images_tags (
-  id       UUID PRIMARY KEY             NOT NULL    DEFAULT uuid_generate_v4(),
-  image_id UUID                         NOT NULL,
-  name     VARCHAR(256)                             DEFAULT '',
-  created  TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc'),
-  updated  TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc')
+CREATE TABLE images_tags
+(
+  id       UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+  image_id UUID             NOT NULL,
+  name     VARCHAR(256)              DEFAULT '',
+  created  TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc'),
+  updated  TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc')
 );
 
-CREATE TABLE images_builds (
-  id               UUID PRIMARY KEY             NOT NULL    DEFAULT uuid_generate_v4(),
-  image_id         UUID                         NOT NULL,
-  builder_id       UUID                                     DEFAULT NULL,
-  number           INTEGER                                  DEFAULT 0,
-  size             INTEGER                                  DEFAULT 0,
-  source           JSONB                                    DEFAULT '{}',
-  image            JSONB                                    DEFAULT '{}',
-  config           JSONB                                    DEFAULT '{}',
-  state_step       VARCHAR(32)                              DEFAULT '',
-  state_status     VARCHAR(32)                              DEFAULT '',
-  state_message    TEXT                                     DEFAULT '',
-  state_processing BOOLEAN                                  DEFAULT FALSE,
-  state_done       BOOLEAN                                  DEFAULT FALSE,
-  state_error      BOOLEAN                                  DEFAULT FALSE,
-  state_canceled   BOOLEAN                                  DEFAULT FALSE,
-  state_started    TIMESTAMPTZ                              DEFAULT NULL,
-  state_finished   TIMESTAMPTZ                              DEFAULT NULL,
-  created          TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc'),
-  updated          TIMESTAMPTZ                              DEFAULT (now() AT TIME ZONE 'utc')
+CREATE TABLE images_builds
+(
+  id               UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+  image_id         UUID             NOT NULL,
+  builder_id       UUID                      DEFAULT NULL,
+  number           INTEGER                   DEFAULT 0,
+  size             INTEGER                   DEFAULT 0,
+  source           JSONB                     DEFAULT '{}',
+  image            JSONB                     DEFAULT '{}',
+  config           JSONB                     DEFAULT '{}',
+  state_step       VARCHAR(32)               DEFAULT '',
+  state_status     VARCHAR(32)               DEFAULT '',
+  state_message    TEXT                      DEFAULT '',
+  state_processing BOOLEAN                   DEFAULT FALSE,
+  state_done       BOOLEAN                   DEFAULT FALSE,
+  state_error      BOOLEAN                   DEFAULT FALSE,
+  state_canceled   BOOLEAN                   DEFAULT FALSE,
+  state_started    TIMESTAMPTZ               DEFAULT NULL,
+  state_finished   TIMESTAMPTZ               DEFAULT NULL,
+  created          TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc'),
+  updated          TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc')
 );
 
-CREATE TABLE systems (
-  id           boolean PRIMARY KEY             NOT NULL    DEFAULT TRUE,
-  access_token VARCHAR(512)                                DEFAULT '',
-  auth_server  TEXT                                        DEFAULT '',
-  created      TIMESTAMPTZ                                 DEFAULT (now() AT TIME ZONE 'utc'),
-  updated      TIMESTAMPTZ                                 DEFAULT (now() AT TIME ZONE 'utc'),
+CREATE TABLE systems
+(
+  id              boolean PRIMARY KEY NOT NULL DEFAULT TRUE,
+  access_token    VARCHAR(512)                 DEFAULT '',
+  auth_server     TEXT                         DEFAULT '',
+  ctrl_master     TEXT                         DEFAULT '',
+  ctrl_updated    TIMESTAMPTZ                  DEFAULT (now() AT TIME ZONE 'utc'),
+  ctrl_last_event TIMESTAMPTZ                  DEFAULT (now() AT TIME ZONE 'utc'),
+  created         TIMESTAMPTZ                  DEFAULT (now() AT TIME ZONE 'utc'),
+  updated         TIMESTAMPTZ                  DEFAULT (now() AT TIME ZONE 'utc'),
   CONSTRAINT only_one_row CHECK (id = TRUE)
 );
 
@@ -147,31 +159,35 @@ BEGIN
   IF TG_OP = 'INSERT'
   THEN
 
-    IF NOT EXISTS(SELECT FALSE FROM images_tags AS it WHERE it.image_id = NEW.image_id
-                                                        AND it.name = NEW.image ->> 'tag')
+    IF NOT EXISTS(SELECT FALSE
+                  FROM images_tags AS it
+                  WHERE it.image_id = NEW.image_id
+                    AND it.name = NEW.image ->> 'tag')
     THEN
       INSERT INTO images_tags (image_id, name) VALUES (NEW.image_id, NEW.image ->> 'tag');
     END IF;
 
-    PERFORM pg_notify('e_watch_build',
-                      JSON_BUILD_OBJECT('channel', 'build', 'entity', NEW.id :: TEXT, 'operation',
-                                        'insert') :: TEXT);
+    PERFORM
+    pg_notify('e_watch_build',
+              JSON_BUILD_OBJECT('channel', 'build', 'entity', NEW.id :: TEXT, 'operation',
+                                'insert') :: TEXT);
 
     RETURN NEW;
   ELSIF TG_OP = 'UPDATE'
-    THEN
+  THEN
 
-      PERFORM pg_notify('e_watch_build',
-                        JSON_BUILD_OBJECT('channel', 'build', 'entity', NEW.id :: TEXT, 'operation',
-                                          'update') :: TEXT);
+    PERFORM
+    pg_notify('e_watch_build',
+              JSON_BUILD_OBJECT('channel', 'build', 'entity', NEW.id :: TEXT, 'operation',
+                                'update') :: TEXT);
 
-      RETURN NEW;
+    RETURN NEW;
   ELSE
     RETURN NEW;
   END IF;
 END;
 $$
-LANGUAGE plpgsql;
+  LANGUAGE plpgsql;
 
 ---------------------------------------------------------------------------------------------------
 --------------------------------------- Creates notify procedures ---------------------------------
@@ -181,12 +197,13 @@ CREATE OR REPLACE FUNCTION lb_notify(gate TEXT, channel TEXT, op TEXT, entity TE
   RETURNS BOOLEAN AS
 $$
 BEGIN
-  PERFORM pg_notify(gate, JSON_BUILD_OBJECT('channel', channel, 'entity', entity, 'operation', op, 'payload',
-                                            payload) :: TEXT);
+  PERFORM
+  pg_notify(gate, JSON_BUILD_OBJECT('channel', channel, 'entity', entity, 'operation', op, 'payload',
+                                    payload) :: TEXT);
   RETURN TRUE;
 END;
 $$
-LANGUAGE plpgsql;
+  LANGUAGE plpgsql;
 
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------- Creates triggers -----------------------------------------
@@ -196,7 +213,8 @@ CREATE CONSTRAINT TRIGGER lb_after_images_builds_change
   AFTER INSERT OR UPDATE
   ON images_builds
   DEFERRABLE
-  FOR EACH ROW EXECUTE PROCEDURE lb_after_images_builds_function();
+  FOR EACH ROW
+EXECUTE PROCEDURE lb_after_images_builds_function();
 
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------- Creates default records  ---------------------------------

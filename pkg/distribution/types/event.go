@@ -19,8 +19,7 @@
 package types
 
 type Event struct {
-	Channel   string `json:"channel"`
-	Entity    string `json:"entity"`
-	Operation string `json:"operation"`
-	//Payload   json.RawMessage `json:"payload"`
+	Channel   string    `json:"channel"`
+	Entity    string    `json:"entity"`
+	Operation string    `json:"operation"`
 }

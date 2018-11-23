@@ -40,6 +40,16 @@ func (s *SystemStorage) Update(ctx context.Context, system *types.System) error 
 	return nil
 }
 
+func (s *SystemStorage) UpdateControllerMaster(ctx context.Context, system *types.System) error {
+	log.V(logLevel).Debugf("%s:update_ctrl_master:> update controller %s", logPrefix, system.CtrlMaster)
+	return nil
+}
+
+func (s *SystemStorage) UpdateControllerLastEvent(ctx context.Context, system *types.System) error {
+	log.V(logLevel).Debugf("%s:update_ctrl_last_event:> update last event for controller %s", logPrefix, system.CtrlMaster)
+	return nil
+}
+
 func newSystemStorage() *SystemStorage {
 	s := new(SystemStorage)
 	return s
