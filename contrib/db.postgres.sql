@@ -170,7 +170,7 @@ BEGIN
     PERFORM
     pg_notify('e_watch_build',
               JSON_BUILD_OBJECT('channel', 'build', 'entity', NEW.id :: TEXT, 'operation',
-                                'insert', 'ts', now() AT TIME ZONE 'utc') :: TEXT);
+                                'insert') :: TEXT);
 
     RETURN NEW;
   ELSIF TG_OP = 'UPDATE'
@@ -179,7 +179,7 @@ BEGIN
     PERFORM
     pg_notify('e_watch_build',
               JSON_BUILD_OBJECT('channel', 'build', 'entity', NEW.id :: TEXT, 'operation',
-                                'update', 'ts', now() AT TIME ZONE 'utc') :: TEXT);
+                                'update') :: TEXT);
 
     RETURN NEW;
   ELSE
@@ -199,7 +199,7 @@ $$
 BEGIN
   PERFORM
   pg_notify(gate, JSON_BUILD_OBJECT('channel', channel, 'entity', entity, 'operation', op, 'payload',
-                                    payload, 'ts', now() AT TIME ZONE 'utc') :: TEXT);
+                                    payload) :: TEXT);
   RETURN TRUE;
 END;
 $$

@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/spf13/viper"
 	"net/http"
 	"time"
@@ -103,7 +104,10 @@ func (ec ExporterController) loop(ctx context.Context) {
 
 	state := envs.Get().GetState()
 
+	var lastEvent = sys.CtrlLastEvent
+
 	for range time.Tick(delayForSendEvents) {
+
 		select {
 		case <-ec.done:
 			return
@@ -113,10 +117,11 @@ func (ec ExporterController) loop(ctx context.Context) {
 			rq.Builds = make(map[string]request.BuildEvent, 0)
 
 			var i = 0
-			for key, b := range state.Build().List() {
 
-				if b.Meta.Updated.Before(sys.CtrlLastEvent) {
-					state.Build().Del(key)
+			for _, b := range state.Build().List() {
+
+				if lastEvent != nil && !lastEvent.IsZero() && b.Meta.Updated.Before(*lastEvent) {
+					state.Build().Del(b.Meta.ID)
 					continue
 				}
 
@@ -151,7 +156,9 @@ func (ec ExporterController) loop(ctx context.Context) {
 					be.Commit.Email = b.Spec.Source.Commit.Email
 				}
 
-				rq.Builds[key] = be
+				rq.Builds[b.Meta.ID] = be
+
+				lastEvent = &b.Meta.Updated
 			}
 
 			body, err := json.Marshal(rq)
@@ -167,11 +174,20 @@ func (ec ExporterController) loop(ctx context.Context) {
 				continue
 			}
 
+			if lastEvent != nil && !lastEvent.IsZero() {
+				err = sm.UpdateControllerLastEvent(sys, &types.SystemUpdateControllerLastEventOptions{LastEvent: *lastEvent})
+				if err != nil {
+					log.V(logLevel).Errorf("%s:> get system info err: %v", logPrefix, err)
+					return
+				}
+			}
+
 			for key := range rq.Builds {
 				state.Build().Del(key)
 			}
 
 		}
+
 	}
 
 }

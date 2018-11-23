@@ -27,7 +27,7 @@ type System struct {
 	AuthServer    string
 	CtrlMaster    string
 	CtrlUpdated   time.Time
-	CtrlLastEvent time.Time
+	CtrlLastEvent *time.Time
 	Created       time.Time
 	Updated       time.Time
 }
@@ -41,7 +41,11 @@ type SystemUpdateOptions struct {
 	AuthServer  *string
 }
 
-type SystemSetControllerOptions struct {
+type SystemUpdateControllerOptions struct {
 	Hostname string
 	Pid      int
+}
+
+type SystemUpdateControllerLastEventOptions struct {
+	LastEvent time.Time
 }

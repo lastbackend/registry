@@ -116,9 +116,42 @@ func (s *SystemStorage) UpdateControllerMaster(ctx context.Context, system *type
 		return err
 	}
 
-	system, err = s.Get(ctx)
+	item, err := s.Get(ctx)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:update_ctrl_master:> get system row err: %v", logSystemPrefix, err)
+		return err
+	}
+
+	system.CtrlMaster = item.CtrlMaster
+	system.AccessToken = item.AccessToken
+	system.AuthServer = item.AuthServer
+	system.CtrlMaster = item.CtrlMaster
+	system.CtrlUpdated = item.CtrlUpdated
+	system.CtrlLastEvent = item.CtrlLastEvent
+	system.Created = item.Created
+	system.Updated = item.Updated
+
+	return err
+}
+
+func (s *SystemStorage) UpdateControllerLastEvent(ctx context.Context, system *types.System) error {
+
+	log.V(logLevel).Debugf("%s:update_ctrl_last_event:> update controller last event %s", logSystemPrefix, system.CtrlMaster)
+
+	const query = `
+		UPDATE systems
+		SET
+			ctrl_last_event = $2,
+      updated = now() at time zone 'utc'
+    WHERE COALESCE(ctrl_master, '') <> '' AND ctrl_master = $1
+		RETURNING ctrl_last_event, updated;`
+
+	err := getClient(ctx).QueryRowContext(ctx, query,
+		system.CtrlMaster,
+		system.CtrlLastEvent,
+	).Scan(&system.CtrlLastEvent, &system.Updated)
+	if err != nil {
+		log.V(logLevel).Errorf("%s:update_ctrl_last_event:> exec query err: %v", logSystemPrefix, err)
 		return err
 	}
 

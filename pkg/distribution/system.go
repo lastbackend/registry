@@ -34,7 +34,8 @@ const (
 type ISystem interface {
 	Get() (*types.System, error)
 	Update(system *types.System, opts *types.SystemUpdateOptions) error
-	UpdateController(system *types.System, opts *types.SystemSetControllerOptions) error
+	UpdateController(system *types.System, opts *types.SystemUpdateControllerOptions) error
+	UpdateControllerLastEvent(system *types.System, opts *types.SystemUpdateControllerLastEventOptions) error
 }
 
 type System struct {
@@ -82,14 +83,14 @@ func (s System) Update(system *types.System, opts *types.SystemUpdateOptions) er
 	return nil
 }
 
-func (s System) UpdateController(system *types.System, opts *types.SystemSetControllerOptions) error {
+func (s System) UpdateController(system *types.System, opts *types.SystemUpdateControllerOptions) error {
 
 	if system == nil {
 		return errors.New("invalid argument")
 	}
 
 	if opts == nil {
-		opts = new(types.SystemSetControllerOptions)
+		opts = new(types.SystemUpdateControllerOptions)
 	}
 
 	if len(opts.Hostname) == 0 {
@@ -98,7 +99,7 @@ func (s System) UpdateController(system *types.System, opts *types.SystemSetCont
 	}
 
 	if opts.Pid == 0 {
-		log.V(logLevel).Warnf("%s:update_controller:> pin id zero", logSystemPrefix)
+		log.V(logLevel).Warnf("%s:update_controller:> pid id zero", logSystemPrefix)
 		return nil
 	}
 
@@ -108,6 +109,22 @@ func (s System) UpdateController(system *types.System, opts *types.SystemSetCont
 
 	if err := s.storage.System().UpdateControllerMaster(s.context, system); err != nil {
 		log.V(logLevel).Errorf("%s:update_controller:> update controller err: %v", logSystemPrefix, err)
+		return err
+	}
+
+	return nil
+}
+
+func (s System) UpdateControllerLastEvent(system *types.System, opts *types.SystemUpdateControllerLastEventOptions) error {
+
+	if system == nil {
+		return errors.New("invalid argument")
+	}
+
+	system.CtrlLastEvent = &opts.LastEvent
+
+	if err := s.storage.System().UpdateControllerLastEvent(s.context, system); err != nil {
+		log.V(logLevel).Errorf("%s:update_controller_last_event:> update controller err: %v", logSystemPrefix, err)
 		return err
 	}
 

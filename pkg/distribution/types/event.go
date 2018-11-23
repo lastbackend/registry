@@ -18,11 +18,8 @@
 
 package types
 
-import "time"
-
 type Event struct {
 	Channel   string    `json:"channel"`
 	Entity    string    `json:"entity"`
 	Operation string    `json:"operation"`
-	Timestamp time.Time `json:"ts"`
 }

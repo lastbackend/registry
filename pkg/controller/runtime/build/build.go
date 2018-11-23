@@ -40,13 +40,14 @@ type BuildController struct {
 }
 
 func New() *BuildController {
-	return new(BuildController)
+	bc := new(BuildController)
+	go bc.watch(context.Background())
+	return bc
 }
 
 func (bc BuildController) Start(ctx context.Context) {
 	log.V(logLevel).Infof("%s:> start build controller", logPrefix)
 	go bc.inspector(ctx)
-	go bc.watch(ctx)
 	<-bc.done
 }
 

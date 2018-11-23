@@ -75,7 +75,7 @@ func (c *Process) HeartBeat(ctx context.Context, lead chan bool) {
 
 		log.V(logLevel).Debugf("%s:> beat", logPrefix)
 
-		opts := new(types.SystemSetControllerOptions)
+		opts := new(types.SystemUpdateControllerOptions)
 		opts.Hostname = c.process.Hostname
 		opts.Pid = c.process.PID
 

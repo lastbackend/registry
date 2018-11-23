@@ -85,6 +85,7 @@ func (r *Runtime) Loop() {
 				{
 
 					if l {
+
 						if r.active {
 							log.V(logLevel).Debugf("%s:loop:> is already marked as master -> skip", logPrefix)
 							continue
