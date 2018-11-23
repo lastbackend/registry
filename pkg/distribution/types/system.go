@@ -26,7 +26,7 @@ type System struct {
 	AccessToken   string
 	AuthServer    string
 	CtrlMaster    string
-	CtrlUpdated   time.Time
+	CtrlUpdated   *time.Time
 	CtrlLastEvent *time.Time
 	Created       time.Time
 	Updated       time.Time
