@@ -107,6 +107,7 @@ func (s *SystemStorage) UpdateControllerMaster(ctx context.Context, system *type
 			ctrl_updated = now() at time zone 'utc',
       updated = now() at time zone 'utc'
     WHERE COALESCE(ctrl_master, '') = '' 
+       OR ctrl_updated IS NULL
 			 OR ctrl_updated < (NOW() :: timestamp - '1 minutes' :: interval) 
        OR ctrl_master = $1;`
 
