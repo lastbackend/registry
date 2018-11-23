@@ -46,7 +46,7 @@ type Runtime struct {
 	exporterCtrl *exporter.ExporterController
 }
 
-func NewRuntime() *Runtime {
+func New() *Runtime {
 	r := new(Runtime)
 
 	r.ctx, r.cancel = context.WithCancel(context.Background())

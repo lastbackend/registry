@@ -54,7 +54,7 @@ func Daemon() bool {
 	env.SetState(state.New())
 
 	// Initialize Runtime
-	r := runtime.NewRuntime()
+	r := runtime.New()
 	go r.Loop()
 
 	// Handle SIGINT and SIGTERM.

@@ -38,7 +38,9 @@ type BuilderController struct {
 }
 
 func New() *BuilderController {
-	return new(BuilderController)
+	bc := new(BuilderController)
+	bc.done = make(chan bool)
+	return bc
 }
 
 func (bc BuilderController) Start(ctx context.Context) {

@@ -48,7 +48,9 @@ type ExporterController struct {
 }
 
 func New() *ExporterController {
-	return new(ExporterController)
+	ec := new(ExporterController)
+	ec.done = make(chan bool)
+	return ec
 }
 
 func (ec ExporterController) Start(ctx context.Context) {

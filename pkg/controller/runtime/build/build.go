@@ -41,6 +41,7 @@ type BuildController struct {
 
 func New() *BuildController {
 	bc := new(BuildController)
+	bc.done = make(chan bool)
 	go bc.watch(context.Background())
 	return bc
 }
