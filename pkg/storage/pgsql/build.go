@@ -292,17 +292,18 @@ func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
 	const query = `
 		UPDATE images_builds
 		SET
-			state_step = $2,
-			state_status = $3,
-			state_message = $4,
+      builder_id       = CASE WHEN ($6 = TRUE OR $7 = TRUE OR $8 = TRUE) THEN NULL ELSE builder_id END,
+			state_step       = $2,
+			state_status     = $3,
+			state_message    = $4,
 			state_processing = $5,
-			state_done = $6,
-			state_error = $7,
-			state_canceled = $8,
+			state_done       = $6,
+			state_error      = $7,
+			state_canceled   = $8,
   		-- set state_started if state_step == '' and processing = true
-  		state_started = CASE WHEN (state_step = '' AND $5 = TRUE) THEN now() at time zone 'utc' ELSE state_started END,
+  		state_started    = CASE WHEN (state_started = NULL' AND $5 = TRUE) THEN now() at time zone 'utc' ELSE state_started END,
   		-- set state_finished if state_done = true or state_error = true or state_canceled = true
-  		state_finished = CASE WHEN ($6 = TRUE OR $7 = TRUE OR $8 = TRUE) THEN now() at time zone 'utc' ELSE state_finished END,
+  		state_finished   = CASE WHEN state_started <> NULL AND ($6 = TRUE OR $7 = TRUE OR $8 = TRUE) THEN now() at time zone 'utc' ELSE state_finished END,
 			size = $9,
 			image = json_build_object(
 				'name', image ->> 'name',
@@ -311,15 +312,22 @@ func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
 				'auth', image ->> 'auth',
 				'hash', $10 :: TEXT
 			),
-			builder_id = CASE WHEN $11 <> '' THEN $11 :: UUID ELSE NULL END,
 			updated = now() at time zone 'utc'
 		WHERE id = $1
-		RETURNING updated;`
+    RETURNING updated;`
 
-	err := getClient(ctx).QueryRowContext(ctx, query, build.Meta.ID,
-		build.Status.Step, build.Status.Status, build.Status.Message, build.Status.Processing,
-		build.Status.Done, build.Status.Error, build.Status.Canceled, build.Status.Size, build.Spec.Image.Hash,
-		build.Meta.Builder).Scan(&build.Meta.Updated)
+	err := getClient(ctx).QueryRowContext(ctx, query,
+		build.Meta.ID,
+		build.Status.Step,
+		build.Status.Status,
+		build.Status.Message,
+		build.Status.Processing,
+		build.Status.Done,
+		build.Status.Error,
+		build.Status.Canceled,
+		build.Status.Size,
+		build.Spec.Image.Hash,
+	).Scan(&build.Meta.Updated)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:update:> exec query err: %v", logBuildPrefix, err)
 		return err
@@ -356,18 +364,19 @@ func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*typ
 
 	const query = `
 		UPDATE images_builds
-		SET builder_id       = $1,
-		    state_status     = 'queued',
-		    state_processing = TRUE
+		SET 
+      builder_id       = $1,
+		  state_status     = $2,
+		  state_processing = TRUE
 		WHERE images_builds.id = (
 		 SELECT ib1.id
 		  FROM images_builds AS ib1
 		  WHERE 
 		  (
 		      -- check if there are builds that are not active or finished
-		      NOT (ib1.state_done OR ib1.state_canceled OR ib1.state_error OR
-		           ib1.state_processing)
-		      -- check if exists builds that are set as processing for one tag
+		      NOT (ib1.state_done OR ib1.state_canceled OR ib1.state_error OR ib1.state_processing)
+		      
+          -- check if exists builds that are set as processing for one tag
 		      AND NOT EXISTS(
 		        SELECT TRUE
 		        FROM images_builds AS ib2
@@ -387,7 +396,7 @@ func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*typ
 		return nil, nil
 	}
 
-	err := getClient(ctx).QueryRowContext(ctx, query, builder.Meta.ID).Scan(&id)
+	err := getClient(ctx).QueryRowContext(ctx, query, builder.Meta.ID, types.BuildStatusQueued).Scan(&id)
 	switch err {
 	case nil:
 	case sql.ErrNoRows:
@@ -410,21 +419,21 @@ func (s *BuildStorage) Unfreeze(ctx context.Context) error {
 
 	const query = `
    UPDATE images_builds
-   SET builder_id     = NULL,
+   SET 
+     builder_id       = NULL,
      state_step       = '',
-     state_status     = 'queued',
+     state_status     = $1,
      state_processing = FALSE,
      state_started    = NULL,
      updated          = now() at time zone 'utc'
    WHERE (updated <= (CURRENT_DATE :: timestamp - '1 day' :: interval)
-      OR (
-        (EXISTS(SELECT TRUE
-                FROM builders
-                WHERE online = FALSE
-                  AND id = images_builds.builder_id))
-        AND state_processing IS TRUE));`
+     OR (
+      (EXISTS(SELECT TRUE
+              FROM builders
+              WHERE online = FALSE AND id = images_builds.builder_id))
+      AND state_processing IS TRUE));`
 
-	result, err := getClient(ctx).ExecContext(ctx, query)
+	result, err := getClient(ctx).ExecContext(ctx, query, types.BuildStatusQueued)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:unfreeze:> unfreeze builds query err: %v", logBuildPrefix, err)
 		return err
