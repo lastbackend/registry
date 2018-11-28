@@ -30,7 +30,7 @@ import (
 const (
 	logLevel                     = 3
 	logPrefix                    = "runtime:builder_controller"
-	delayForCheckOfflineBuilders = 30 * time.Second
+	delayForCheckOfflineBuilders = 1 * time.Second
 )
 
 type BuilderController struct {

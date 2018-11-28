@@ -264,6 +264,27 @@ func BuildCancelH(w http.ResponseWriter, r *http.Request) {
 		errors.New("build").NotFound().Http(w)
 		return
 	}
+	if len(build.Meta.Builder) == 0 {
+		opts := new(types.BuildUpdateStatusOptions)
+		opts.Step = build.Status.Step
+		opts.Message = build.Status.Message
+		opts.Error = build.Status.Error
+		opts.Canceled = true
+
+		if err := bm.UpdateStatus(build, opts); err != nil {
+			log.V(logLevel).Errorf("%s:cancel:> update build err: %v", logPrefix, build.Meta.ID, err)
+			errors.HTTP.InternalServerError(w)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte{}); err != nil {
+			log.V(logLevel).Errorf("%s:cancel:> write response err: %v", logPrefix, err)
+			return
+		}
+
+		return
+	}
 
 	builder, err := bdm.Get(build.Meta.Builder)
 	if err != nil {

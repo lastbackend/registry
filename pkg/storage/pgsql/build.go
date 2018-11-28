@@ -301,7 +301,7 @@ func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
 			state_error      = $7,
 			state_canceled   = $8,
   		-- set state_started if state_step == '' and processing = true
-  		state_started    = CASE WHEN (state_started = NULL' AND $5 = TRUE) THEN now() at time zone 'utc' ELSE state_started END,
+  		state_started    = CASE WHEN (state_started = NULL AND $5 = TRUE) THEN now() at time zone 'utc' ELSE state_started END,
   		-- set state_finished if state_done = true or state_error = true or state_canceled = true
   		state_finished   = CASE WHEN state_started <> NULL AND ($6 = TRUE OR $7 = TRUE OR $8 = TRUE) THEN now() at time zone 'utc' ELSE state_finished END,
 			size = $9,

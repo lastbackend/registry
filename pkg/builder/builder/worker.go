@@ -532,8 +532,6 @@ func (w *worker) logging(writer io.Writer) error {
 			}
 		}
 	}
-
-	return nil
 }
 
 type event struct {
@@ -557,10 +555,15 @@ func (w *worker) sendEvent(event event) {
 	e.Error = event.error
 	e.Canceled = w.ctx.Err() == context.Canceled
 
-	envs.Get().GetClient().V1().
+	err := envs.Get().GetClient().V1().
 		Image(mspec.Image.Owner, mspec.Image.Name).
 		Build(mmeta.ID).
 		SetStatus(w.ctx, e)
+
+	if err != nil {
+		log.Errorf("%s:send_event:> set status request err: %v", logWorkerPrefix, err)
+		return
+	}
 }
 
 // Send status build event to controller
@@ -575,8 +578,13 @@ func (w *worker) sendInfo(info *lbt.Image) {
 	e.Hash = info.Meta.ID
 	e.VirtualSize = info.Status.VirtualSize
 
-	envs.Get().GetClient().V1().
+	err := envs.Get().GetClient().V1().
 		Image(mspec.Image.Owner, mspec.Image.Name).
 		Build(mmeta.ID).
 		SetImageInfo(w.ctx, e)
+
+	if err != nil {
+		log.Errorf("%s:send_info:> set info request err: %v", logWorkerPrefix, err)
+		return
+	}
 }
