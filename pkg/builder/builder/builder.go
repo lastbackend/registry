@@ -130,7 +130,6 @@ func (b *Builder) Start() error {
 
 	go b.manage()
 	go b.status()
-	// TODO: subscribe to docker
 
 	return nil
 }
@@ -390,8 +389,6 @@ func (b *Builder) status() error {
 			return err
 		}
 	}
-
-	return nil
 }
 
 // Shutdown builder process
