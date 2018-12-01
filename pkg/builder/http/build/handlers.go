@@ -44,7 +44,11 @@ func BuildCancelH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	return
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte{}); err != nil {
+		log.V(logLevel).Errorf("%s:cancel:> write response err: %v", logPrefix, err)
+		return
+	}
 }
 
 // BuildLogsCancelH - handler for get build logs stream

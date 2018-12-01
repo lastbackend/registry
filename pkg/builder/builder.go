@@ -78,7 +78,8 @@ func Daemon() bool {
 	bo := new(builder.BuilderOpts)
 	bo.DindHost = viper.GetString("builder.dind.host")
 	bo.ExtraHosts = viper.GetStringSlice("builder.extra_hosts")
-	bo.Limit = viper.GetInt("builder.workers")
+	bo.WorkerLimit = viper.GetInt("builder.workers")
+	bo.WorkerMemory = viper.GetInt64("builder.worker_memory")
 	bo.RootCerts = viper.GetStringSlice("builder.cacerts")
 
 	if viper.IsSet("builder.logger") {
@@ -88,7 +89,11 @@ func Daemon() bool {
 	if viper.IsSet("builder.blob_storage") {
 		var blobStorage blob.IBlobStorage
 		var cfg config.Config
-		viper.UnmarshalKey("builder.blob_storage", &cfg)
+
+		err := viper.UnmarshalKey("builder.blob_storage", &cfg)
+		if err != nil {
+			log.Fatalf("config parse err: %s", err)
+		}
 
 		switch viper.GetString("builder.blob_storage.type") {
 		case blob.DriverS3:

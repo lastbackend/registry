@@ -32,6 +32,12 @@ func (BuilderRequest) UpdateOptions() *BuilderUpdateOptions {
 }
 
 func (b BuilderUpdateOptions) Validate() *errors.Err {
+	switch true {
+	case b.WorkerLimit && b.WorkerMemory < 256:
+		return errors.New("builder").BadParameter("worker.memory")
+	case b.WorkerLimit && b.Workers <= 0:
+		return errors.New("builder").BadParameter("workers")
+	}
 	return nil
 }
 

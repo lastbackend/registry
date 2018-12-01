@@ -20,6 +20,8 @@ package builder
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -33,15 +35,19 @@ import (
 	"github.com/lastbackend/registry/pkg/api/types/v1"
 	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 	"github.com/lastbackend/registry/pkg/builder/envs"
+	"github.com/lastbackend/registry/pkg/builder/runtime"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/spf13/viper"
 
 	lbt "github.com/lastbackend/lastbackend/pkg/distribution/types"
 	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
+	rbt "github.com/lastbackend/registry/pkg/builder/types"
 )
 
 const (
-	logBuilderPrefix = "builder"
+	logBuilderPrefix       = "builder"
+	defaultWorkerMemory    = 512
+	defaultWorkerInstances = 1
 )
 
 // The main entity that is responsible for
@@ -54,7 +60,8 @@ type Builder struct {
 	hostname string
 	cri      cri.CRI
 	cii      cii.CII
-	limit    int
+
+	limits limits
 
 	opts BuilderOpts
 
@@ -64,12 +71,20 @@ type Builder struct {
 	workers map[*worker]bool
 }
 
+type limits struct {
+	Worker struct {
+		Instances int
+		Memory    int64
+	}
+}
+
 type BuilderOpts struct {
-	Stdout     bool
-	DindHost   string
-	ExtraHosts []string
-	Limit      int
-	RootCerts  []string
+	Stdout       bool
+	DindHost     string
+	ExtraHosts   []string
+	WorkerLimit  int
+	WorkerMemory int64
+	RootCerts    []string
 }
 
 // Preparing the builder environment for workers
@@ -86,7 +101,18 @@ func New(cri cri.CRI, cii cii.CII, opts *BuilderOpts) *Builder {
 		opts = new(BuilderOpts)
 	}
 
-	b.limit = opts.Limit
+	if opts.WorkerMemory != 0 {
+		b.limits.Worker.Instances = opts.WorkerLimit
+	} else {
+		b.limits.Worker.Instances = defaultWorkerInstances
+	}
+
+	if opts.WorkerMemory != 0 {
+		b.limits.Worker.Memory = opts.WorkerMemory
+	} else {
+		b.limits.Worker.Memory = defaultWorkerMemory
+	}
+
 	b.cri = cri
 	b.cii = cii
 	b.opts = *opts
@@ -164,6 +190,52 @@ func (b *Builder) BuildCancel(ctx context.Context, id string) error {
 	return nil
 }
 
+// Shutdown builder process
+func (b *Builder) Shutdown() {
+
+	log.Infof("%s:shutdown:> shutdown builder process", logWorkerPrefix)
+
+	b.done <- true
+}
+
+// Update builder manifest
+func (b *Builder) Update(ctx context.Context, opts *rbt.BuilderManifest) error {
+
+	log.Infof("%s:update:> update builder manifest", logWorkerPrefix)
+
+	if opts.Limits != nil {
+		if opts.Limits.WorkerLimit {
+			b.limits.Worker.Instances = opts.Limits.Workers
+			b.limits.Worker.Memory = opts.Limits.WorkerMemory
+		} else {
+
+			if b.opts.WorkerLimit != 0 {
+				b.limits.Worker.Instances = b.opts.WorkerLimit
+			} else {
+				b.limits.Worker.Instances = defaultWorkerInstances
+			}
+
+			if b.opts.WorkerMemory != 0 {
+				b.limits.Worker.Memory = b.opts.WorkerMemory
+			} else {
+				b.limits.Worker.Memory = defaultWorkerMemory
+			}
+
+		}
+	}
+
+	return nil
+}
+
+// Notification that the builder has completed its work
+func (b *Builder) Done() <-chan bool {
+	return b.done
+}
+
+func (b *Builder) ActiveWorkers() uint {
+	return uint(len(b.workers))
+}
+
 // Spawn - finished or failed workers will be restarted until context is closed
 // If worker failed - then wait some time until respawn
 func (b *Builder) manage() error {
@@ -188,6 +260,7 @@ func (b *Builder) manage() error {
 				go func() {
 					opts := new(workerOpts)
 					opts.Stdout = b.opts.Stdout
+					opts.Memory = b.limits.Worker.Memory
 
 					if err := w.run(t, opts); err != nil {
 						log.Errorf("%s:manage:> start worker for provision err: %v", logWorkerPrefix, err)
@@ -202,12 +275,13 @@ func (b *Builder) manage() error {
 	}()
 
 	for {
+
 		select {
 		case <-b.ctx.Done():
 			log.Debugf("%s:manage:> stop manage", logWorkerPrefix)
 			return nil
 		default:
-			if len(b.workers) >= b.limit {
+			if len(b.workers) >= b.limits.Worker.Instances {
 				continue
 			}
 
@@ -281,6 +355,7 @@ func (b *Builder) configure() error {
 	return nil
 }
 
+// Restore builder
 func (b *Builder) restore() error {
 
 	containers, err := b.cri.List(b.ctx, true)
@@ -312,6 +387,7 @@ func (b *Builder) restore() error {
 	return nil
 }
 
+// Create new build task
 func (b Builder) newTask(manifest *vv1.BuildManifest) *types.Task {
 	t := new(types.Task)
 
@@ -335,10 +411,18 @@ func (b Builder) newTask(manifest *vv1.BuildManifest) *types.Task {
 	return t
 }
 
+// Connect builder
 func (b *Builder) connect() error {
+
 	opts := v1.Request().Builder().ConnectOptions()
 	opts.IP = envs.Get().GetIP()
 	opts.Port = uint16(viper.GetInt("builder.port"))
+
+	info := runtime.BuilderInfo()
+	opts.System.Architecture = info.Architecture
+	opts.System.OSName = info.OSName
+	opts.System.OSType = info.OSType
+	opts.System.Version = info.Version
 
 	if viper.IsSet("builder.tls") {
 		opts.TLS = !viper.GetBool("builder.tls.insecure")
@@ -369,37 +453,60 @@ func (b *Builder) connect() error {
 		}
 	}
 
-	if err := envs.Get().GetClient().V1().Builder(envs.Get().GetHostname()).Connect(b.ctx, opts); err != nil {
+	manifest, err := envs.Get().GetClient().V1().Builder(envs.Get().GetHostname()).Connect(b.ctx, opts)
+	if err != nil {
 		log.Errorf("%s:start:> send event connect builder err: %v", logWorkerPrefix, err)
 		return err
+	}
+
+	buf, _ := json.Marshal(manifest)
+	fmt.Println(string(buf))
+
+	modify := false
+
+	mopts := new(rbt.BuilderManifest)
+	if manifest.Limits != nil {
+		modify = true
+		mopts.Limits = new(rbt.BuilderLimits)
+		mopts.Limits.WorkerLimit = manifest.Limits.WorkerLimit
+		mopts.Limits.WorkerMemory = int64(manifest.Limits.WorkerMemory)
+		mopts.Limits.Workers = manifest.Limits.Workers
+	}
+
+	if modify {
+		if err := b.Update(b.ctx, mopts); err != nil {
+			log.Errorf("%s:start:> update builder manifest err: %v", logWorkerPrefix, err)
+			return err
+		}
 	}
 
 	return nil
 }
 
+// Set builder status
 func (b *Builder) status() error {
 
 	opts := v1.Request().Builder().StatusUpdateOptions()
-	// TODO: send data builder info to api
+
+	status := runtime.BuilderStatus()
+
+	opts.Allocated.Cpu = status.Allocated.Cpu
+	opts.Allocated.Memory = status.Allocated.Memory
+	opts.Allocated.Workers = status.Allocated.Workers
+	opts.Allocated.Storage = status.Allocated.Storage
+
+	opts.Capacity.Cpu = status.Capacity.Cpu
+	opts.Capacity.Memory = status.Capacity.Memory
+	opts.Capacity.Workers = status.Capacity.Workers
+	opts.Capacity.Storage = status.Capacity.Storage
 
 	for {
 		<-time.After(10 * time.Second)
-		if err := envs.Get().GetClient().V1().Builder(envs.Get().GetHostname()).SetStatus(b.ctx, opts); err != nil {
+		err := envs.Get().GetClient().V1().Builder(envs.Get().GetHostname()).SetStatus(b.ctx, opts)
+		if err != nil {
 			log.Errorf("%s:start:> send event status builder err: %v", logWorkerPrefix, err)
 			return err
 		}
+
 	}
-}
-
-// Shutdown builder process
-func (b *Builder) Shutdown() {
-
-	log.Infof("%s:shutdown:> shutdown builder process", logWorkerPrefix)
-
-	b.done <- true
-}
-
-// Notification that the builder has completed its work
-func (b *Builder) Done() <-chan bool {
-	return b.done
 }

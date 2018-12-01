@@ -19,15 +19,25 @@
 package request
 
 type BuilderUpdateOptions struct {
-	IP   *string `json:"ip"`
-	Port *uint16 `json:"port"`
+	Workers      int   `json:"workers"`
+	WorkerMemory int64 `json:"worker_memory"`
+	WorkerLimit  bool  `json:"worker_limit"`
 }
 
 type BuilderConnectOptions struct {
-	IP   string `json:"ip"`
-	Port uint16 `json:"port"`
-	TLS  bool   `json:"tls"`
-	SSL  *SSL   `json:"ssl"`
+	IP       string           `json:"ip"`
+	Port     uint16           `json:"port"`
+	TLS      bool             `json:"tls"`
+	SSL      *SSL             `json:"ssl"`
+	System   SystemInfo       `json:"system"`
+	Resource BuilderResources `json:"resource"`
+}
+
+type SystemInfo struct {
+	Version      string
+	Architecture string
+	OSName       string
+	OSType       string
 }
 
 type SSL struct {
@@ -37,6 +47,19 @@ type SSL struct {
 }
 
 type BuilderStatusUpdateOptions struct {
+	Allocated BuilderResources `json:"allocated"`
+	Capacity  BuilderResources `json:"capacity"`
+}
+
+type BuilderResources struct {
+	// Builder total containers
+	Workers uint `json:"workers"`
+	// Builder total memory
+	Memory uint64 `json:"memory"`
+	// Builder total cpu
+	Cpu uint64 `json:"cpu"`
+	// Builder storage
+	Storage uint64 `json:"storage"`
 }
 
 type BuilderCreateManifestOptions struct {

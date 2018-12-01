@@ -16,7 +16,4 @@
 // from Last.Backend LLC.
 //
 
-package views
-
-type Event struct {
-}
+package builder_test

@@ -63,6 +63,8 @@ type worker struct {
 	step     string
 	logDir   string
 
+	memory int64
+
 	task *types.Task
 
 	stdout bool
@@ -72,6 +74,7 @@ type worker struct {
 
 type workerOpts struct {
 	Stdout bool
+	Memory int64
 }
 
 // Create and configure new worker
@@ -84,7 +87,6 @@ func newWorker(ctx context.Context, id string, cri cri.CRI) *worker {
 	w.pid = pid
 	w.logDir = os.TempDir()
 	w.cri = cri
-
 	return w
 }
 
@@ -100,6 +102,7 @@ func (w *worker) run(t *types.Task, wo *workerOpts) error {
 
 	w.task = t
 	w.stdout = wo.Stdout
+	w.memory = wo.Memory
 
 	startTime := time.Now()
 
@@ -175,7 +178,7 @@ func (w *worker) configure() error {
 		PublishAllPorts: true,
 		Resources: lbt.SpecTemplateContainerResources{
 			Request: lbt.SpecTemplateContainerResource{
-				RAM: 512 * 1024 * 1024, // TODO: set from config
+				RAM: w.memory * 1024 * 1024,
 			},
 		},
 	}
@@ -269,7 +272,7 @@ func (w *worker) build() error {
 		},
 		Resources: lbt.SpecTemplateContainerResources{
 			Request: lbt.SpecTemplateContainerResource{
-				RAM: 512 * 1024 * 1024, // TODO: set from config
+				RAM: w.memory * 1024 * 1024,
 			},
 		},
 	}
@@ -336,7 +339,6 @@ func (w *worker) build() error {
 		}
 	}
 
-	return nil
 }
 
 // Running push process to registry

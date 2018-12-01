@@ -16,21 +16,14 @@
 // from Last.Backend LLC.
 //
 
-package types
+package request
 
-import (
-	"context"
-	"io"
-
-	rv1 "github.com/lastbackend/registry/pkg/builder/types/v1/request"
-)
-
-type ClientV1 interface {
-	Build(id string) BuildClientV1
-	Update(ctx context.Context, opts *rv1.BuilderUpdateManifestOptions) error
+type BuilderUpdateManifestOptions struct {
+	Limits *BuilderLimitConfig `json:"limits,omitempty"`
 }
 
-type BuildClientV1 interface {
-	Logs(ctx context.Context, opts *rv1.BuildLogsOptions) (io.ReadCloser, error)
-	Cancel(ctx context.Context) error
+type BuilderLimitConfig struct {
+	WorkerLimit  bool  `json:"worker_limit"`
+	WorkerMemory int64 `json:"worker_memory"`
+	Workers      int   `json:"workers"`
 }

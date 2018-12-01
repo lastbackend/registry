@@ -20,13 +20,11 @@ package v1
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/builder/client/types"
 	"github.com/lastbackend/registry/pkg/util/http/request"
 
-	vv1 "github.com/lastbackend/registry/pkg/builder/types/v1/views"
+	rv1 "github.com/lastbackend/registry/pkg/builder/types/v1/request"
 )
 
 type Client struct {
@@ -42,21 +40,26 @@ func (bc Client) Build(id string) types.BuildClientV1 {
 	return newBuildClient(bc.client, id)
 }
 
-func (bc Client) Status(ctx context.Context) (*vv1.Builder, error) {
+func (bc Client) Update(ctx context.Context, opts *rv1.BuilderUpdateManifestOptions) error {
 
-	var s *vv1.Builder
+	body, err := opts.ToJson()
+	if err != nil {
+		return err
+	}
+
 	var e *errors.Http
 
-	err := bc.client.Get(fmt.Sprintf("/status")).
+	err = bc.client.Put("/settings").
 		AddHeader("Content-Type", "application/json").
-		JSON(&s, &e)
+		Body(body).
+		JSON(nil, &e)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if e != nil {
-		return nil, errors.New(e.Message)
+		return errors.New(e.Message)
 	}
 
-	return s, nil
+	return nil
 }
