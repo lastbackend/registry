@@ -136,6 +136,26 @@ func (b *Builder) Update(builder *types.Builder, opts *types.BuilderUpdateOption
 		builder.Spec.Network.SSL = opts.SSL
 	}
 
+	if opts.Limits != nil {
+		builder.Spec.Limits.WorkerLimit = opts.Limits.WorkerLimit
+		builder.Spec.Limits.Workers = opts.Limits.Workers
+		builder.Spec.Limits.WorkerMemory = opts.Limits.WorkerMemory
+	}
+
+	if opts.Allocated != nil {
+		builder.Status.Allocated.Workers = opts.Allocated.Workers
+		builder.Status.Allocated.Memory = opts.Allocated.Memory
+		builder.Status.Allocated.Cpu = opts.Allocated.Cpu
+		builder.Status.Allocated.Storage = opts.Allocated.Storage
+	}
+
+	if opts.Capacity != nil {
+		builder.Status.Capacity.Workers = opts.Capacity.Workers
+		builder.Status.Capacity.Memory = opts.Capacity.Memory
+		builder.Status.Capacity.Cpu = opts.Capacity.Cpu
+		builder.Status.Capacity.Storage = opts.Capacity.Storage
+	}
+
 	if err := b.storage.Builder().Update(b.context, builder); err != nil {
 		log.V(logLevel).Errorf("%s:update:> update builder %s err: %v", logBuilderPrefix, builder.Meta.Hostname, err)
 		return err

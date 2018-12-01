@@ -16,7 +16,13 @@
 // from Last.Backend LLC.
 //
 
-package views
+package builder
 
-type Builder struct {
+import (
+	"github.com/lastbackend/registry/pkg/util/http"
+)
+
+var Routes = []http.Route{
+	// Builder handlers
+	{Path: "/settings", Method: http.MethodPut, Handler: BuilderUpdateH},
 }

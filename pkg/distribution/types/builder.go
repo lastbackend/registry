@@ -26,18 +26,30 @@ type Builder struct {
 
 type BuilderMeta struct {
 	Meta
-	Hostname string `json:"hostname"`
+	BuilderInfo
+}
+
+type BuilderInfo struct {
+	Hostname     string `json:"hostname"`
+	Version      string `json:"version"`
+	Architecture string `json:"architecture"`
+	OSName       string `json:"os_name"`
+	OSType       string `json:"os_type"`
 }
 
 type BuilderStatus struct {
-	Insecure bool   `json:"insecure"`
-	Online   bool   `json:"online"`
-	TLS      bool   `json:"tls"`
-	Error    string `json:"error"`
+	Insecure bool `json:"insecure"`
+	Online   bool `json:"online"`
+	TLS      bool `json:"tls"`
+	// Builder Capacity
+	Capacity BuilderResources `json:"capacity"`
+	// Builder Allocated
+	Allocated BuilderResources `json:"allocated"`
 }
 
 type BuilderSpec struct {
 	Network BuilderSpecNetwork `json:"network"`
+	Limits  BuilderSpecLimits  `json:"limits"`
 }
 
 type BuilderSpecNetwork struct {
@@ -47,10 +59,27 @@ type BuilderSpecNetwork struct {
 	SSL  *SSL   `json:"ssl"`
 }
 
+type BuilderSpecLimits struct {
+	WorkerLimit  bool  `json:"worker_limit"`
+	Workers      int   `json:"workers"`
+	WorkerMemory int64 `json:"worker_memory"`
+}
+
 type SSL struct {
 	CA   []byte `json:"ca"`
 	Cert []byte `json:"cert"`
 	Key  []byte `json:"key"`
+}
+
+type BuilderResources struct {
+	// Builder total containers
+	Workers uint `json:"workers"`
+	// Builder total memory
+	Memory uint64 `json:"memory"`
+	// Builder total cpu
+	Cpu uint64 `json:"cpu"`
+	// Builder storage
+	Storage uint64 `json:"storage"`
 }
 
 // *********************************************
@@ -67,10 +96,19 @@ type BuilderCreateOptions struct {
 }
 
 type BuilderUpdateOptions struct {
-	Hostname *string `json:"hostname"`
-	IP       *string `json:"ip"`
-	Port     *uint16 `json:"port"`
-	Online   *bool   `json:"online"`
-	TLS      *bool   `json:"tls"`
-	SSL      *SSL    `json:"ssl"`
+	Hostname  *string           `json:"hostname"`
+	IP        *string           `json:"ip"`
+	Port      *uint16           `json:"port"`
+	Online    *bool             `json:"online"`
+	TLS       *bool             `json:"tls"`
+	SSL       *SSL              `json:"ssl"`
+	Limits    *BuilderLimits    `json:"limits"`
+	Allocated *BuilderResources `json:"allocated"`
+	Capacity  *BuilderResources `json:"capacity"`
+}
+
+type BuilderLimits struct {
+	WorkerLimit  bool  `json:"worker_limit"`
+	Workers      int   `json:"workers"`
+	WorkerMemory int64 `json:"worker_memory"`
 }

@@ -73,10 +73,26 @@ type BuilderStatus struct {
 	Insecure bool `json:"insecure"`
 	Online   bool `json:"online"`
 	TLS      bool `json:"tls"`
+	// Builder Capacity
+	Capacity BuilderResources `json:"capacity"`
+	// Builder Allocated
+	Allocated BuilderResources `json:"allocated"`
+}
+
+type BuilderResources struct {
+	// Builder total containers
+	Workers uint `json:"workers"`
+	// Builder total memory
+	Memory uint64 `json:"memory"`
+	// Builder total cpu
+	Cpu uint64 `json:"cpu"`
+	// Builder storage
+	Storage uint64 `json:"storage"`
 }
 
 type BuilderSpec struct {
 	Network BuilderSpecNetwork `json:"network"`
+	Limits  BuilderSpecLimits  `json:"limits"`
 }
 
 type BuilderSpecNetwork struct {
@@ -86,6 +102,12 @@ type BuilderSpecNetwork struct {
 	SSL  *SSL   `json:"ssl"`
 }
 
+type BuilderSpecLimits struct {
+	WorkerLimit  bool  `json:"worker_limit"`
+	Workers      int   `json:"workers"`
+	WorkerMemory int64 `json:"worker_memory"`
+}
+
 type SSL struct {
 	CA         []byte `json:"ca"`
 	ClientCert []byte `json:"cert"`
@@ -93,3 +115,13 @@ type SSL struct {
 }
 
 type BuilderList []*Builder
+
+type BuilderConfig struct {
+	Limits *BuilderLimitConfig `json:"limits,omitempty"`
+}
+
+type BuilderLimitConfig struct {
+	WorkerLimit  bool  `json:"worker_limit"`
+	Workers      int   `json:"workers"`
+	WorkerMemory int64 `json:"worker_memory"`
+}

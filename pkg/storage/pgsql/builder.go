@@ -53,27 +53,30 @@ func (s *BuilderStorage) Get(ctx context.Context, builder string) (*types.Builde
 		SELECT to_jsonb(
 		  jsonb_build_object(
 		    'meta', jsonb_build_object(
-		      'id', b.id,
-		      'hostname', b.hostname,
-		      'created', b.created,
-		      'updated', b.updated
+		      'id', id,
+		      'hostname', hostname,
+		      'created', created,
+		      'updated', updated
 		    ),
 		    'status', jsonb_build_object(
-          'online', b.online,
-			    'insecure', b.tls
+          'online', online,
+			    'insecure', tls,
+			    'allocated', allocated,
+			    'capacity', capacity
         ),
 				'spec', jsonb_build_object(
 					'network', jsonb_build_object(
-						'tls', b.tls,
-						'ssl', b.ssl,
-						'ip', b.ip,
-						'port', b.port
-					)
+						'tls', tls,
+						'ssl', ssl,
+						'ip', ip,
+						'port', port
+					),
+			   'limits', limits
 				)
 		  )
 		)
-		FROM builders AS b
-		WHERE b.hostname::text = $1 OR b.id::text = $1;`
+		FROM builders
+		WHERE hostname::text = $1 OR id::text = $1;`
 
 	var buf string
 
@@ -128,7 +131,9 @@ func (s *BuilderStorage) List(ctx context.Context, f *filter.BuilderFilter) ([]*
 		) AS meta,
 		json_build_object(
 			'online', online,
-			'insecure', tls
+			'insecure', tls,
+      'allocated', allocated,
+      'capacity', capacity
 		) AS status,
 		json_build_object(
 			'network', json_build_object(
@@ -136,7 +141,8 @@ func (s *BuilderStorage) List(ctx context.Context, f *filter.BuilderFilter) ([]*
 				'port', port,
 				'tls', tls,
 				'ssl', ssl
-			)
+			),
+      'limits', limits
 		) AS spec
 		FROM builders
 		%s
@@ -212,14 +218,35 @@ func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) err
 			port = $4,
 			tls = $5,
 			ssl = $6,
+			limits = $7,
+			allocated = $8,
+			capacity = $9,
 			updated = now() at time zone 'utc'
 		WHERE id = $1
 		RETURNING updated;`
 
 	ssl, err := json.Marshal(builder.Spec.Network.SSL)
 	if err != nil {
-		log.Errorf("%s:insert:> prepare ssl struct to database write: %s", logBuilderPrefix, err)
+		log.Errorf("%s:update:> prepare ssl struct to database write: %s", logBuilderPrefix, err)
 		ssl = []byte("{}")
+	}
+
+	limits, err := json.Marshal(builder.Spec.Limits)
+	if err != nil {
+		log.Errorf("%s:update:> prepare limits struct to database write: %s", logBuilderPrefix, err)
+		limits = []byte("{}")
+	}
+
+	allocated, err := json.Marshal(builder.Status.Allocated)
+	if err != nil {
+		log.Errorf("%s:update:> prepare allocated struct to database write: %s", logBuilderPrefix, err)
+		allocated = []byte("{}")
+	}
+
+	capacity, err := json.Marshal(builder.Status.Capacity)
+	if err != nil {
+		log.Errorf("%s:update:> prepare capacity struct to database write: %s", logBuilderPrefix, err)
+		capacity = []byte("{}")
 	}
 
 	err = getClient(ctx).QueryRowContext(ctx, query,
@@ -229,6 +256,9 @@ func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) err
 		builder.Spec.Network.Port,
 		builder.Spec.Network.TLS,
 		string(ssl),
+		string(limits),
+		string(allocated),
+		string(capacity),
 	).
 		Scan(&builder.Meta.Updated)
 	if err != nil {

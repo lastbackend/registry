@@ -46,7 +46,8 @@ type BuildClientV1 interface {
 
 type BuilderClientV1 interface {
 	List(ctx context.Context) (*vv1.BuilderList, error)
-	Connect(ctx context.Context, opts *rv1.BuilderConnectOptions) error
+	Connect(ctx context.Context, opts *rv1.BuilderConnectOptions) (*vv1.BuilderConfig, error)
+	Update(ctx context.Context, opts *rv1.BuilderUpdateOptions) (*vv1.Builder, error)
 	SetStatus(ctx context.Context, opts *rv1.BuilderStatusUpdateOptions) error
 	Manifest(ctx context.Context) (*vv1.BuildManifest, error)
 }

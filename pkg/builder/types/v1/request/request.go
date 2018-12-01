@@ -18,16 +18,16 @@
 
 package request
 
-type IRequest interface {
-	Build() *BuildRequest
+type Request struct{}
+
+func New() *Request {
+	return new(Request)
 }
 
-type r struct{}
-
-func Request() IRequest {
-	return new(r)
-}
-
-func (r) Build() *BuildRequest {
+func (Request) Build() *BuildRequest {
 	return new(BuildRequest)
+}
+
+func (Request) Builder() *BuilderRequest {
+	return new(BuilderRequest)
 }

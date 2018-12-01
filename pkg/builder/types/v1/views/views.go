@@ -16,21 +16,11 @@
 // from Last.Backend LLC.
 //
 
-package types
+package views
 
-import (
-	"context"
-	"io"
+type Views struct{}
 
-	rv1 "github.com/lastbackend/registry/pkg/builder/types/v1/request"
-)
-
-type ClientV1 interface {
-	Build(id string) BuildClientV1
-	Update(ctx context.Context, opts *rv1.BuilderUpdateManifestOptions) error
+func New() *Views {
+	return new(Views)
 }
 
-type BuildClientV1 interface {
-	Logs(ctx context.Context, opts *rv1.BuildLogsOptions) (io.ReadCloser, error)
-	Cancel(ctx context.Context) error
-}

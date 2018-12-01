@@ -67,14 +67,17 @@ CREATE EXTENSION "uuid-ossp" WITH SCHEMA public;
 
 CREATE TABLE builders
 (
-  id       UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-  hostname VARCHAR(512)     NOT NULL,
-  ip       VARCHAR(512)     NOT NULL,
-  port     INTEGER          NOT NULL,
-  tls      BOOLEAN                   DEFAULT FALSE,
-  ssl      JSONB                     DEFAULT NULL,
-  created  TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc'),
-  updated  TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc')
+  id        UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+  hostname  VARCHAR(512)     NOT NULL,
+  ip        VARCHAR(512)     NOT NULL,
+  port      INTEGER          NOT NULL,
+  tls       BOOLEAN                   DEFAULT FALSE,
+  ssl       JSONB                     DEFAULT NULL,
+  limits    JSONB                     DEFAULT NULL,
+  allocated JSONB                     DEFAULT '{}',
+  capacity  JSONB                     DEFAULT '{}',
+  created   TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc'),
+  updated   TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc')
 );
 
 CREATE TABLE images

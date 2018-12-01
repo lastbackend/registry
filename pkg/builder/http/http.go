@@ -22,6 +22,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/builder/http/build"
+	"github.com/lastbackend/registry/pkg/builder/http/builder"
 	"github.com/lastbackend/registry/pkg/util/http"
 	"github.com/lastbackend/registry/pkg/util/http/cors"
 )
@@ -50,6 +51,7 @@ func AddRoutes(r ...[]http.Route) {
 
 func init() {
 	AddRoutes(build.Routes)
+	AddRoutes(builder.Routes)
 }
 
 func Listen(host string, port int, opts *HttpOpts) error {

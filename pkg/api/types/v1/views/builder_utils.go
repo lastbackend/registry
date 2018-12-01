@@ -51,6 +51,18 @@ func (bv *BuilderView) ToBuilderStatus(status types.BuilderStatus) BuilderStatus
 		Insecure: status.Insecure,
 		Online:   status.Online,
 		TLS:      status.TLS,
+		Capacity: BuilderResources{
+			Workers: status.Capacity.Workers,
+			Memory:  status.Capacity.Memory,
+			Cpu:     status.Capacity.Cpu,
+			Storage: status.Capacity.Storage,
+		},
+		Allocated: BuilderResources{
+			Workers: status.Allocated.Workers,
+			Memory:  status.Allocated.Memory,
+			Cpu:     status.Allocated.Cpu,
+			Storage: status.Allocated.Storage,
+		},
 	}
 }
 
@@ -60,6 +72,11 @@ func (bv *BuilderView) ToBuilderSpec(spec types.BuilderSpec) BuilderSpec {
 			IP:   spec.Network.IP,
 			Port: spec.Network.Port,
 			TLS:  spec.Network.TLS,
+		},
+		Limits: BuilderSpecLimits{
+			WorkerLimit:  spec.Limits.WorkerLimit,
+			Workers:      spec.Limits.Workers,
+			WorkerMemory: spec.Limits.WorkerMemory,
 		},
 	}
 
@@ -100,7 +117,7 @@ func (obj BuilderList) ToJson() ([]byte, error) {
 	return json.Marshal(obj)
 }
 
-func (bv *BuilderView) NewManifest(obj *types.Task) *BuildManifest {
+func (bv *BuilderView) NewBuildManifest(obj *types.Task) *BuildManifest {
 	if obj == nil {
 		return nil
 	}
@@ -127,6 +144,27 @@ func (bv *BuilderView) NewManifest(obj *types.Task) *BuildManifest {
 }
 
 func (obj BuildManifest) ToJson() ([]byte, error) {
+	if unsafe.Sizeof(obj) == 0 {
+		return []byte{}, nil
+	}
+	return json.Marshal(obj)
+}
+
+func (bv *BuilderView) NewConfigManifest(obj *types.Builder) *BuilderConfig {
+	if obj == nil {
+		return nil
+	}
+	bc := new(BuilderConfig)
+	if obj.Spec.Limits.WorkerLimit {
+		bc.Limits = new(BuilderLimitConfig)
+		bc.Limits.WorkerLimit = obj.Spec.Limits.WorkerLimit
+		bc.Limits.Workers = obj.Spec.Limits.Workers
+		bc.Limits.WorkerMemory = obj.Spec.Limits.WorkerMemory
+	}
+	return bc
+}
+
+func (obj BuilderConfig) ToJson() ([]byte, error) {
 	if unsafe.Sizeof(obj) == 0 {
 		return []byte{}, nil
 	}

@@ -18,7 +18,10 @@
 
 package v1
 
+import "github.com/lastbackend/registry/pkg/builder/types/v1/request"
+
 type IRequest interface {
+	Builder() *request.BuilderRequest
 }
 
 type IView interface {
