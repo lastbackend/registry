@@ -73,8 +73,8 @@ type Builder struct {
 
 type limits struct {
 	Worker struct {
-		Instances int
-		Memory    int64
+		Instances uint
+		Memory    uint64
 	}
 }
 
@@ -82,8 +82,8 @@ type BuilderOpts struct {
 	Stdout       bool
 	DindHost     string
 	ExtraHosts   []string
-	WorkerLimit  int
-	WorkerMemory int64
+	WorkerLimit  uint
+	WorkerMemory uint64
 	RootCerts    []string
 }
 
@@ -281,7 +281,7 @@ func (b *Builder) manage() error {
 			log.Debugf("%s:manage:> stop manage", logWorkerPrefix)
 			return nil
 		default:
-			if len(b.workers) >= b.limits.Worker.Instances {
+			if len(b.workers) >= int(b.limits.Worker.Instances) {
 				continue
 			}
 
@@ -469,7 +469,7 @@ func (b *Builder) connect() error {
 		modify = true
 		mopts.Limits = new(rbt.BuilderLimits)
 		mopts.Limits.WorkerLimit = manifest.Limits.WorkerLimit
-		mopts.Limits.WorkerMemory = int64(manifest.Limits.WorkerMemory)
+		mopts.Limits.WorkerMemory = manifest.Limits.WorkerMemory
 		mopts.Limits.Workers = manifest.Limits.Workers
 	}
 

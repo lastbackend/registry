@@ -18,6 +18,11 @@
 
 package types
 
+const (
+	DEFAULT_MIN_WORKERS = 1
+	DEFAULT_MIN_WORKER_MEMORY = 256
+)
+
 type Builder struct {
 	Meta   BuilderMeta   `json:"meta"`
 	Status BuilderStatus `json:"status"`
@@ -61,8 +66,8 @@ type BuilderSpecNetwork struct {
 
 type BuilderSpecLimits struct {
 	WorkerLimit  bool  `json:"worker_limit"`
-	Workers      int   `json:"workers"`
-	WorkerMemory int64 `json:"worker_memory"`
+	Workers      uint   `json:"workers"`
+	WorkerMemory uint64 `json:"worker_memory"`
 }
 
 type SSL struct {
@@ -77,7 +82,7 @@ type BuilderResources struct {
 	// Builder total memory
 	Memory uint64 `json:"memory"`
 	// Builder total cpu
-	Cpu uint64 `json:"cpu"`
+	Cpu uint `json:"cpu"`
 	// Builder storage
 	Storage uint64 `json:"storage"`
 }
@@ -108,7 +113,7 @@ type BuilderUpdateOptions struct {
 }
 
 type BuilderLimits struct {
-	WorkerLimit  bool  `json:"worker_limit"`
-	Workers      int   `json:"workers"`
-	WorkerMemory int64 `json:"worker_memory"`
+	WorkerLimit  bool   `json:"worker_limit"`
+	Workers      uint   `json:"workers"`
+	WorkerMemory uint64 `json:"worker_memory"`
 }

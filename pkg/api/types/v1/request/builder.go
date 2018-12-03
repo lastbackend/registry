@@ -19,9 +19,9 @@
 package request
 
 type BuilderUpdateOptions struct {
-	Workers      int   `json:"workers"`
-	WorkerMemory int64 `json:"worker_memory"`
-	WorkerLimit  bool  `json:"worker_limit"`
+	Workers      uint   `json:"workers"`
+	WorkerMemory uint64 `json:"worker_memory"`
+	WorkerLimit  bool   `json:"worker_limit"`
 }
 
 type BuilderConnectOptions struct {
@@ -57,7 +57,7 @@ type BuilderResources struct {
 	// Builder total memory
 	Memory uint64 `json:"memory"`
 	// Builder total cpu
-	Cpu uint64 `json:"cpu"`
+	Cpu uint `json:"cpu"`
 	// Builder storage
 	Storage uint64 `json:"storage"`
 }

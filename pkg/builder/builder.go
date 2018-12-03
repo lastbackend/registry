@@ -78,8 +78,8 @@ func Daemon() bool {
 	bo := new(builder.BuilderOpts)
 	bo.DindHost = viper.GetString("builder.dind.host")
 	bo.ExtraHosts = viper.GetStringSlice("builder.extra_hosts")
-	bo.WorkerLimit = viper.GetInt("builder.workers")
-	bo.WorkerMemory = viper.GetInt64("builder.worker_memory")
+	bo.WorkerLimit = uint(viper.GetInt("builder.workers"))
+	bo.WorkerMemory = uint64(viper.GetInt64("builder.worker_memory"))
 	bo.RootCerts = viper.GetStringSlice("builder.cacerts")
 
 	if viper.IsSet("builder.logger") {
