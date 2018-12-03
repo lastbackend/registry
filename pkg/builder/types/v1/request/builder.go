@@ -23,7 +23,7 @@ type BuilderUpdateManifestOptions struct {
 }
 
 type BuilderLimitConfig struct {
-	WorkerLimit  bool  `json:"worker_limit"`
-	WorkerMemory int64 `json:"worker_memory"`
-	Workers      int   `json:"workers"`
+	WorkerLimit  bool   `json:"worker_limit"`
+	WorkerMemory uint64 `json:"worker_memory"`
+	Workers      uint   `json:"workers"`
 }

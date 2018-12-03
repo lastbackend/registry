@@ -63,7 +63,7 @@ type worker struct {
 	step     string
 	logDir   string
 
-	memory int64
+	memory uint64
 
 	task *types.Task
 
@@ -74,7 +74,7 @@ type worker struct {
 
 type workerOpts struct {
 	Stdout bool
-	Memory int64
+	Memory uint64
 }
 
 // Create and configure new worker
@@ -178,7 +178,7 @@ func (w *worker) configure() error {
 		PublishAllPorts: true,
 		Resources: lbt.SpecTemplateContainerResources{
 			Request: lbt.SpecTemplateContainerResource{
-				RAM: w.memory * 1024 * 1024,
+				RAM: int64(w.memory) * 1024 * 1024,
 			},
 		},
 	}
@@ -272,7 +272,7 @@ func (w *worker) build() error {
 		},
 		Resources: lbt.SpecTemplateContainerResources{
 			Request: lbt.SpecTemplateContainerResource{
-				RAM: w.memory * 1024 * 1024,
+				RAM: int64(w.memory) * 1024 * 1024,
 			},
 		},
 	}

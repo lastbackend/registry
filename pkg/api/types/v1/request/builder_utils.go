@@ -21,6 +21,7 @@ package request
 import (
 	"encoding/json"
 	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
+	"github.com/lastbackend/registry/pkg/distribution/types"
 	"io"
 	"io/ioutil"
 )
@@ -33,9 +34,9 @@ func (BuilderRequest) UpdateOptions() *BuilderUpdateOptions {
 
 func (b BuilderUpdateOptions) Validate() *errors.Err {
 	switch true {
-	case b.WorkerLimit && b.WorkerMemory < 256:
+	case b.WorkerLimit && b.WorkerMemory < types.DEFAULT_MIN_WORKER_MEMORY:
 		return errors.New("builder").BadParameter("worker.memory")
-	case b.WorkerLimit && b.Workers <= 0:
+	case b.WorkerLimit && b.Workers < types.DEFAULT_MIN_WORKERS:
 		return errors.New("builder").BadParameter("workers")
 	}
 	return nil

@@ -85,7 +85,7 @@ type BuilderResources struct {
 	// Builder total memory
 	Memory uint64 `json:"memory"`
 	// Builder total cpu
-	Cpu uint64 `json:"cpu"`
+	Cpu uint `json:"cpu"`
 	// Builder storage
 	Storage uint64 `json:"storage"`
 }
@@ -103,9 +103,9 @@ type BuilderSpecNetwork struct {
 }
 
 type BuilderSpecLimits struct {
-	WorkerLimit  bool  `json:"worker_limit"`
-	Workers      int   `json:"workers"`
-	WorkerMemory int64 `json:"worker_memory"`
+	WorkerLimit  bool   `json:"worker_limit"`
+	Workers      uint   `json:"workers"`
+	WorkerMemory uint64 `json:"worker_memory"`
 }
 
 type SSL struct {
@@ -121,7 +121,7 @@ type BuilderConfig struct {
 }
 
 type BuilderLimitConfig struct {
-	WorkerLimit  bool  `json:"worker_limit"`
-	Workers      int   `json:"workers"`
-	WorkerMemory int64 `json:"worker_memory"`
+	WorkerLimit  bool   `json:"worker_limit"`
+	Workers      uint   `json:"workers"`
+	WorkerMemory uint64 `json:"worker_memory"`
 }

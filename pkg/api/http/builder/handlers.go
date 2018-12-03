@@ -93,6 +93,16 @@ func BuilderUpdateH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if rq.WorkerLimit && rq.Workers > uint(builder.Status.Capacity.Memory/types.DEFAULT_MIN_WORKER_MEMORY) {
+		errors.New("builder").BadParameter("workers").Http(w)
+		return
+	}
+
+	if rq.WorkerLimit && rq.WorkerMemory > (builder.Status.Capacity.Memory/uint64(rq.Workers)) {
+		errors.New("builder").BadParameter("worker.memory").Http(w)
+		return
+	}
+
 	opts := new(types.BuilderUpdateOptions)
 	opts.Limits = new(types.BuilderLimits)
 	opts.Limits.Workers = rq.Workers
