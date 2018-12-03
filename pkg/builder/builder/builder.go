@@ -20,8 +20,6 @@ package builder
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -456,9 +454,6 @@ func (b *Builder) connect() error {
 		log.Errorf("%s:start:> send event connect builder err: %v", logWorkerPrefix, err)
 		return err
 	}
-
-	buf, _ := json.Marshal(manifest)
-	fmt.Println(string(buf))
 
 	modify := false
 
