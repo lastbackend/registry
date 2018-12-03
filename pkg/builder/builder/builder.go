@@ -20,8 +20,6 @@ package builder
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -46,8 +44,6 @@ import (
 
 const (
 	logBuilderPrefix       = "builder"
-	defaultWorkerMemory    = 512
-	defaultWorkerInstances = 1
 )
 
 // The main entity that is responsible for
@@ -104,13 +100,13 @@ func New(cri cri.CRI, cii cii.CII, opts *BuilderOpts) *Builder {
 	if opts.WorkerMemory != 0 {
 		b.limits.Worker.Instances = opts.WorkerLimit
 	} else {
-		b.limits.Worker.Instances = defaultWorkerInstances
+		b.limits.Worker.Instances = types.DEFAULT_MIN_WORKERS
 	}
 
 	if opts.WorkerMemory != 0 {
 		b.limits.Worker.Memory = opts.WorkerMemory
 	} else {
-		b.limits.Worker.Memory = defaultWorkerMemory
+		b.limits.Worker.Memory = types.DEFAULT_MIN_WORKER_MEMORY
 	}
 
 	b.cri = cri
@@ -212,13 +208,13 @@ func (b *Builder) Update(ctx context.Context, opts *rbt.BuilderManifest) error {
 			if b.opts.WorkerLimit != 0 {
 				b.limits.Worker.Instances = b.opts.WorkerLimit
 			} else {
-				b.limits.Worker.Instances = defaultWorkerInstances
+				b.limits.Worker.Instances = types.DEFAULT_MIN_WORKERS
 			}
 
 			if b.opts.WorkerMemory != 0 {
 				b.limits.Worker.Memory = b.opts.WorkerMemory
 			} else {
-				b.limits.Worker.Memory = defaultWorkerMemory
+				b.limits.Worker.Memory = types.DEFAULT_MIN_WORKER_MEMORY
 			}
 
 		}
@@ -458,9 +454,6 @@ func (b *Builder) connect() error {
 		log.Errorf("%s:start:> send event connect builder err: %v", logWorkerPrefix, err)
 		return err
 	}
-
-	buf, _ := json.Marshal(manifest)
-	fmt.Println(string(buf))
 
 	modify := false
 

@@ -29,8 +29,6 @@ import (
 	"github.com/shirou/gopsutil/mem"
 )
 
-const MinWorkerMemory = 512
-
 func BuilderInfo() types.BuilderInfo {
 
 	hostname, err := os.Hostname()
@@ -77,7 +75,7 @@ func BuilderCapacity() types.BuilderResources {
 
 	return types.BuilderResources{
 		Storage: uint64(storage / 1024 / 1024),
-		Workers: uint(m / MinWorkerMemory),
+		Workers: uint(m / types.DEFAULT_MIN_WORKER_MEMORY),
 		Memory:  uint64(m),
 	}
 }
