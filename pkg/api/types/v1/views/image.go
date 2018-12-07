@@ -18,27 +18,28 @@
 
 package views
 
+import "time"
+
 type Image struct {
-	Meta   *ImageMeta   `json:"meta"`
-	Status *ImageStatus `json:"status"`
-	Spec   *ImageSpec   `json:"spec"`
+	Meta    ImageMeta    `json:"meta"`
+	Status  *ImageStatus `json:"status,omitempty"`
+	TagList *ImageTags   `json:"tags,omitempty"`
 }
 
 type ImageList []*Image
 
 type ImageMeta struct {
-	Owner       string `json:"owner"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Owner       string            `json:"owner"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Labels      map[string]string `json:"labels"`
+	Created     time.Time         `json:"created"`
+	Updated     time.Time         `json:"updated"`
 }
 
 type ImageStatus struct {
-	Stats ImageStats `json:"stats"`
-}
-
-type ImageSpec struct {
-	Private bool        `json:"private"`
-	TagList []*ImageTag `json:"tags"`
+	Stats   ImageStats `json:"stats"`
+	Private bool       `json:"private"`
 }
 
 type ImageTag struct {
@@ -46,6 +47,8 @@ type ImageTag struct {
 	Status ImageTagStatus `json:"status"`
 	Spec   ImageTagSpec   `json:"spec"`
 }
+
+type ImageTags []*ImageTag
 
 type ImageTagMeta struct {
 	Name string `json:"name"`

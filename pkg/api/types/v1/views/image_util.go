@@ -20,8 +20,9 @@ package views
 
 import (
 	"encoding/json"
-	"github.com/lastbackend/registry/pkg/distribution/types"
 	"unsafe"
+
+	"github.com/lastbackend/registry/pkg/distribution/types"
 )
 
 type ImageView struct{}
@@ -32,8 +33,8 @@ func (rv *ImageView) New(obj *types.Image) *Image {
 	}
 	i := new(Image)
 	i.Meta = rv.ToImageMeta(&obj.Meta)
-	i.Spec = rv.ToImageSpec(&obj.Spec)
-	i.Status = rv.ToImageStatus(&obj.Status)
+	i.TagList = rv.ToImageTags(obj.TagList)
+	i.Status = rv.ToImageStatus(obj.Status)
 	return i
 }
 
@@ -50,7 +51,9 @@ func (rv *ImageView) NewList(list []*types.Image) *ImageList {
 	}
 	il := make(ImageList, 0)
 	for _, item := range list {
-		il = append(il, rv.New(item))
+		i := new(Image)
+		i.Meta = rv.ToImageMeta(&item.Meta)
+		il = append(il, i)
 	}
 	return &il
 }
@@ -62,21 +65,27 @@ func (obj *ImageList) ToJson() ([]byte, error) {
 	return json.Marshal(obj)
 }
 
-func (rv *ImageView) ToImageMeta(obj *types.ImageMeta) *ImageMeta {
-	return &ImageMeta{
+func (rv *ImageView) ToImageMeta(obj *types.ImageMeta) ImageMeta {
+	im := ImageMeta{
 		Name:        obj.Name,
 		Owner:       obj.Owner,
 		Description: obj.Description,
+		Labels:      obj.Labels,
+		Created:     obj.Created,
+		Updated:     obj.Updated,
 	}
+
+	if obj.Labels == nil {
+		im.Labels = make(map[string]string, 0)
+	}
+
+	return im
 }
 
-func (rv *ImageView) ToImageSpec(obj *types.ImageSpec) *ImageSpec {
-	spec := ImageSpec{
-		Private: obj.Private,
-		TagList: make([]*ImageTag, 0),
-	}
+func (rv *ImageView) ToImageTags(obj map[string]*types.ImageTag) *ImageTags {
+	var tl = ImageTags{}
 
-	for _, tag := range obj.TagList {
+	for _, tag := range obj {
 
 		it := new(ImageTag)
 		it.Meta.Name = tag.Name
@@ -86,14 +95,15 @@ func (rv *ImageView) ToImageSpec(obj *types.ImageSpec) *ImageSpec {
 		it.Spec.EnvVars = tag.Spec.EnvVars
 		it.Status.Disabled = tag.Disabled
 
-		spec.TagList = append(spec.TagList, it)
+		tl = append(tl, it)
 	}
 
-	return &spec
+	return &tl
 }
 
-func (rv *ImageView) ToImageStatus(obj *types.ImageStatus) *ImageStatus {
+func (rv *ImageView) ToImageStatus(obj types.ImageStatus) *ImageStatus {
 	return &ImageStatus{
+		Private: obj.Private,
 		Stats: ImageStats{
 			BuildsQuantity: obj.Stats.BuildsQuantity,
 			PullsQuantity:  obj.Stats.PullsQuantity,

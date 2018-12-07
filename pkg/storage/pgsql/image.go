@@ -70,12 +70,10 @@ func (s *ImageStorage) Get(ctx context.Context, owner, name string) (*types.Imag
 		    ),
 		    'status', jsonb_build_object(
           'last_build', build,
-          'stats', i.stats
+          'stats', i.stats,
+          'private', i.private
         ),
-				'spec', jsonb_build_object(
-				  'private', i.private,
-		      'tags', tags
-				)
+				'tags', tags
 		  )
 		)
 		FROM (
@@ -167,37 +165,66 @@ func (s *ImageStorage) List(ctx context.Context, f *filter.ImageFilter) ([]*type
 	}
 
 	var query = fmt.Sprintf(`
-		SELECT owner, name, description, created, updated
-		FROM images
-		%s
-		ORDER BY created DESC;`, whereCondition)
+    SELECT COALESCE(json_agg(
+      json_build_object(
+          'meta', jsonb_build_object(
+          'id', tmp.id,
+          'owner', tmp.owner,
+          'name', tmp.name,
+          'description', tmp.description,
+          'created', tmp.created,
+          'updated', tmp.updated
+        ),
+          'status', jsonb_build_object(
+              'last_build', tmp.build,
+              'stats', tmp.stats
+            ),
+          'spec', jsonb_build_object(
+              'private', tmp.private,
+              'tags', tmp.tags
+            )
+        )), '[]')
+      FROM (SELECT
+      *,
+      (SELECT jsonb_build_object(
+         'id', id,
+         'number', number,
+         'status', state_status,
+         'updated', updated
+       )
+       FROM images_builds
+       WHERE image_id = images.id
+       ORDER BY created DESC
+       LIMIT 1)  AS build,
+      (SELECT COALESCE(json_object_agg(name, tags), '{}')
+       FROM (
+              SELECT
+                image_id AS image,
+                name,
+                updated,
+                created
+              FROM images_tags AS it
+              WHERE it.image_id = images.id) tags) AS tags
+    FROM images
+    %s) AS tmp;`, whereCondition)
 
-	rows, err := getClient(ctx).QueryContext(ctx, query, values...)
-	if err != nil {
-		log.V(logLevel).Errorf("%s:list:> get images list err: %v", logImagePrefix, err)
+	var buf string
+
+	err := getClient(ctx).QueryRow(query).Scan(&buf)
+	switch err {
+	case nil:
+	case sql.ErrNoRows:
+		return nil, nil
+	default:
+		log.V(logLevel).Errorf("%s:list:> get images list err: %v", logBuilderPrefix, err)
 		return nil, err
 	}
-	defer rows.Close()
 
 	i := make([]*types.Image, 0)
 
-	for rows.Next() {
-		item := new(types.Image)
-		err := rows.Scan(
-			&item.Meta.Owner,
-			&item.Meta.Name,
-			&item.Meta.Description,
-			&item.Meta.Updated,
-			&item.Meta.Created,
-		)
-		if err != nil {
-			log.V(logLevel).Errorf("%s:list:> get games err: %v", logImagePrefix, err)
-			return nil, err
-		}
-
-		i = append(i, item)
+	if err := json.Unmarshal([]byte(buf), &i); err != nil {
+		return nil, err
 	}
-
 	return i, nil
 }
 
@@ -219,7 +246,7 @@ func (s *ImageStorage) Insert(ctx context.Context, image *types.Image) error {
 	err := getClient(ctx).QueryRowContext(ctx, query,
 		image.Meta.Owner,
 		image.Meta.Name,
-		image.Spec.Private,
+		image.Status.Private,
 		image.Meta.Description,
 	).
 		Scan(&image.Meta.ID, &image.Meta.Created, &image.Meta.Updated)
@@ -247,7 +274,7 @@ func (s *ImageStorage) Update(ctx context.Context, image *types.Image) error {
 	err := getClient(ctx).QueryRowContext(ctx, query,
 		image.Meta.ID,
 		image.Meta.Description,
-		image.Spec.Private,
+		image.Status.Private,
 	).
 		Scan(&image.Meta.Updated)
 	if err != nil {
