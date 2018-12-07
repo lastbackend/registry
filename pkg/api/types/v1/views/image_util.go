@@ -33,6 +33,8 @@ func (rv *ImageView) New(obj *types.Image) *Image {
 	}
 	i := new(Image)
 	i.Meta = rv.ToImageMeta(&obj.Meta)
+	i.TagList = rv.ToImageTags(obj.TagList)
+	i.Status = rv.ToImageStatus(obj.Status)
 	return i
 }
 
@@ -51,8 +53,6 @@ func (rv *ImageView) NewList(list []*types.Image) *ImageList {
 	for _, item := range list {
 		i := new(Image)
 		i.Meta = rv.ToImageMeta(&item.Meta)
-		i.TagList = rv.ToImageTags(item.TagList)
-		i.Status = rv.ToImageStatus(&item.Status)
 		il = append(il, i)
 	}
 	return &il
@@ -101,7 +101,7 @@ func (rv *ImageView) ToImageTags(obj map[string]*types.ImageTag) *ImageTags {
 	return &tl
 }
 
-func (rv *ImageView) ToImageStatus(obj *types.ImageStatus) *ImageStatus {
+func (rv *ImageView) ToImageStatus(obj types.ImageStatus) *ImageStatus {
 	return &ImageStatus{
 		Private: obj.Private,
 		Stats: ImageStats{
