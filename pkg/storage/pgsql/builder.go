@@ -121,32 +121,36 @@ func (s *BuilderStorage) List(ctx context.Context, f *filter.BuilderFilter) ([]*
 	}
 
 	var query = fmt.Sprintf(`
-		SELECT COALESCE(jsonb_build_array(builders), '[]')
-		FROM (SELECT 
-		json_build_object(
-			'id', id,
-			'hostname', hostname,
-			'created', created,
-			'updated', updated
-		) AS meta,
-		json_build_object(
-			'online', online,
-			'insecure', tls,
-      'allocated', allocated,
-      'capacity', capacity
-		) AS status,
-		json_build_object(
-			'network', json_build_object(
-				'ip', ip,
-				'port', port,
-				'tls', tls,
-				'ssl', ssl
-			),
-      'limits', limits
-		) AS spec
-		FROM builders
-		%s
-		ORDER BY created DESC) AS builders;`, where)
+     SELECT COALESCE(json_agg(
+       json_build_object(
+         'meta', json_build_object(
+           'id', tmp.id,
+           'hostname', tmp.hostname,
+           'created', tmp.created,
+           'updated', tmp.updated
+         ),
+         'status', json_build_object(
+           'online', tmp.online,
+           'insecure', tmp.tls,
+           'allocated', tmp.allocated,
+           'capacity', tmp.capacity
+         ),
+         'spec', json_build_object(
+           'network', json_build_object(
+             'ip', tmp.ip,
+             'port', tmp.port,
+             'tls', tmp.tls,
+             'ssl', tmp.ssl
+           ),
+           'limits', tmp.limits
+       )
+     )), '[]')
+     FROM (
+       SELECT *
+       FROM builders
+       %s
+       ORDER BY created DESC
+     ) AS tmp;`, where)
 
 	var buf string
 

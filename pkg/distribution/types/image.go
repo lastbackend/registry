@@ -27,9 +27,9 @@ const (
 )
 
 type Image struct {
-	Meta   ImageMeta   `json:"meta"`
-	Status ImageStatus `json:"status"`
-	Spec   ImageSpec   `json:"spec"`
+	Meta    ImageMeta            `json:"meta"`
+	Status  ImageStatus          `json:"status"`
+	TagList map[string]*ImageTag `json:"tags"`
 }
 
 type ImageMeta struct {
@@ -38,12 +38,8 @@ type ImageMeta struct {
 }
 
 type ImageStatus struct {
-	Stats ImageStats `json:"stats"`
-}
-
-type ImageSpec struct {
-	Private bool                 `json:"private"`
-	TagList map[string]*ImageTag `json:"tags"`
+	Stats   ImageStats `json:"stats"`
+	Private bool       `json:"private"`
 }
 
 type ImageSource struct {

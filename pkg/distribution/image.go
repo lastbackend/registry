@@ -90,7 +90,7 @@ func (i Image) Create(opts *types.ImageCreateOptions) (*types.Image, error) {
 	image.Meta.Owner = opts.Owner
 
 	image.Meta.Description = opts.Description
-	image.Spec.Private = opts.Private
+	image.Status.Private = opts.Private
 
 	if err := i.storage.Image().Insert(i.context, image); err != nil {
 		log.V(logLevel).Errorf("%s:create:> insert image %s/%s err: %v", logImagePrefix, image.Meta.Owner, image.Meta.Name, err)
@@ -117,7 +117,7 @@ func (i Image) Update(image *types.Image, opts *types.ImageUpdateOptions) error 
 	}
 
 	if opts.Private != nil {
-		image.Spec.Private = *opts.Private
+		image.Status.Private = *opts.Private
 	}
 
 	if err := i.storage.Image().Update(i.context, image); err != nil {
