@@ -490,15 +490,15 @@ func (b Builder) status() error {
 		opts.Capacity.Cpu = status.Capacity.Cpu
 
 		if b.limits != nil {
+			opts.Allocated.Workers = b.limits.WorkerInstances
+			opts.Allocated.Memory = uint64(b.limits.WorkerInstances) * uint64(b.limits.WorkerMemory)
+			opts.Allocated.Storage = uint64(b.limits.WorkerInstances) * uint64(b.limits.WorkerStorage)
+			opts.Allocated.Cpu = uint(b.limits.WorkerInstances) * uint(b.limits.WorkerCPU)
+		} else {
 			opts.Allocated.Workers = status.Capacity.Workers
 			opts.Allocated.Memory = status.Capacity.Memory
 			opts.Allocated.Storage = status.Capacity.Storage
 			opts.Allocated.Cpu = status.Capacity.Cpu
-		} else {
-			opts.Allocated.Workers = b.limits.WorkerInstances
-			opts.Allocated.Memory = b.limits.WorkerMemory
-			opts.Allocated.Storage = b.limits.WorkerStorage
-			opts.Allocated.Cpu = b.limits.WorkerCPU
 		}
 
 		u := b.getUsage()
@@ -521,22 +521,22 @@ func (b Builder) getUsage() *types.BuilderResources {
 	br := new(types.BuilderResources)
 	br.Workers = uint(len(b.workers))
 
-	br.Memory = uint64(int64(br.Workers) * types.DEFAULT_MIN_WORKER_MEMORY)
-	br.Cpu = 0 //uint(int64(br.Workers) * types.DEFAULT_MIN_WORKER_CPU)
-	br.Storage = 0 //uint64(int64(br.Workers) * types.DEFAULT_MIN_WORKER_Storage)
+	br.Memory = uint64(br.Workers) * types.DEFAULT_MIN_WORKER_MEMORY
+	br.Cpu = 0     //uint(br.Workers) * types.DEFAULT_MIN_WORKER_CPU
+	br.Storage = 0 //uint64(br.Workers) * types.DEFAULT_MIN_WORKER_Storage
 
 	if b.limits != nil {
 
 		if b.limits.WorkerMemory != 0 {
-			br.Memory = uint64(int64(br.Workers) * int64(b.limits.WorkerMemory))
+			br.Memory = uint64(br.Workers) * uint64(b.limits.WorkerMemory)
 		}
 
 		if b.limits.WorkerStorage != 0 {
-			br.Storage = 0 //uint64(int64(br.Workers) * int64(b.limits.WorkerMemory))
+			br.Storage = 0 //uint64(br.Workers) * uint64(b.limits.WorkerMemory)
 		}
 
 		if b.limits.WorkerCPU != 0 {
-			br.Cpu = 0 //uint(int64(br.Workers) * int64(b.limits.WorkerCPU))
+			br.Cpu = 0 //uint(br.Workers) * uint(b.limits.WorkerCPU)
 		}
 
 	}
