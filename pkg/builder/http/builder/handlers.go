@@ -47,7 +47,6 @@ func BuilderUpdateH(w http.ResponseWriter, r *http.Request) {
 
 	if rq.Limits != nil {
 		opts.Limits = new(types.BuilderLimits)
-		opts.Limits.WorkerLimit = rq.Limits.WorkerLimit
 		opts.Limits.WorkerMemory = rq.Limits.WorkerMemory
 		opts.Limits.Workers = rq.Limits.Workers
 	}

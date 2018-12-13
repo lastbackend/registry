@@ -39,6 +39,5 @@ type BuilderManifest struct {
 
 type BuilderLimits struct {
 	Workers      uint
-	WorkerLimit  bool
 	WorkerMemory uint64
 }

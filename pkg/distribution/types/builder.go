@@ -19,8 +19,10 @@
 package types
 
 const (
-	DEFAULT_MIN_WORKERS = 1
-	DEFAULT_MIN_WORKER_MEMORY = 256
+	DEFAULT_MIN_WORKERS        = 1
+	DEFAULT_MIN_WORKER_CPU     = 1
+	DEFAULT_MIN_WORKER_Storage = 5
+	DEFAULT_MIN_WORKER_MEMORY  = 256
 )
 
 type Builder struct {
@@ -50,11 +52,13 @@ type BuilderStatus struct {
 	Capacity BuilderResources `json:"capacity"`
 	// Builder Allocated
 	Allocated BuilderResources `json:"allocated"`
+	// Builder Usage
+	Usage BuilderResources `json:"usage"`
 }
 
 type BuilderSpec struct {
 	Network BuilderSpecNetwork `json:"network"`
-	Limits  BuilderSpecLimits  `json:"limits"`
+	Limits  *BuilderSpecLimits `json:"limits"`
 }
 
 type BuilderSpecNetwork struct {
@@ -65,7 +69,7 @@ type BuilderSpecNetwork struct {
 }
 
 type BuilderSpecLimits struct {
-	WorkerLimit  bool  `json:"worker_limit"`
+	WorkerLimit  bool   `json:"worker_limit"`
 	Workers      uint   `json:"workers"`
 	WorkerMemory uint64 `json:"worker_memory"`
 }
@@ -110,6 +114,7 @@ type BuilderUpdateOptions struct {
 	Limits    *BuilderLimits    `json:"limits"`
 	Allocated *BuilderResources `json:"allocated"`
 	Capacity  *BuilderResources `json:"capacity"`
+	Usage     *BuilderResources `json:"usage"`
 }
 
 type BuilderLimits struct {

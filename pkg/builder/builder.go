@@ -20,8 +20,6 @@ package builder
 
 import (
 	"fmt"
-	"github.com/lastbackend/registry/pkg/util/blob/config"
-	"github.com/lastbackend/registry/pkg/util/blob/s3"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,6 +32,8 @@ import (
 	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/builder/http"
 	"github.com/lastbackend/registry/pkg/util/blob"
+	"github.com/lastbackend/registry/pkg/util/blob/config"
+	"github.com/lastbackend/registry/pkg/util/blob/s3"
 	"github.com/lastbackend/registry/pkg/util/system"
 	"github.com/spf13/viper"
 )
@@ -78,8 +78,6 @@ func Daemon() bool {
 	bo := new(builder.BuilderOpts)
 	bo.DindHost = viper.GetString("builder.dind.host")
 	bo.ExtraHosts = viper.GetStringSlice("builder.extra_hosts")
-	bo.WorkerLimit = uint(viper.GetInt("builder.workers"))
-	bo.WorkerMemory = uint64(viper.GetInt64("builder.worker_memory"))
 	bo.RootCerts = viper.GetStringSlice("builder.cacerts")
 
 	if viper.IsSet("builder.logger") {

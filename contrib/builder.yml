@@ -26,7 +26,6 @@ builder:
     client_key: "/opt/cert/builder/client-key.pem"
   cacerts:
   - "hub.lstbknd.net:/opt/cert/hub/ca.pem:ro"
-  workers: 2
   logger:
     stdout: true
   blob_storage:

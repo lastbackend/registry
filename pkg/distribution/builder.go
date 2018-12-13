@@ -156,6 +156,13 @@ func (b *Builder) Update(builder *types.Builder, opts *types.BuilderUpdateOption
 		builder.Status.Capacity.Storage = opts.Capacity.Storage
 	}
 
+	if opts.Usage != nil {
+		builder.Status.Usage.Workers = opts.Usage.Workers
+		builder.Status.Usage.Memory = opts.Usage.Memory
+		builder.Status.Usage.Cpu = opts.Usage.Cpu
+		builder.Status.Usage.Storage = opts.Usage.Storage
+	}
+
 	if err := b.storage.Builder().Update(b.context, builder); err != nil {
 		log.V(logLevel).Errorf("%s:update:> update builder %s err: %v", logBuilderPrefix, builder.Meta.Hostname, err)
 		return err
