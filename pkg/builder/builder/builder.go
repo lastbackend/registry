@@ -46,8 +46,13 @@ const (
 	logBuilderPrefix = "builder"
 )
 
+const (
+	defaultSendStatusDelay = 5 * time.Second
+)
+
 // The main entity that is responsible for
 // the environment and existence of workers
+
 type Builder struct {
 	sync.RWMutex
 
@@ -482,36 +487,44 @@ func (b Builder) status() error {
 
 	for {
 
-		status := runtime.BuilderStatus()
+		select {
+		case <-b.ctx.Done():
+			log.Debugf("%s:status:> stop send status", logWorkerPrefix)
+			return nil
+		default:
 
-		opts.Capacity.Workers = status.Capacity.Workers
-		opts.Capacity.Memory = status.Capacity.Memory
-		opts.Capacity.Storage = status.Capacity.Storage
-		opts.Capacity.Cpu = status.Capacity.Cpu
+			status := runtime.BuilderStatus()
 
-		if b.limits != nil {
-			opts.Allocated.Workers = b.limits.WorkerInstances
-			opts.Allocated.Memory = uint64(b.limits.WorkerInstances) * uint64(b.limits.WorkerMemory)
-			opts.Allocated.Storage = uint64(b.limits.WorkerInstances) * uint64(b.limits.WorkerStorage)
-			opts.Allocated.Cpu = uint(b.limits.WorkerInstances) * uint(b.limits.WorkerCPU)
-		} else {
-			opts.Allocated.Workers = status.Capacity.Workers
-			opts.Allocated.Memory = status.Capacity.Memory
-			opts.Allocated.Storage = status.Capacity.Storage
-			opts.Allocated.Cpu = status.Capacity.Cpu
-		}
+			opts.Capacity.Workers = status.Capacity.Workers
+			opts.Capacity.Memory = status.Capacity.Memory
+			opts.Capacity.Storage = status.Capacity.Storage
+			opts.Capacity.Cpu = status.Capacity.Cpu
 
-		u := b.getUsage()
-		opts.Usage.Workers = u.Workers
-		opts.Usage.Memory = u.Memory
-		opts.Usage.Storage = u.Storage
-		opts.Usage.Cpu = u.Cpu
+			if b.limits != nil {
+				opts.Allocated.Workers = b.limits.WorkerInstances
+				opts.Allocated.Memory = uint64(b.limits.WorkerInstances) * uint64(b.limits.WorkerMemory)
+				opts.Allocated.Storage = uint64(b.limits.WorkerInstances) * uint64(b.limits.WorkerStorage)
+				opts.Allocated.Cpu = uint(b.limits.WorkerInstances) * uint(b.limits.WorkerCPU)
+			} else {
+				opts.Allocated.Workers = status.Capacity.Workers
+				opts.Allocated.Memory = status.Capacity.Memory
+				opts.Allocated.Storage = status.Capacity.Storage
+				opts.Allocated.Cpu = status.Capacity.Cpu
+			}
 
-		<-time.After(5 * time.Second)
-		err := envs.Get().GetClient().V1().Builder(envs.Get().GetHostname()).SetStatus(b.ctx, opts)
-		if err != nil {
-			log.Errorf("%s:start:> send event status builder err: %v", logWorkerPrefix, err)
-			return err
+			u := b.getUsage()
+			opts.Usage.Workers = u.Workers
+			opts.Usage.Memory = u.Memory
+			opts.Usage.Storage = u.Storage
+			opts.Usage.Cpu = u.Cpu
+
+			<-time.After(defaultSendStatusDelay)
+
+			err := envs.Get().GetClient().V1().Builder(envs.Get().GetHostname()).SetStatus(b.ctx, opts)
+			if err != nil {
+				log.Errorf("%s:start:> send event status builder err: %v", logWorkerPrefix, err)
+				continue
+			}
 		}
 
 	}
