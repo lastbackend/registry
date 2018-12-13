@@ -76,6 +76,7 @@ CREATE TABLE builders
   limits    JSONB                     DEFAULT NULL,
   allocated JSONB                     DEFAULT '{}',
   capacity  JSONB                     DEFAULT '{}',
+  usage     JSONB                     DEFAULT '{}',
   created   TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc'),
   updated   TIMESTAMPTZ               DEFAULT (now() AT TIME ZONE 'utc')
 );

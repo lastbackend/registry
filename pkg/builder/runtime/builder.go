@@ -48,7 +48,7 @@ func BuilderInfo() types.BuilderInfo {
 func BuilderStatus() types.BuilderStatus {
 	state := types.BuilderStatus{}
 	state.Capacity = BuilderCapacity()
-	state.Allocated = BuilderAllocation()
+	state.Usage = BuilderUsage()
 	return state
 }
 
@@ -80,7 +80,7 @@ func BuilderCapacity() types.BuilderResources {
 	}
 }
 
-func BuilderAllocation() types.BuilderResources {
+func BuilderUsage() types.BuilderResources {
 
 	vmStat, err := mem.VirtualMemory()
 	if err != nil {

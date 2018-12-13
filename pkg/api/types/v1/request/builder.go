@@ -49,6 +49,7 @@ type SSL struct {
 type BuilderStatusUpdateOptions struct {
 	Allocated BuilderResources `json:"allocated"`
 	Capacity  BuilderResources `json:"capacity"`
+	Usage     BuilderResources `json:"usage"`
 }
 
 type BuilderResources struct {

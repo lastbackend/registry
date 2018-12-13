@@ -63,6 +63,12 @@ func (bv *BuilderView) ToBuilderStatus(status types.BuilderStatus) BuilderStatus
 			Cpu:     status.Allocated.Cpu,
 			Storage: status.Allocated.Storage,
 		},
+		Usage: BuilderResources{
+			Workers: status.Usage.Workers,
+			Memory:  status.Usage.Memory,
+			Cpu:     status.Usage.Cpu,
+			Storage: status.Usage.Storage,
+		},
 	}
 }
 

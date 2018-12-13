@@ -141,7 +141,6 @@ func BuilderUpdateH(w http.ResponseWriter, r *http.Request) {
 
 	uopts := new(request.BuilderUpdateManifestOptions)
 	uopts.Limits = new(request.BuilderLimitConfig)
-	uopts.Limits.WorkerLimit = builder.Spec.Limits.WorkerLimit
 	uopts.Limits.WorkerMemory = builder.Spec.Limits.WorkerMemory
 	uopts.Limits.Workers = builder.Spec.Limits.Workers
 
@@ -308,6 +307,12 @@ func BuilderStatusH(w http.ResponseWriter, r *http.Request) {
 	opts.Capacity.Memory = rq.Capacity.Memory
 	opts.Capacity.Cpu = rq.Capacity.Cpu
 	opts.Capacity.Storage = rq.Capacity.Storage
+
+	opts.Usage = new(types.BuilderResources)
+	opts.Usage.Workers = rq.Usage.Workers
+	opts.Usage.Memory = rq.Usage.Memory
+	opts.Usage.Cpu = rq.Usage.Cpu
+	opts.Usage.Storage = rq.Usage.Storage
 
 	if err := bm.Update(builder, opts); err != nil {
 		log.V(logLevel).Errorf("%s:status:> update builder info err: %v", logPrefix, err)

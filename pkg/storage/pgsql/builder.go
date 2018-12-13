@@ -62,7 +62,8 @@ func (s *BuilderStorage) Get(ctx context.Context, builder string) (*types.Builde
           'online', online,
 			    'insecure', tls,
 			    'allocated', allocated,
-			    'capacity', capacity
+			    'capacity', capacity,
+			    'usage', usage
         ),
 				'spec', jsonb_build_object(
 					'network', jsonb_build_object(
@@ -133,7 +134,8 @@ func (s *BuilderStorage) List(ctx context.Context, f *filter.BuilderFilter) ([]*
            'online', tmp.online,
            'insecure', tmp.tls,
            'allocated', tmp.allocated,
-           'capacity', tmp.capacity
+           'capacity', tmp.capacity,
+           'usage', tmp.usage
          ),
          'spec', json_build_object(
            'network', json_build_object(
@@ -217,14 +219,15 @@ func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) err
 	const query = `
 		UPDATE builders
 		SET
-			online = $2,
-			ip = $3,
-			port = $4,
-			tls = $5,
-			ssl = $6,
-			limits = $7,
+			online    = $2,
+			ip        = $3,
+			port      = $4,
+			tls       = $5,
+			ssl       = $6,
+			limits    = $7,
 			allocated = $8,
-			capacity = $9,
+			capacity  = $9,
+			usage     = $10,
 			updated = now() at time zone 'utc'
 		WHERE id = $1
 		RETURNING updated;`
@@ -253,6 +256,12 @@ func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) err
 		capacity = []byte("{}")
 	}
 
+	usage, err := json.Marshal(builder.Status.Usage)
+	if err != nil {
+		log.Errorf("%s:update:> prepare usage struct to database write: %s", logBuilderPrefix, err)
+		usage = []byte("{}")
+	}
+
 	err = getClient(ctx).QueryRowContext(ctx, query,
 		builder.Meta.ID,
 		builder.Status.Online,
@@ -263,6 +272,7 @@ func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) err
 		string(limits),
 		string(allocated),
 		string(capacity),
+		string(usage),
 	).
 		Scan(&builder.Meta.Updated)
 	if err != nil {

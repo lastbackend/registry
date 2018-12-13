@@ -77,6 +77,8 @@ type BuilderStatus struct {
 	Capacity BuilderResources `json:"capacity"`
 	// Builder Allocated
 	Allocated BuilderResources `json:"allocated"`
+	// Builder Usage
+	Usage BuilderResources `json:"usage"`
 }
 
 type BuilderResources struct {
