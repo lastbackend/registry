@@ -136,7 +136,7 @@ func (ec ExporterController) loop(ctx context.Context) {
 					Number:     b.Meta.Number,
 					Branch:     b.Spec.Source.Branch,
 					Image:      fmt.Sprintf("%s/%s:%s", b.Spec.Image.Owner, b.Spec.Image.Name, b.Spec.Image.Tag),
-					ImageSha:   b.Spec.Image.ID,
+					ImageSha:   b.Spec.Image.Hash,
 					Source:     fmt.Sprintf("%s/%s/%s#%s", b.Spec.Source.Hub, b.Spec.Source.Owner, b.Spec.Source.Name, b.Spec.Source.Branch),
 					Size:       b.Status.Size,
 					Step:       b.Status.Step,

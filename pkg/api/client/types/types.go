@@ -39,7 +39,6 @@ type BuildClientV1 interface {
 	List(ctx context.Context, opts *rv1.BuildListOptions) (*vv1.BuildList, error)
 	Create(ctx context.Context, opts *rv1.BuildCreateOptions) (*vv1.Build, error)
 	SetStatus(ctx context.Context, opts *rv1.BuildUpdateStatusOptions) error
-	SetImageInfo(ctx context.Context, opts *rv1.BuildSetImageInfoOptions) error
 	Logs(ctx context.Context, opts *rv1.BuildLogsOptions) (io.ReadCloser, error)
 	Cancel(ctx context.Context) error
 }

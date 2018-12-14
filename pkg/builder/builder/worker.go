@@ -70,6 +70,11 @@ type worker struct {
 	stdout bool
 
 	cri cri.CRI
+
+	image *lbt.Image
+}
+
+type imageInfo struct {
 }
 
 type workerOpts struct {
@@ -174,8 +179,7 @@ func (w *worker) configure() error {
 		Security: lbt.SpecTemplateContainerSecurity{
 			Privileged: true,
 		},
-		Labels:          map[string]string{lbt.ContainerTypeLBR: w.pid},
-		PublishAllPorts: true,
+		Labels: map[string]string{lbt.ContainerTypeLBR: w.pid},
 		Resources: lbt.SpecTemplateContainerResources{
 			Request: lbt.SpecTemplateContainerResource{
 				RAM: int64(w.memory) * 1024 * 1024,
@@ -380,7 +384,7 @@ func (w *worker) push() error {
 		writer = os.Stdout
 	}
 
-	img, err := cii.Push(w.ctx, &lbt.ImageManifest{Name: name, Tag: tag, Auth: auth}, writer)
+	w.image, err = cii.Push(w.ctx, &lbt.ImageManifest{Name: name, Tag: tag, Auth: auth}, writer)
 	switch err {
 	case nil:
 	case context.Canceled:
@@ -392,8 +396,6 @@ func (w *worker) push() error {
 		w.sendEvent(event{step: types.BuildStepUpload, message: errorUploadFailed, error: true})
 		return err
 	}
-
-	w.sendInfo(img)
 
 	return nil
 }
@@ -557,6 +559,17 @@ func (w *worker) sendEvent(event event) {
 	e.Error = event.error
 	e.Canceled = w.ctx.Err() == context.Canceled
 
+	if w.image != nil {
+		e.Image = new(request.ImageInfo)
+		e.Image.Size = w.image.Status.Size
+		e.Image.VirtualSize = w.image.Status.VirtualSize
+
+		if len(w.image.Meta.Digest) != 0 {
+			// [hub]/[owner]/[name]@[sha256:hash]
+			e.Image.Hash = strings.Split(w.image.Meta.Digest, "@")[1]
+		}
+	}
+
 	err := envs.Get().GetClient().V1().
 		Image(mspec.Image.Owner, mspec.Image.Name).
 		Build(mmeta.ID).
@@ -564,29 +577,6 @@ func (w *worker) sendEvent(event event) {
 
 	if err != nil {
 		log.Errorf("%s:send_event:> set status request err: %v", logWorkerPrefix, err)
-		return
-	}
-}
-
-// Send status build event to controller
-func (w *worker) sendInfo(info *lbt.Image) {
-	log.Debugf("%s:send_info> send task status event %s", logWorkerPrefix, w.pid)
-
-	mspec := w.task.Spec
-	mmeta := w.task.Meta
-
-	e := new(request.BuildSetImageInfoOptions)
-	e.Size = info.Status.Size
-	e.Hash = info.Meta.ID
-	e.VirtualSize = info.Status.VirtualSize
-
-	err := envs.Get().GetClient().V1().
-		Image(mspec.Image.Owner, mspec.Image.Name).
-		Build(mmeta.ID).
-		SetImageInfo(w.ctx, e)
-
-	if err != nil {
-		log.Errorf("%s:send_info:> set info request err: %v", logWorkerPrefix, err)
 		return
 	}
 }

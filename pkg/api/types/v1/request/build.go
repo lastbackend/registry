@@ -37,13 +37,14 @@ type BuildCreateOptions struct {
 }
 
 type BuildUpdateStatusOptions struct {
-	Step     string `json:"step"`
-	Message  string `json:"message"`
-	Error    bool   `json:"error"`
-	Canceled bool   `json:"canceled"`
+	Step     string     `json:"step"`
+	Message  string     `json:"message"`
+	Error    bool       `json:"error"`
+	Canceled bool       `json:"canceled"`
+	Image    *ImageInfo `json:"image"`
 }
 
-type BuildSetImageInfoOptions struct {
+type ImageInfo struct {
 	Hash        string `json:"id"`
 	Size        int64  `json:"size"`
 	VirtualSize int64  `json:"virtual_size"`

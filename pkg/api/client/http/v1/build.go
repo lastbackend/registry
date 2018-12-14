@@ -152,30 +152,6 @@ func (bc BuildClient) SetStatus(ctx context.Context, opts *rv1.BuildUpdateStatus
 	return nil
 }
 
-func (bc BuildClient) SetImageInfo(ctx context.Context, opts *rv1.BuildSetImageInfoOptions) error {
-
-	body, err := opts.ToJson()
-	if err != nil {
-		return err
-	}
-
-	var e *errors.Http
-
-	err = bc.client.Put(fmt.Sprintf("/image/%s/%s/build/%s/info", bc.owner, bc.name, bc.id)).
-		AddHeader("Content-Type", "application/json").
-		Body(body).
-		JSON(nil, &e)
-
-	if err != nil {
-		return err
-	}
-	if e != nil {
-		return errors.New(e.Message)
-	}
-
-	return nil
-}
-
 func (bc BuildClient) Logs(ctx context.Context, opts *rv1.BuildLogsOptions) (io.ReadCloser, error) {
 
 	res := bc.client.Get(fmt.Sprintf("/image/%s/%s/build/%s/logs", bc.owner, bc.name, bc.id))

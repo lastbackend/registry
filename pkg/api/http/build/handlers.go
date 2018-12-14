@@ -530,6 +530,11 @@ func BuildStatusUpdateH(w http.ResponseWriter, r *http.Request) {
 	opts.Error = rq.Error
 	opts.Canceled = rq.Canceled
 
+	if rq.Image != nil {
+		opts.Hash = &rq.Image.Hash
+		opts.Size = &rq.Image.Size
+	}
+
 	if err := bm.UpdateStatus(build, opts); err != nil {
 		log.V(logLevel).Errorf("%s:update_status:> update build err: %v", logPrefix, build.Meta.ID, err)
 		errors.HTTP.InternalServerError(w)
@@ -539,52 +544,6 @@ func BuildStatusUpdateH(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte{}); err != nil {
 		log.V(logLevel).Errorf("%s:update_status:> write response err: %v", logPrefix, err)
-		return
-	}
-}
-
-func BuildInfoUpdateH(w http.ResponseWriter, r *http.Request) {
-
-	log.Debugf("%s:update_info:> set build info handler", logPrefix)
-
-	var (
-		bm  = distribution.NewBuildModel(r.Context(), envs.Get().GetStorage())
-		bid = utils.Vars(r)[`build`]
-	)
-
-	// request body struct
-	rq := v1.Request().Build().BuildInfoOptions()
-	if e := rq.DecodeAndValidate(r.Body); e != nil {
-		log.V(logLevel).Errorf("%s:update_info:> validation incoming data err: %v", logPrefix, e)
-		e.Http(w)
-		return
-	}
-
-	build, err := bm.Get(bid)
-	if err != nil {
-		log.V(logLevel).Errorf("%s:update_info:> get build by id %s err: %v", logPrefix, bid, err)
-		errors.HTTP.InternalServerError(w)
-		return
-	}
-	if build == nil {
-		log.V(logLevel).Warnf("%s:update_info:> build `%s` not found", logPrefix, bid)
-		errors.New("build").NotFound().Http(w)
-		return
-	}
-
-	opts := new(types.BuildUpdateInfoOptions)
-	opts.Size = rq.Size
-	opts.Hash = rq.Hash
-
-	if err := bm.UpdateInfo(build, opts); err != nil {
-		log.V(logLevel).Errorf("%s:update_info:> update build err: %v", logPrefix, bid, err)
-		errors.HTTP.InternalServerError(w)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte{}); err != nil {
-		log.V(logLevel).Errorf("%s:update_info:> write response err: %v", logPrefix, err)
 		return
 	}
 }
