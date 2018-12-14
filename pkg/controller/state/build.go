@@ -20,48 +20,23 @@ package state
 
 import (
 	"github.com/lastbackend/registry/pkg/distribution/types"
-	"sort"
 	"sync"
 )
 
 type BuildState struct {
 	lock   sync.RWMutex
-	items  dataSlice
-	builds map[string]*types.Build
-}
-
-type dataSlice []*types.Build
-
-// Len is part of sort.Interface.
-func (d dataSlice) Len() int {
-	return len(d)
-}
-
-// Swap is part of sort.Interface.
-func (d dataSlice) Swap(i, j int) {
-	d[i], d[j] = d[j], d[i]
-}
-
-// Less is part of sort.Interface. We use count as the value to sort by
-func (d dataSlice) Less(i, j int) bool {
-	return d[i].Meta.Updated.Before(d[j].Meta.Updated)
+	Builds map[string]*types.Build
 }
 
 func (s *BuildState) Set(key string, build *types.Build) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	s.builds[key] = build
-	s.items = append(s.items, build)
-}
-
-func (s BuildState) List() []*types.Build {
-	sort.Sort(s.items)
-	return s.items
+	s.Builds[key] = build
 }
 
 func (s BuildState) Get(key string) *types.Build {
-	if _, ok := s.builds[key]; ok {
-		t := s.builds[key]
+	if _, ok := s.Builds[key]; ok {
+		t := s.Builds[key]
 		return t
 	}
 	return nil
@@ -70,20 +45,11 @@ func (s BuildState) Get(key string) *types.Build {
 func (s *BuildState) Del(key string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-
-	for j, item := range s.items {
-		if item.Meta.ID == key {
-			s.items = append(s.items[:j], s.items[j+1:]...)
-			break
-		}
-	}
-
-	delete(s.builds, key)
+	delete(s.Builds, key)
 }
 
 func NewBuildState() *BuildState {
 	bs := new(BuildState)
-	bs.builds = make(map[string]*types.Build, 0)
-	bs.items = make(dataSlice, 0)
+	bs.Builds = make(map[string]*types.Build, 0)
 	return bs
 }

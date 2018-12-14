@@ -267,17 +267,17 @@ func (s *BuildStorage) Insert(ctx context.Context, build *types.Build) error {
 		INSERT INTO images_builds(image_id, number, state_status, source, config, image)
 		  SELECT $1, info.number, $3, $4, $5, $6
 		  FROM info
-		RETURNING id, number, created, updated, created, updated;`
+		RETURNING id, number, state_status, created, updated, created, updated;`
 
 	err = getClient(ctx).QueryRowContext(ctx, query,
 		build.Spec.Image.ID,
 		build.Spec.Image.Tag,
-		build.Status.Status,
+		types.BuildStatusQueued,
 		string(source),
 		string(config),
 		string(image),
 	).
-		Scan(&build.Meta.ID, &build.Meta.Number, &build.Meta.Created, &build.Meta.Updated,
+		Scan(&build.Meta.ID, &build.Meta.Number, &build.Status.Status, &build.Status.Status, &build.Meta.Created, &build.Meta.Updated,
 			&build.Meta.Created, &build.Meta.Updated)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:insert:> insert build err: %v", logBuildPrefix, err)
@@ -300,10 +300,8 @@ func (s *BuildStorage) Update(ctx context.Context, build *types.Build) error {
 			state_done       = $6,
 			state_error      = $7,
 			state_canceled   = $8,
-  		-- set state_started if state_step == '' and processing = true
-  		state_started    = CASE WHEN (state_started = NULL AND $5 = TRUE) THEN now() at time zone 'utc' ELSE state_started END,
   		-- set state_finished if state_done = true or state_error = true or state_canceled = true
-  		state_finished   = CASE WHEN state_started <> NULL AND ($6 = TRUE OR $7 = TRUE OR $8 = TRUE) THEN now() at time zone 'utc' ELSE state_finished END,
+  		state_finished   = CASE WHEN state_started IS NOT NULL AND ($6 IS TRUE OR $7 IS TRUE OR $8 IS TRUE) THEN now() at time zone 'utc' ELSE state_finished END,
 			size = $9,
 			image = json_build_object(
 				'name', image ->> 'name',
@@ -366,7 +364,8 @@ func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*typ
 		UPDATE images_builds
 		SET 
       builder_id       = $1,
-		  state_status     = $2,
+      state_status     = $2,
+      state_started    = now() AT TIME ZONE 'utc',
 		  state_processing = TRUE
 		WHERE images_builds.id = (
 		 SELECT ib1.id
@@ -396,7 +395,7 @@ func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*typ
 		return nil, nil
 	}
 
-	err := getClient(ctx).QueryRowContext(ctx, query, builder.Meta.ID, types.BuildStatusQueued).Scan(&id)
+	err := getClient(ctx).QueryRowContext(ctx, query, builder.Meta.ID, types.BuildStatusPreparing).Scan(&id)
 	switch err {
 	case nil:
 	case sql.ErrNoRows:

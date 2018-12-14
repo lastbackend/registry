@@ -37,10 +37,9 @@ import (
 )
 
 const (
-	logLevel           = 3
-	logPrefix          = "runtime:exporter_controller"
-	delayForSendEvents = 1 * time.Minute
-	delayTime          = 1 * time.Microsecond
+	logLevel  = 3
+	logPrefix = "runtime:exporter_controller"
+	delayTime = 1 * time.Second
 )
 
 type ExporterController struct {
@@ -108,7 +107,7 @@ func (ec ExporterController) loop(ctx context.Context) {
 
 	var lastEvent = sys.CtrlLastEvent
 
-	for range time.Tick(delayForSendEvents) {
+	for range time.Tick(delayTime) {
 
 		select {
 		case <-ec.done:
@@ -120,7 +119,7 @@ func (ec ExporterController) loop(ctx context.Context) {
 
 			var i = 0
 
-			for _, b := range state.Build().List() {
+			for _, b := range state.Build().Builds {
 
 				if lastEvent != nil && !lastEvent.IsZero() && b.Meta.Updated.Before(*lastEvent) {
 					state.Build().Del(b.Meta.ID)
@@ -137,6 +136,7 @@ func (ec ExporterController) loop(ctx context.Context) {
 					Number:     b.Meta.Number,
 					Branch:     b.Spec.Source.Branch,
 					Image:      fmt.Sprintf("%s/%s:%s", b.Spec.Image.Owner, b.Spec.Image.Name, b.Spec.Image.Tag),
+					ImageSha:   b.Spec.Image.ID,
 					Source:     fmt.Sprintf("%s/%s/%s#%s", b.Spec.Source.Hub, b.Spec.Source.Owner, b.Spec.Source.Name, b.Spec.Source.Branch),
 					Size:       b.Status.Size,
 					Step:       b.Status.Step,
@@ -163,6 +163,10 @@ func (ec ExporterController) loop(ctx context.Context) {
 				lastEvent = &b.Meta.Updated
 			}
 
+			if len(rq.Builds) == 0 {
+				continue
+			}
+
 			body, err := json.Marshal(rq)
 			if err != nil {
 				log.V(logLevel).Errorf("%s:> convert data to json err: %v", logPrefix, err)
@@ -170,9 +174,9 @@ func (ec ExporterController) loop(ctx context.Context) {
 			}
 
 			res := client.Post(u.Path).Body(body).Do()
-			data, err := res.Raw()
+
 			if res.StatusCode() != http.StatusOK || err != nil {
-				log.V(logLevel).Errorf("%s:> send events err: %v body: (%s)", logPrefix, res.Error(), data)
+				log.V(logLevel).Errorf("%s:> send events err: %v ", logPrefix, res)
 				continue
 			}
 
@@ -180,7 +184,7 @@ func (ec ExporterController) loop(ctx context.Context) {
 				err = sm.UpdateControllerLastEvent(sys, &types.SystemUpdateControllerLastEventOptions{LastEvent: *lastEvent})
 				if err != nil {
 					log.V(logLevel).Errorf("%s:> get system info err: %v", logPrefix, err)
-					return
+					continue
 				}
 			}
 

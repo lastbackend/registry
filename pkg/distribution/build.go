@@ -107,8 +107,6 @@ func (b Build) Create(opts *types.BuildCreateOptions) (*types.Build, error) {
 		bld.Meta.Labels = make(map[string]string, 0)
 	}
 
-	bld.Status.Status = types.BuildStatusQueued
-
 	bld.Spec.Source.Hub = opts.Source.Hub
 	bld.Spec.Source.Owner = opts.Source.Owner
 	bld.Spec.Source.Name = opts.Source.Name
@@ -192,7 +190,7 @@ func (b Build) UpdateStatus(build *types.Build, opts *types.BuildUpdateStatusOpt
 		build.MarkAsError(opts.Step, opts.Message)
 		// BuildStepFetch -  not supported
 	case opts.Step == types.BuildStepFetch:
-		build.MarkAsFetching(opts.Step, opts.Message)
+		build.MarkAsPreparing(opts.Step, opts.Message)
 	case opts.Step == types.BuildStepBuild:
 		build.MarkAsBuilding(opts.Step, opts.Message)
 	case opts.Step == types.BuildStepUpload:
