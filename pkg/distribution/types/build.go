@@ -27,7 +27,7 @@ import (
 // Statuses
 const (
 	BuildStatusQueued    = "queued"
-	BuildStatusFetching  = "fetching"
+	BuildStatusPreparing = "preparing"
 	BuildStatusBuilding  = "building"
 	BuildStatusUploading = "uploading"
 	BuildStatusSuccess   = "success"
@@ -157,10 +157,10 @@ type SourceJobConfig struct {
 	WorkDir string `json:"dir"`
 }
 
-func (b *Build) MarkAsFetching(step, message string) {
+func (b *Build) MarkAsPreparing(step, message string) {
 	b.Status.Step = step
 	b.Status.Message = message
-	b.Status.Status = BuildStatusFetching
+	b.Status.Status = BuildStatusPreparing
 	b.Status.Processing = true
 	b.Status.Done = false
 	b.Status.Error = false

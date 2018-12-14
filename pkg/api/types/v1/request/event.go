@@ -21,8 +21,7 @@ package request
 import "time"
 
 type EventOptions struct {
-	Builds    map[string]BuildEvent `json:"builds"`
-	Resources ResourcesEvent        `json:"resources"`
+	Builds map[string]BuildEvent `json:"builds"`
 }
 
 type BuildEvent struct {
@@ -31,6 +30,7 @@ type BuildEvent struct {
 	Commit     BuildCommit `json:"commit"`
 	Branch     string      `json:"branch"`
 	Image      string      `json:"image"`
+	ImageSha   string      `json:"image_sha"`
 	Source     string      `json:"source"`
 	Size       int64       `json:"size"`
 	Step       string      `json:"step"`
@@ -50,10 +50,4 @@ type BuildCommit struct {
 	Message  string    `json:"message"`
 	Email    string    `json:"email"`
 	Date     time.Time `json:"date"`
-}
-
-type ResourcesEvent struct {
-	Capacity  struct{} `json:"capacity"`
-	Allocated struct{} `json:"allocated"`
-	Builders  struct{} `json:"builders"`
 }
