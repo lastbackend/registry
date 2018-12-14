@@ -26,7 +26,7 @@
   version = "v9"
 
 [[projects]]
-  digest = "1:e9832d7477570e5550889d27fecb3873cd4c71a0e11f9d19c68f2941be74e3e2"
+  digest = "1:3ba3b7d2d7adf5be4db37148169eb0dfdca549f9df869441f375e91d4026d497"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -38,6 +38,7 @@
     "aws/credentials",
     "aws/credentials/ec2rolecreds",
     "aws/credentials/endpointcreds",
+    "aws/credentials/processcreds",
     "aws/credentials/stscreds",
     "aws/csm",
     "aws/defaults",
@@ -64,8 +65,8 @@
     "service/sts",
   ]
   pruneopts = "UT"
-  revision = "333869724b050875e82f4e593488ad2464c41331"
-  version = "v1.15.83"
+  revision = "056aa960bc0fb3918d8b2101e2a9c92675327ea3"
+  version = "v1.16.5"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -84,7 +85,6 @@
   version = "v3.2.0"
 
 [[projects]]
-  branch = "master"
   digest = "1:4ddc17aeaa82cb18c5f0a25d7c253a10682f518f4b2558a82869506eec223d76"
   name = "github.com/docker/distribution"
   packages = [
@@ -92,7 +92,8 @@
     "reference",
   ]
   pruneopts = "UT"
-  revision = "93e082742a009850ac46962150b2f652a822c5ff"
+  revision = "40b7b5830a2337bb07627617740c0e39eb92800c"
+  version = "v2.7.0"
 
 [[projects]]
   digest = "1:d40cef2b20331a3a337ff6872f39c470ed5cd4800919f0ef4847403b3df3b172"
@@ -158,12 +159,12 @@
   version = "v1.2.1"
 
 [[projects]]
-  digest = "1:bbadccf3d3317ea03c0dac0b45b673b4b397c8f91a1d2eff550a3c51c4ad770e"
+  digest = "1:d059a146ab350e553c2687d3e17f198eb5b27c7cf55fe6ba0e2d21349df63388"
   name = "github.com/gogo/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
-  version = "v1.1.1"
+  revision = "4cbf7e384e768b4e01799441fdf2a706a5635ae7"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:c79fb010be38a59d657c48c6ba1d003a8aa651fa56b579d959d74573b7dff8e1"
@@ -217,11 +218,11 @@
   version = "v1.0"
 
 [[projects]]
-  digest = "1:e22af8c7518e1eab6f2eab2b7d7558927f816262586cd6ed9f349c97a6c285c4"
+  digest = "1:bb81097a5b62634f3e9fec1014657855610c82d19b9a40c17612e32651e35dca"
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
   pruneopts = "UT"
-  revision = "0b12d6b5"
+  revision = "c2b33e84"
 
 [[projects]]
   digest = "1:0a69a1c0db3591fcefb47f115b224592c8dfa4368b7ba9fae509d5e16cdc95c8"
@@ -233,7 +234,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1c552b6c54b6d19142093db57f5547a5f22e3faeb0c5d9becfde15e3b33445c4"
+  digest = "1:11f887811ccd3acb7b3bce031353e70ab3dc9e279a77a7ddd50d773c087c369b"
   name = "github.com/lastbackend/lastbackend"
   packages = [
     "pkg/distribution/errors",
@@ -254,7 +255,7 @@
     "pkg/util/system/types",
   ]
   pruneopts = "UT"
-  revision = "edf75fa9e3e43dcab8d1d4e3c50f94a68c885ffd"
+  revision = "005eab298f19bec3fa7fc602da87420ebc48e680"
 
 [[projects]]
   digest = "1:8ef506fc2bb9ced9b151dafa592d4046063d744c646c1bbe801982ce87e4bc24"
@@ -342,8 +343,8 @@
     "mem",
   ]
   pruneopts = "UT"
-  revision = "3ec50d2876a36047b2ca39f955ba88fb7a455e92"
-  version = "v2.18.10"
+  revision = "0f70a4a06f7a1039305ec9b3ba9c2800f8929fba"
+  version = "v2.18.11"
 
 [[projects]]
   digest = "1:69b1cc331fca23d702bd72f860c6a647afd0aa9fcbc1d0659b1365e26546dd70"
@@ -397,12 +398,12 @@
   version = "v1.0.3"
 
 [[projects]]
-  digest = "1:214775c11fd26da94a100111a62daa25339198a4f9c57cb4aab352da889f5b93"
+  digest = "1:de37e343c64582d7026bf8ab6ac5b22a72eac54f3a57020db31524affed9f423"
   name = "github.com/spf13/viper"
   packages = ["."]
   pruneopts = "UT"
-  revision = "2c12c60302a5a0e62ee102ca9bc996277c2f64f5"
-  version = "v1.2.1"
+  revision = "6d33b5a963d922d182c91e8a1c88d81fd150cfd4"
+  version = "v1.3.1"
 
 [[projects]]
   digest = "1:18752d0b95816a1b777505a97f71c7467a8445b8ffb55631a7bf779f6ba4fa83"
@@ -422,11 +423,11 @@
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "eb0de9b17e854e9b1ccd9963efafc79862359959"
+  revision = "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
 
 [[projects]]
   branch = "master"
-  digest = "1:1a4795679f0b2980684d6be4367792bd0ef039fb2abfea544c3f937e8e81acb1"
+  digest = "1:e8485356cc0cfdee9fe8484606d20887df306f9aa370813668ebfc0b4858a979"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -439,18 +440,18 @@
     "proxy",
   ]
   pruneopts = "UT"
-  revision = "adae6a3d119ae4890b46832a2e88a95adc62b8e7"
+  revision = "891ebc4b82d6e74f468c533b06f983c7be918a96"
 
 [[projects]]
   branch = "master"
-  digest = "1:f343f077a5b0bc3a3788b3a04e24dd417e3e25b2acb529c413e212d2c42416ef"
+  digest = "1:ba8cbf57cfd92d5f8592b4aca1a35d92c162363d32aeabd5b12555f8896635e7"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "62eef0e2fa9b2c385f7b2778e763486da6880d37"
+  revision = "4d1cda033e0619309c606fc686de3adcf599539e"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -476,12 +477,12 @@
   version = "v0.3.0"
 
 [[projects]]
-  digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
+  digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
+  revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
+  version = "v2.2.2"
 
 [solve-meta]
   analyzer-name = "dep"

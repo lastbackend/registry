@@ -286,15 +286,12 @@ type BuildCreateOptions struct {
 }
 
 type BuildUpdateStatusOptions struct {
-	Step     string `json:"step"`
-	Message  string `json:"message"`
-	Error    bool   `json:"error"`
-	Canceled bool   `json:"canceled"`
-}
-
-type BuildUpdateInfoOptions struct {
-	Size int64  `json:"size"`
-	Hash string `json:"hash"`
+	Step     string  `json:"step"`
+	Message  string  `json:"message"`
+	Error    bool    `json:"error"`
+	Canceled bool    `json:"canceled"`
+	Size     *int64  `json:"size"`
+	Hash     *string `json:"hash"`
 }
 
 type BuildListOptions struct {

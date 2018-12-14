@@ -108,39 +108,3 @@ func (b *BuildUpdateStatusOptions) DecodeAndValidate(reader io.Reader) *errors.E
 func (b *BuildUpdateStatusOptions) ToJson() ([]byte, error) {
 	return json.Marshal(b)
 }
-
-func (BuildRequest) BuildInfoOptions() *BuildSetImageInfoOptions {
-	return new(BuildSetImageInfoOptions)
-}
-
-func (b *BuildSetImageInfoOptions) Validate() *errors.Err {
-	return nil
-}
-
-func (b *BuildSetImageInfoOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
-
-	if reader == nil {
-		err := errors.New("data body can not be null")
-		return errors.New("image").IncorrectJSON(err)
-	}
-
-	body, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return errors.New("image").Unknown(err)
-	}
-
-	err = json.Unmarshal(body, b)
-	if err != nil {
-		return errors.New("image").IncorrectJSON(err)
-	}
-
-	if err := b.Validate(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (b *BuildSetImageInfoOptions) ToJson() ([]byte, error) {
-	return json.Marshal(b)
-}

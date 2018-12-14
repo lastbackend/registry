@@ -95,6 +95,7 @@ func (bc BuildController) watch(ctx context.Context) {
 			{
 
 				event := types.Event{}
+
 				if err := json.Unmarshal([]byte(e), &event); err != nil {
 					log.Errorf("%s:subscribe:> parse event from db err: %v", logPrefix, err)
 					continue

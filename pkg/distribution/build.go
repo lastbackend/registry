@@ -38,7 +38,6 @@ type IBuild interface {
 	List(image *types.Image, opts *types.BuildListOptions) (*types.BuildList, error)
 	Create(opts *types.BuildCreateOptions) (*types.Build, error)
 	UpdateStatus(build *types.Build, opts *types.BuildUpdateStatusOptions) error
-	UpdateInfo(build *types.Build, opts *types.BuildUpdateInfoOptions) error
 	Unfreeze() error
 }
 
@@ -199,31 +198,16 @@ func (b Build) UpdateStatus(build *types.Build, opts *types.BuildUpdateStatusOpt
 		build.MarkAsDone(opts.Step, opts.Message)
 	}
 
+	if opts.Size!= nil {
+		build.Status.Size = *opts.Size
+	}
+
+	if opts.Size!= nil {
+		build.Spec.Image.Hash = *opts.Hash
+	}
+
 	if err := b.storage.Build().Update(b.context, build); err != nil {
 		log.Errorf("%s:build:update_status:> update build status err: %v", logBuildPrefix, err)
-		return err
-	}
-
-	return nil
-}
-
-func (b Build) UpdateInfo(build *types.Build, opts *types.BuildUpdateInfoOptions) error {
-
-	if build == nil {
-		return errors.New("invalid argument")
-	}
-
-	if opts == nil {
-		opts = new(types.BuildUpdateInfoOptions)
-	}
-
-	log.V(logLevel).Infof("%s:build:update_info:> update build %s data", logBuildPrefix, build.Meta.ID)
-
-	build.Status.Size = opts.Size
-	build.Spec.Image.Hash = opts.Hash
-
-	if err := b.storage.Build().Update(b.context, build); err != nil {
-		log.Errorf("%s:build:update_info:> set build info err: %v", logBuildPrefix, err)
 		return err
 	}
 
