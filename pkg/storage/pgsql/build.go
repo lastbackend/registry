@@ -277,8 +277,15 @@ func (s *BuildStorage) Insert(ctx context.Context, build *types.Build) error {
 		string(config),
 		string(image),
 	).
-		Scan(&build.Meta.ID, &build.Meta.Number, &build.Status.Status, &build.Status.Status, &build.Meta.Created, &build.Meta.Updated,
-			&build.Meta.Created, &build.Meta.Updated)
+		Scan(
+			&build.Meta.ID,
+			&build.Meta.Number,
+			&build.Status.Status,
+			&build.Meta.Created,
+			&build.Meta.Updated,
+			&build.Meta.Created,
+			&build.Meta.Updated,
+		)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:insert:> insert build err: %v", logBuildPrefix, err)
 		return err
