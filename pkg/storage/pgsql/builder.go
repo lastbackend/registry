@@ -71,8 +71,7 @@ func (s *BuilderStorage) Get(ctx context.Context, builder string) (*types.Builde
 						'ssl', ssl,
 						'ip', ip,
 						'port', port
-					),
-			   'limits', limits
+					)
 				)
 		  )
 		)
@@ -143,8 +142,7 @@ func (s *BuilderStorage) List(ctx context.Context, f *filter.BuilderFilter) ([]*
              'port', tmp.port,
              'tls', tmp.tls,
              'ssl', tmp.ssl
-           ),
-           'limits', tmp.limits
+           )
        )
      )), '[]')
      FROM (
@@ -224,10 +222,9 @@ func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) err
 			port      = $4,
 			tls       = $5,
 			ssl       = $6,
-			limits    = $7,
-			allocated = $8,
-			capacity  = $9,
-			usage     = $10,
+			allocated = $7,
+			capacity  = $8,
+			usage     = $9,
 			updated = now() at time zone 'utc'
 		WHERE id = $1
 		RETURNING updated;`
@@ -236,12 +233,6 @@ func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) err
 	if err != nil {
 		log.Errorf("%s:update:> prepare ssl struct to database write: %s", logBuilderPrefix, err)
 		ssl = []byte("{}")
-	}
-
-	limits, err := json.Marshal(builder.Spec.Limits)
-	if err != nil {
-		log.Errorf("%s:update:> prepare limits struct to database write: %s", logBuilderPrefix, err)
-		limits = []byte("{}")
 	}
 
 	allocated, err := json.Marshal(builder.Status.Allocated)
@@ -269,7 +260,6 @@ func (s *BuilderStorage) Update(ctx context.Context, builder *types.Builder) err
 		builder.Spec.Network.Port,
 		builder.Spec.Network.TLS,
 		string(ssl),
-		string(limits),
 		string(allocated),
 		string(capacity),
 		string(usage),
