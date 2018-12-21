@@ -18,12 +18,6 @@
 
 package request
 
-type BuilderUpdateOptions struct {
-	Workers      uint   `json:"workers"`
-	WorkerMemory uint64 `json:"worker_memory"`
-	WorkerLimit  bool   `json:"worker_limit"`
-}
-
 type BuilderConnectOptions struct {
 	IP       string           `json:"ip"`
 	Port     uint16           `json:"port"`
@@ -54,13 +48,13 @@ type BuilderStatusUpdateOptions struct {
 
 type BuilderResources struct {
 	// Builder total containers
-	Workers uint `json:"workers"`
+	Workers int `json:"workers"`
 	// Builder total memory
-	Memory uint64 `json:"memory"`
+	RAM int64 `json:"memory"`
 	// Builder total cpu
-	Cpu uint `json:"cpu"`
+	CPU int64 `json:"cpu"`
 	// Builder storage
-	Storage uint64 `json:"storage"`
+	Storage int64 `json:"storage"`
 }
 
 type BuilderCreateManifestOptions struct {

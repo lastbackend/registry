@@ -7,5 +7,5 @@ verbose: 7
 psql: "host=127.0.0.1 port=5432 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"
 
 exporter:
-  uri: "https://api.lstbknd.net/registry/events"
-  timeout: 5
+  uri: "http://localhost:2965/registry/events"
+  timeout: 5w

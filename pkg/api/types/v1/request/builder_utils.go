@@ -21,54 +21,11 @@ package request
 import (
 	"encoding/json"
 	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
-	"github.com/lastbackend/registry/pkg/distribution/types"
 	"io"
 	"io/ioutil"
 )
 
 type BuilderRequest struct{}
-
-func (BuilderRequest) UpdateOptions() *BuilderUpdateOptions {
-	return new(BuilderUpdateOptions)
-}
-
-func (b BuilderUpdateOptions) Validate() *errors.Err {
-	switch true {
-	case b.WorkerLimit && b.WorkerMemory < types.DEFAULT_MIN_WORKER_MEMORY:
-		return errors.New("builder").BadParameter("worker.memory")
-	case b.WorkerLimit && b.Workers < types.DEFAULT_MIN_WORKERS:
-		return errors.New("builder").BadParameter("workers")
-	}
-	return nil
-}
-
-func (b *BuilderUpdateOptions) DecodeAndValidate(reader io.Reader) *errors.Err {
-
-	if reader == nil {
-		err := errors.New("data body can not be null")
-		return errors.New("builder").IncorrectJSON(err)
-	}
-
-	body, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return errors.New("builder").Unknown(err)
-	}
-
-	err = json.Unmarshal(body, b)
-	if err != nil {
-		return errors.New("builder").IncorrectJSON(err)
-	}
-
-	if err := b.Validate(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (b BuilderUpdateOptions) ToJson() ([]byte, error) {
-	return json.Marshal(b)
-}
 
 func (BuilderRequest) ConnectOptions() *BuilderConnectOptions {
 	return new(BuilderConnectOptions)

@@ -20,11 +20,12 @@ package runtime
 
 import (
 	"fmt"
-	"github.com/lastbackend/registry/pkg/builder/envs"
 	"os"
+	"runtime"
 	"syscall"
 
 	"github.com/lastbackend/lastbackend/pkg/util/system"
+	"github.com/lastbackend/registry/pkg/builder/envs"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/shirou/gopsutil/mem"
 )
@@ -74,9 +75,10 @@ func BuilderCapacity() types.BuilderResources {
 	m := vmStat.Total / 1024 / 1024
 
 	return types.BuilderResources{
-		Storage: uint64(storage / 1024 / 1024),
-		Workers: uint(m / types.DEFAULT_MIN_WORKER_MEMORY),
-		Memory:  uint64(m),
+		Storage: int64(storage) / 1024 / 1024,
+		Workers: int(m / types.DEFAULT_MIN_WORKER_MEMORY),
+		RAM:     int64(m),
+		CPU:     int64(runtime.NumCPU()),
 	}
 }
 
@@ -91,6 +93,7 @@ func BuilderUsage() types.BuilderResources {
 
 	return types.BuilderResources{
 		Workers: envs.Get().GetBuilder().ActiveWorkers(),
-		Memory:  uint64(m),
+		RAM:     int64(m),
+		CPU:     0,
 	}
 }

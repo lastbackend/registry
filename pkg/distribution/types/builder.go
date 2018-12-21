@@ -20,9 +20,9 @@ package types
 
 const (
 	DEFAULT_MIN_WORKERS        = 1
-	DEFAULT_MIN_WORKER_CPU     = 1
+	DEFAULT_MIN_WORKER_CPU     = 50000000 // 0.5 vCPU
 	DEFAULT_MIN_WORKER_Storage = 5
-	DEFAULT_MIN_WORKER_MEMORY  = 256
+	DEFAULT_MIN_WORKER_MEMORY  = 256 * 1024 * 1024
 )
 
 type Builder struct {
@@ -69,9 +69,10 @@ type BuilderSpecNetwork struct {
 }
 
 type BuilderSpecLimits struct {
-	WorkerLimit  bool   `json:"worker_limit"`
-	Workers      uint   `json:"workers"`
-	WorkerMemory uint64 `json:"worker_memory"`
+	WorkerLimit bool  `json:"worker_limit"`
+	Workers     uint  `json:"workers"`
+	WorkerRAM   int64 `json:"worker_ram"`
+	WorkerCPU   int64 `json:"worker_cpu"`
 }
 
 type SSL struct {
@@ -82,13 +83,13 @@ type SSL struct {
 
 type BuilderResources struct {
 	// Builder total containers
-	Workers uint `json:"workers"`
+	Workers int `json:"workers"`
 	// Builder total memory
-	Memory uint64 `json:"memory"`
+	RAM int64 `json:"ram"`
 	// Builder total cpu
-	Cpu uint `json:"cpu"`
+	CPU int64 `json:"cpu"`
 	// Builder storage
-	Storage uint64 `json:"storage"`
+	Storage int64 `json:"storage"`
 }
 
 // *********************************************
@@ -118,7 +119,9 @@ type BuilderUpdateOptions struct {
 }
 
 type BuilderLimits struct {
-	WorkerLimit  bool   `json:"worker_limit"`
-	Workers      uint   `json:"workers"`
-	WorkerMemory uint64 `json:"worker_memory"`
+	WorkerLimit   bool  `json:"worker_limit"`
+	Workers       uint  `json:"workers"`
+	WorkerRAM     int64 `json:"worker_ram"`
+	WorkerCPU     int64 `json:"worker_cpu"`
+	WorkerStorage int64 `json:"worker_storage"`
 }

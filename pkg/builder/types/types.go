@@ -27,8 +27,9 @@ type IBuilder interface {
 	Start() error
 	BuildLogs(ctx context.Context, pid string, stream io.Writer) error
 	BuildCancel(ctx context.Context, pid string) error
-	ActiveWorkers() uint
-	Update(ctx context.Context, opts *BuilderManifest) error
+	ActiveWorkers() int
+	SetReserveMemory(memory string) error
+	SetWorkerLimits(instances int, ram, cpu string) error
 	Shutdown()
 	Done() <-chan bool
 }
@@ -38,6 +39,7 @@ type BuilderManifest struct {
 }
 
 type BuilderLimits struct {
-	Workers      uint
-	WorkerMemory uint64
+	Workers   uint
+	WorkerRAM int64
+	WorkerCPU int64
 }

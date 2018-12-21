@@ -41,6 +41,12 @@ builder:
   extra_hosts:
   - "hub.lstbknd.net:172.17.0.1"
   - "api.lstbknd.net:172.17.0.1"
+  resources:
+    reserve_memory: "512MiB"
+    wowkers: 2
+    wowker_limits:
+      ram: "512MB"
+      cpu: "1"
 
 # Runtime
 runtime:

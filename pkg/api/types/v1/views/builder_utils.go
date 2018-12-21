@@ -53,20 +53,20 @@ func (bv *BuilderView) ToBuilderStatus(status types.BuilderStatus) BuilderStatus
 		TLS:      status.TLS,
 		Capacity: BuilderResources{
 			Workers: status.Capacity.Workers,
-			Memory:  status.Capacity.Memory,
-			Cpu:     status.Capacity.Cpu,
+			RAM:     status.Capacity.RAM,
+			CPU:     status.Capacity.CPU,
 			Storage: status.Capacity.Storage,
 		},
 		Allocated: BuilderResources{
 			Workers: status.Allocated.Workers,
-			Memory:  status.Allocated.Memory,
-			Cpu:     status.Allocated.Cpu,
+			RAM:     status.Allocated.RAM,
+			CPU:     status.Allocated.CPU,
 			Storage: status.Allocated.Storage,
 		},
 		Usage: BuilderResources{
 			Workers: status.Usage.Workers,
-			Memory:  status.Usage.Memory,
-			Cpu:     status.Usage.Cpu,
+			RAM:     status.Usage.RAM,
+			CPU:     status.Usage.CPU,
 			Storage: status.Usage.Storage,
 		},
 	}
@@ -80,9 +80,10 @@ func (bv *BuilderView) ToBuilderSpec(spec types.BuilderSpec) BuilderSpec {
 			TLS:  spec.Network.TLS,
 		},
 		Limits: BuilderSpecLimits{
-			WorkerLimit:  spec.Limits.WorkerLimit,
-			Workers:      spec.Limits.Workers,
-			WorkerMemory: spec.Limits.WorkerMemory,
+			WorkerLimit: spec.Limits.WorkerLimit,
+			Workers:     spec.Limits.Workers,
+			WorkerRAM:   spec.Limits.WorkerRAM,
+			WorkerCPU:   spec.Limits.WorkerCPU,
 		},
 	}
 
@@ -150,27 +151,6 @@ func (bv *BuilderView) NewBuildManifest(obj *types.Task) *BuildManifest {
 }
 
 func (obj BuildManifest) ToJson() ([]byte, error) {
-	if unsafe.Sizeof(obj) == 0 {
-		return []byte{}, nil
-	}
-	return json.Marshal(obj)
-}
-
-func (bv *BuilderView) NewConfigManifest(obj *types.Builder) *BuilderConfig {
-	if obj == nil {
-		return nil
-	}
-	bc := new(BuilderConfig)
-	if obj.Spec.Limits.WorkerLimit {
-		bc.Limits = new(BuilderLimitConfig)
-		bc.Limits.WorkerLimit = obj.Spec.Limits.WorkerLimit
-		bc.Limits.Workers = obj.Spec.Limits.Workers
-		bc.Limits.WorkerMemory = obj.Spec.Limits.WorkerMemory
-	}
-	return bc
-}
-
-func (obj BuilderConfig) ToJson() ([]byte, error) {
 	if unsafe.Sizeof(obj) == 0 {
 		return []byte{}, nil
 	}

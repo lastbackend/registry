@@ -25,7 +25,7 @@ builder:
     client_cert: "/opt/cert/builder/client.pem"
     client_key: "/opt/cert/builder/client-key.pem"
   cacerts:
-  - "hub.lstbknd.net:/opt/cert/hub/ca.pem:ro"
+    - "hub.lstbknd.net:/opt/cert/hub/ca.pem:ro"
   logger:
     stdout: true
   blob_storage:
@@ -38,9 +38,16 @@ builder:
     ssl: true
   dind:
     host: "172.17.0.1"
+  # reserve_memory - allocating memory for OS
   extra_hosts:
-  - "hub.lstbknd.net:172.17.0.1"
-  - "api.lstbknd.net:172.17.0.1"
+    - "hub.lstbknd.net:172.17.0.1"
+    - "api.lstbknd.net:172.17.0.1"
+  resources:
+    reserve_memory: "512MiB"
+    workers:
+      instances: 2
+      worker_ram: "512MB"
+      worker_cpu: "1.0"
 
 # Runtime
 runtime:

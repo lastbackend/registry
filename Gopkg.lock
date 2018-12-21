@@ -26,7 +26,7 @@
   version = "v9"
 
 [[projects]]
-  digest = "1:3ba3b7d2d7adf5be4db37148169eb0dfdca549f9df869441f375e91d4026d497"
+  digest = "1:e10c8977f0725524cc76d1dce85befd4f9c94b985469dfecf63b0123f9615aa4"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -65,8 +65,8 @@
     "service/sts",
   ]
   pruneopts = "UT"
-  revision = "056aa960bc0fb3918d8b2101e2a9c92675327ea3"
-  version = "v1.16.5"
+  revision = "103cb51d5be1d3e4735da3ed250f27df6c73fadf"
+  version = "v1.16.10"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -148,15 +148,15 @@
   version = "v1.4.7"
 
 [[projects]]
-  digest = "1:64a5a67c69b70c2420e607a8545d674a23778ed9c3e80607bfd17b77c6c87f6a"
+  digest = "1:c96d16a4451e48e2c44b2c3531fd8ec9248d822637f1911a88959ca0bcae4a64"
   name = "github.com/go-ole/go-ole"
   packages = [
     ".",
     "oleutil",
   ]
   pruneopts = "UT"
-  revision = "a41e3c4b706f6ae8dfbff342b06e40fa4d2d0506"
-  version = "v1.2.1"
+  revision = "39dc8486bd0952279431257138bc428275b86797"
+  version = "v1.2.2"
 
 [[projects]]
   digest = "1:d059a146ab350e553c2687d3e17f198eb5b27c7cf55fe6ba0e2d21349df63388"
@@ -234,7 +234,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:11f887811ccd3acb7b3bce031353e70ab3dc9e279a77a7ddd50d773c087c369b"
+  digest = "1:60a570396c382fdae8f1d20e95deab8b9e9674b6b00e564edab0c0a96f1da4e6"
   name = "github.com/lastbackend/lastbackend"
   packages = [
     "pkg/distribution/errors",
@@ -250,12 +250,13 @@
     "pkg/runtime/cri/cri",
     "pkg/runtime/cri/docker",
     "pkg/util/converter",
+    "pkg/util/resource",
     "pkg/util/system",
     "pkg/util/system/os",
     "pkg/util/system/types",
   ]
   pruneopts = "UT"
-  revision = "005eab298f19bec3fa7fc602da87420ebc48e680"
+  revision = "4c763ead418b1b2ca9a69b0fe8b1f3c52c7fef90"
 
 [[projects]]
   digest = "1:8ef506fc2bb9ced9b151dafa592d4046063d744c646c1bbe801982ce87e4bc24"
@@ -355,15 +356,15 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:6a4a11ba764a56d2758899ec6f3848d24698d48442ebce85ee7a3f63284526cd"
+  digest = "1:d707dbc1330c0ed177d4642d6ae102d5e2c847ebd0eb84562d0dc4f024531cfc"
   name = "github.com/spf13/afero"
   packages = [
     ".",
     "mem",
   ]
   pruneopts = "UT"
-  revision = "d40851caa0d747393da1ffb28f7f9d8b4eeffebd"
-  version = "v1.1.2"
+  revision = "a5d6946387efe7d64d09dcba68cdd523dc1273a3"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:08d65904057412fc0270fc4812a1c90c594186819243160dc779a402d4b6d0bc"
@@ -440,18 +441,18 @@
     "proxy",
   ]
   pruneopts = "UT"
-  revision = "891ebc4b82d6e74f468c533b06f983c7be918a96"
+  revision = "927f97764cc334a6575f4b7a1584a147864d5723"
 
 [[projects]]
   branch = "master"
-  digest = "1:ba8cbf57cfd92d5f8592b4aca1a35d92c162363d32aeabd5b12555f8896635e7"
+  digest = "1:3d5e79e10549fd9119cbefd614b6d351ef5bd0be2f2b103a4199788e784cbc68"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "4d1cda033e0619309c606fc686de3adcf599539e"
+  revision = "b4a75ba826a64a70990f11a225237acd6ef35c9f"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -507,6 +508,7 @@
     "github.com/lastbackend/lastbackend/pkg/runtime/cri",
     "github.com/lastbackend/lastbackend/pkg/runtime/cri/cri",
     "github.com/lastbackend/lastbackend/pkg/util/converter",
+    "github.com/lastbackend/lastbackend/pkg/util/resource",
     "github.com/lastbackend/lastbackend/pkg/util/system",
     "github.com/lib/pq",
     "github.com/satori/go.uuid",

@@ -54,29 +54,28 @@ func (bc BuilderClient) List(ctx context.Context) (*vv1.BuilderList, error) {
 	return s, nil
 }
 
-func (bc BuilderClient) Connect(ctx context.Context, opts *rv1.BuilderConnectOptions) (*vv1.BuilderConfig, error) {
+func (bc BuilderClient) Connect(ctx context.Context, opts *rv1.BuilderConnectOptions) error {
 
 	body, err := opts.ToJson()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var s *vv1.BuilderConfig
 	var e *errors.Http
 
 	err = bc.client.Put(fmt.Sprintf("/builder/%s/connect", bc.hostname)).
 		AddHeader("Content-Type", "application/json").
 		Body(body).
-		JSON(&s, &e)
+		JSON(nil, &e)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if e != nil {
-		return nil, errors.New(e.Message)
+		return errors.New(e.Message)
 	}
 
-	return s, nil
+	return nil
 }
 
 func (bc BuilderClient) SetStatus(ctx context.Context, opts *rv1.BuilderStatusUpdateOptions) error {
@@ -101,31 +100,6 @@ func (bc BuilderClient) SetStatus(ctx context.Context, opts *rv1.BuilderStatusUp
 	}
 
 	return nil
-}
-
-func (bc BuilderClient) Update(ctx context.Context, opts *rv1.BuilderUpdateOptions) (*vv1.Builder, error) {
-
-	body, err := opts.ToJson()
-	if err != nil {
-		return nil, err
-	}
-
-	var s *vv1.Builder
-	var e *errors.Http
-
-	err = bc.client.Put(fmt.Sprintf("/builder/%s", bc.hostname)).
-		AddHeader("Content-Type", "application/json").
-		Body(body).
-		JSON(&s, &e)
-
-	if err != nil {
-		return nil, err
-	}
-	if e != nil {
-		return nil, errors.New(e.Message)
-	}
-
-	return s, nil
 }
 
 func (bc BuilderClient) Manifest(ctx context.Context) (*vv1.BuildManifest, error) {

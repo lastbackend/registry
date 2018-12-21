@@ -63,7 +63,8 @@ type worker struct {
 	step     string
 	logDir   string
 
-	memory uint64
+	ram int64
+	cpu int64
 
 	task *types.Task
 
@@ -74,12 +75,10 @@ type worker struct {
 	image *lbt.Image
 }
 
-type imageInfo struct {
-}
-
 type workerOpts struct {
 	Stdout bool
-	Memory uint64
+	RAM    int64
+	CPU    int64
 }
 
 // Create and configure new worker
@@ -107,7 +106,8 @@ func (w *worker) run(t *types.Task, wo *workerOpts) error {
 
 	w.task = t
 	w.stdout = wo.Stdout
-	w.memory = wo.Memory
+	w.ram = wo.RAM
+	w.cpu = wo.CPU
 
 	startTime := time.Now()
 
@@ -181,8 +181,9 @@ func (w *worker) configure() error {
 		},
 		Labels: map[string]string{lbt.ContainerTypeLBR: w.pid},
 		Resources: lbt.SpecTemplateContainerResources{
-			Request: lbt.SpecTemplateContainerResource{
-				RAM: int64(w.memory) * 1024 * 1024,
+			Limits: lbt.SpecTemplateContainerResource{
+				RAM: w.ram,
+				CPU: w.cpu,
 			},
 		},
 	}
@@ -275,8 +276,9 @@ func (w *worker) build() error {
 			Command: []string{"build", "-f", dockerfile, "-t", image, gituri},
 		},
 		Resources: lbt.SpecTemplateContainerResources{
-			Request: lbt.SpecTemplateContainerResource{
-				RAM: int64(w.memory) * 1024 * 1024,
+			Limits: lbt.SpecTemplateContainerResource{
+				RAM: w.ram,
+				CPU: w.cpu,
 			},
 		},
 	}
@@ -313,8 +315,7 @@ func (w *worker) build() error {
 		go w.logging(os.Stdout)
 	}
 
-	ch := make(chan *lbt.Container)
-	go w.cri.Subscribe(w.ctx, ch)
+	done := make(chan bool)
 
 	for {
 		select {
@@ -322,24 +323,46 @@ func (w *worker) build() error {
 			log.Debugf("%s:build:> process canceled", logWorkerPrefix)
 			w.sendEvent(event{step: types.BuildStepBuild, canceled: true})
 			return nil
-		case c := <-ch:
+		case <-done:
+			log.Debugf("%s:build:> process exit", logWorkerPrefix)
+			return nil
+		default:
 
-			if id, ok := c.Labels[lbt.ContainerTypeLBR]; !ok || id != w.pid {
-				continue
+			inspect, err := w.cri.Inspect(w.ctx, cid)
+			if err != nil {
+				log.Errorf("%s:build:> inspect docker:git container err: %v", logWorkerPrefix, err)
+				return err
 			}
-
-			if c.ExitCode != 0 {
-				err := fmt.Errorf("container exited with %d code", c.ExitCode)
-				log.Errorf("%s:build:> container exit with err %v", logWorkerPrefix, err)
-				w.sendEvent(event{step: types.BuildStepBuild, message: errorBuildFailed, error: true})
+			if inspect == nil {
+				err := fmt.Errorf("docker:git does not exists")
+				log.Errorf("%s:build:> container inspect err: %v", logWorkerPrefix, err)
+				return err
+			}
+			if inspect.ExitCode != 0 {
+				err := fmt.Errorf("docker:dind exit with status code %d", inspect.ExitCode)
+				log.Errorf("%s:build:> container exit with err: %v", logWorkerPrefix, err)
 				return err
 			}
 
-			if c.Status != "exited" {
+			if id, ok := inspect.Labels[lbt.ContainerTypeLBR]; !ok || id != w.pid {
 				continue
 			}
 
-			return nil
+			if inspect.Status != "running" {
+
+				if inspect.ExitCode != 0 {
+					err := fmt.Errorf("container exited with %d code", inspect.ExitCode)
+					log.Errorf("%s:build:> container exit with err %v", logWorkerPrefix, err)
+					w.sendEvent(event{step: types.BuildStepBuild, message: errorBuildFailed, error: true})
+					return err
+				}
+
+				return nil
+			}
+
+			<-time.After(5 * time.Second)
+
+			continue
 		}
 	}
 
