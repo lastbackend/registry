@@ -32,7 +32,7 @@ import (
 const (
 	logLevel                  = 3
 	logPrefix                 = "runtime:build_controller"
-	delayForCheckUnfreezeTime = 1 * time.Minute
+	delayForCheckUnfreezeTime = 5 * time.Minute
 )
 
 type BuildController struct {

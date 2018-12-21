@@ -39,7 +39,7 @@ import (
 const (
 	logLevel  = 3
 	logPrefix = "runtime:exporter_controller"
-	delayTime = 1 * time.Second
+	delayTime = 5 * time.Second
 )
 
 type ExporterController struct {
