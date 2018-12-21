@@ -94,7 +94,6 @@ type BuilderResources struct {
 
 type BuilderSpec struct {
 	Network BuilderSpecNetwork `json:"network"`
-	Limits  BuilderSpecLimits  `json:"limits"`
 }
 
 type BuilderSpecNetwork struct {
@@ -102,13 +101,6 @@ type BuilderSpecNetwork struct {
 	Port uint16 `json:"port"`
 	TLS  bool   `json:"tls"`
 	SSL  *SSL   `json:"ssl"`
-}
-
-type BuilderSpecLimits struct {
-	WorkerLimit bool  `json:"worker_limit"`
-	Workers     uint  `json:"workers"`
-	WorkerRAM   int64 `json:"worker_ram"`
-	WorkerCPU   int64 `json:"worker_cpu"`
 }
 
 type SSL struct {

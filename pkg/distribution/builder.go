@@ -135,13 +135,6 @@ func (b *Builder) Update(builder *types.Builder, opts *types.BuilderUpdateOption
 		builder.Spec.Network.SSL = opts.SSL
 	}
 
-	if opts.Limits != nil {
-		builder.Spec.Limits.WorkerLimit = opts.Limits.WorkerLimit
-		builder.Spec.Limits.Workers = opts.Limits.Workers
-		builder.Spec.Limits.WorkerRAM = opts.Limits.WorkerRAM
-		builder.Spec.Limits.WorkerCPU = opts.Limits.WorkerCPU
-	}
-
 	if opts.Allocated != nil {
 		builder.Status.Allocated.Workers = opts.Allocated.Workers
 		builder.Status.Allocated.RAM = opts.Allocated.RAM

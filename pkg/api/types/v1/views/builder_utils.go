@@ -79,12 +79,6 @@ func (bv *BuilderView) ToBuilderSpec(spec types.BuilderSpec) BuilderSpec {
 			Port: spec.Network.Port,
 			TLS:  spec.Network.TLS,
 		},
-		Limits: BuilderSpecLimits{
-			WorkerLimit: spec.Limits.WorkerLimit,
-			Workers:     spec.Limits.Workers,
-			WorkerRAM:   spec.Limits.WorkerRAM,
-			WorkerCPU:   spec.Limits.WorkerCPU,
-		},
 	}
 
 	if bs.Network.SSL != nil {
