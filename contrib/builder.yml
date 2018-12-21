@@ -43,10 +43,10 @@ builder:
   - "api.lstbknd.net:172.17.0.1"
   resources:
     reserve_memory: "512MiB"
-    wowkers: 2
-    wowker_limits:
-      ram: "512MB"
-      cpu: "1"
+    workers:
+      instances: 2
+      worker_ram: "512MB"
+      worker_cpu: "1.0"
 
 # Runtime
 runtime:
