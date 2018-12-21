@@ -317,9 +317,15 @@ func (b *Builder) manage() error {
 					delete(b.workers, w)
 					b.Unlock()
 				}()
+
 			}
 		}
 	}()
+
+	instances := defaultWorkerInstances
+	if b.limits != nil && b.limits.workerInstances != 0 {
+		instances = int(b.limits.workerInstances)
+	}
 
 	for {
 
@@ -329,13 +335,8 @@ func (b *Builder) manage() error {
 			return nil
 		default:
 
-			instances := defaultWorkerInstances
-
-			if b.limits != nil && b.limits.workerInstances != 0 {
-				instances = int(b.limits.workerInstances)
-			}
-
 			if len(b.workers) >= instances {
+				<-time.After(10 * time.Second)
 				continue
 			}
 
