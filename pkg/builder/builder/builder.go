@@ -20,6 +20,7 @@ package builder
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -30,6 +31,7 @@ import (
 	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/lastbackend/pkg/runtime/cii"
 	"github.com/lastbackend/lastbackend/pkg/runtime/cri"
+	"github.com/lastbackend/lastbackend/pkg/util/resource"
 	"github.com/lastbackend/registry/pkg/api/types/v1"
 	"github.com/lastbackend/registry/pkg/api/types/v1/request"
 	"github.com/lastbackend/registry/pkg/builder/envs"
@@ -39,7 +41,6 @@ import (
 
 	lbt "github.com/lastbackend/lastbackend/pkg/distribution/types"
 	vv1 "github.com/lastbackend/registry/pkg/api/types/v1/views"
-	rbt "github.com/lastbackend/registry/pkg/builder/types"
 )
 
 const (
@@ -48,6 +49,12 @@ const (
 
 const (
 	defaultSendStatusDelay = 5 * time.Second
+	defaultWorkerInstances = 1
+	defaultWorkerRAM       = "512MB"
+	defaultWorkerCPU       = "0.5"
+	defaultReserveMemory   = "512MB"
+	minimumReserveMemory   = 512
+	minimumRequiredMemory  = 1024
 )
 
 // The main entity that is responsible for
@@ -62,6 +69,8 @@ type Builder struct {
 	cri      cri.CRI
 	cii      cii.CII
 
+	reserveMemory int64
+
 	limits *limits
 
 	opts BuilderOpts
@@ -72,18 +81,18 @@ type Builder struct {
 	workers map[*worker]bool
 }
 
-type limits struct {
-	WorkerInstances uint
-	WorkerMemory    uint64
-	WorkerCPU       uint
-	WorkerStorage   uint64
-}
-
 type BuilderOpts struct {
 	Stdout     bool
 	DindHost   string
 	ExtraHosts []string
 	RootCerts  []string
+}
+
+type limits struct {
+	workerInstances int
+	workerRAM       int64
+	workerCPU       int64
+	workerStorage   int64
 }
 
 // Preparing the builder environment for workers
@@ -109,6 +118,10 @@ func New(cri cri.CRI, cii cii.CII, opts *BuilderOpts) *Builder {
 
 	b.workers = make(map[*worker]bool, 0)
 
+	if err := b.SetReserveMemory(defaultReserveMemory); err != nil {
+		log.Errorf("%s:> init reserve number err: %v", logWorkerPrefix, err)
+	}
+
 	ctx = context.WithValue(ctx, "dockerHost", opts.DindHost)
 	ctx = context.WithValue(ctx, "extraHosts", opts.ExtraHosts)
 	ctx = context.WithValue(ctx, "rootCerts", opts.RootCerts)
@@ -126,6 +139,12 @@ func New(cri cri.CRI, cii cii.CII, opts *BuilderOpts) *Builder {
 func (b *Builder) Start() error {
 
 	log.Infof("%s:start:> start builder", logWorkerPrefix)
+
+	status := runtime.BuilderStatus()
+
+	if status.Capacity.RAM < minimumRequiredMemory {
+		return fmt.Errorf("recommended system ram more then %dMB", minimumRequiredMemory)
+	}
 
 	if err := b.configure(); err != nil {
 		log.Errorf("%s:start:> configure builder err: %v", logWorkerPrefix, err)
@@ -185,29 +204,72 @@ func (b *Builder) Shutdown() {
 	b.done <- true
 }
 
-// Update builder manifest
-func (b *Builder) Update(ctx context.Context, opts *rbt.BuilderManifest) error {
-
-	log.Infof("%s:update:> update builder manifest", logWorkerPrefix)
-
-	if opts.Limits != nil {
-		b.limits = new(limits)
-		b.limits.WorkerInstances = opts.Limits.Workers
-		b.limits.WorkerMemory = opts.Limits.WorkerMemory
-	} else {
-		b.limits = nil
-	}
-
-	return nil
-}
-
 // Notification that the builder has completed its work
 func (b *Builder) Done() <-chan bool {
 	return b.done
 }
 
-func (b *Builder) ActiveWorkers() uint {
-	return uint(len(b.workers))
+func (b *Builder) ActiveWorkers() int {
+	return len(b.workers)
+}
+
+func (b *Builder) SetReserveMemory(memory string) error {
+
+	log.Infof("%s:set_reserve_memory:> set reserve memory", logWorkerPrefix)
+
+	if len(memory) == 0 {
+		return fmt.Errorf("bad reserve memory parameter")
+	}
+
+	rm, err := resource.DecodeMemoryResource(memory)
+	if err != nil {
+		log.Infof("%s:set_reserve_memory:> invalid reserve memory parameter err: err", logWorkerPrefix, err)
+		panic(err)
+	}
+	b.reserveMemory = rm / 1024 / 1024
+
+	if b.reserveMemory < minimumReserveMemory {
+		return fmt.Errorf("recommended reserved ram more then %dMB", minimumReserveMemory)
+	}
+
+	return nil
+}
+
+func (b *Builder) SetWorkerLimits(instances int, ram, cpu string) error {
+
+	log.Infof("%s:set_worker_limits:> set worker limits", logWorkerPrefix)
+
+	if instances <= 0 {
+		return fmt.Errorf("bad workers instances parameter")
+	}
+
+	if len(ram) == 0 {
+		ram = defaultWorkerRAM
+	}
+
+	if len(cpu) == 0 {
+		cpu = defaultWorkerCPU
+	}
+
+	b.limits = new(limits)
+	b.limits.workerInstances = instances
+
+	rm, err := resource.DecodeMemoryResource(ram)
+	if err != nil {
+		log.Infof("%s:set_worker_limits:> invalid resource worker ram parameter err: err", logWorkerPrefix, err)
+		return err
+	}
+	b.limits.workerRAM = rm
+
+	cp, err := resource.DecodeCpuResource(cpu)
+	if err != nil {
+		log.Infof("%s:set_worker_limits:> invalid resource worker cpu parameter err: err", logWorkerPrefix, err)
+		return err
+	}
+
+	b.limits.workerCPU = cp
+
+	return nil
 }
 
 // Spawn - finished or failed workers will be restarted until context is closed
@@ -235,10 +297,16 @@ func (b *Builder) manage() error {
 					opts := new(workerOpts)
 					opts.Stdout = b.opts.Stdout
 
-					opts.Memory = types.DEFAULT_MIN_WORKER_MEMORY
+					opts.RAM = types.DEFAULT_MIN_WORKER_MEMORY
 
-					if b.limits != nil && b.limits.WorkerMemory != 0 {
-						opts.Memory = b.limits.WorkerMemory
+					if b.limits != nil && b.limits.workerRAM != 0 {
+						opts.RAM = b.limits.workerRAM
+					}
+
+					opts.CPU = types.DEFAULT_MIN_WORKER_CPU
+
+					if b.limits != nil && b.limits.workerCPU != 0 {
+						opts.CPU = b.limits.workerCPU
 					}
 
 					if err := w.run(t, opts); err != nil {
@@ -261,10 +329,10 @@ func (b *Builder) manage() error {
 			return nil
 		default:
 
-			instances := int(runtime.BuilderCapacity().Workers)
+			instances := defaultWorkerInstances
 
-			if b.limits != nil && b.limits.WorkerInstances != 0 {
-				instances = int(b.limits.WorkerInstances)
+			if b.limits != nil && b.limits.workerInstances != 0 {
+				instances = int(b.limits.workerInstances)
 			}
 
 			if len(b.workers) >= instances {
@@ -299,6 +367,8 @@ func (b *Builder) manage() error {
 
 // Configure builder
 func (b *Builder) configure() error {
+
+	log.Infof("%s:manage:> run configure builder", logWorkerPrefix)
 
 	localImages, err := b.cii.List(b.ctx)
 	if err != nil {
@@ -344,9 +414,11 @@ func (b *Builder) configure() error {
 // Restore builder
 func (b *Builder) restore() error {
 
+	log.Infof("%s:manage:> restore builder processes", logWorkerPrefix)
+
 	containers, err := b.cri.List(b.ctx, true)
 	if err != nil {
-		log.Errorf("Pods restore error: %v", err)
+		log.Errorf("Container restore error: %v", err)
 		return err
 	}
 
@@ -358,7 +430,7 @@ func (b *Builder) restore() error {
 			return err
 		}
 
-		if _, ok := c.Labels[lbt.ContainerTypeLBC]; !ok {
+		if _, ok := c.Labels[lbt.ContainerTypeLBR]; !ok {
 			continue
 		}
 
@@ -411,15 +483,14 @@ func (b *Builder) connect() error {
 	opts.System.Version = info.Version
 
 	if b.limits != nil {
-		opts.Resource.Workers = b.limits.WorkerInstances
-		opts.Resource.Memory = b.limits.WorkerMemory
-		opts.Resource.Cpu = b.limits.WorkerCPU
-		opts.Resource.Storage = b.limits.WorkerStorage
+		opts.Resource.Workers = b.limits.workerInstances
+		opts.Resource.RAM = b.limits.workerRAM
+		opts.Resource.Storage = b.limits.workerStorage
 	} else {
 		r := runtime.BuilderCapacity()
 		opts.Resource.Workers = r.Workers
-		opts.Resource.Memory = r.Memory
-		opts.Resource.Cpu = r.Cpu
+		opts.Resource.RAM = r.RAM
+		opts.Resource.CPU = r.CPU
 		opts.Resource.Storage = r.Storage
 	}
 
@@ -452,29 +523,10 @@ func (b *Builder) connect() error {
 		}
 	}
 
-	manifest, err := envs.Get().GetClient().V1().Builder(envs.Get().GetHostname()).Connect(b.ctx, opts)
+	err := envs.Get().GetClient().V1().Builder(envs.Get().GetHostname()).Connect(b.ctx, opts)
 	if err != nil {
 		log.Errorf("%s:start:> send event connect builder err: %v", logWorkerPrefix, err)
 		return err
-	}
-
-	modify := false
-
-	mopts := new(rbt.BuilderManifest)
-	if manifest.Limits != nil {
-		if manifest.Limits.WorkerLimit {
-			modify = true
-			mopts.Limits = new(rbt.BuilderLimits)
-			mopts.Limits.WorkerMemory = manifest.Limits.WorkerMemory
-			mopts.Limits.Workers = manifest.Limits.Workers
-		}
-	}
-
-	if modify {
-		if err := b.Update(b.ctx, mopts); err != nil {
-			log.Errorf("%s:start:> update builder manifest err: %v", logWorkerPrefix, err)
-			return err
-		}
 	}
 
 	return nil
@@ -496,27 +548,27 @@ func (b Builder) status() error {
 			status := runtime.BuilderStatus()
 
 			opts.Capacity.Workers = status.Capacity.Workers
-			opts.Capacity.Memory = status.Capacity.Memory
+			opts.Capacity.RAM = status.Capacity.RAM - b.reserveMemory
 			opts.Capacity.Storage = status.Capacity.Storage
-			opts.Capacity.Cpu = status.Capacity.Cpu
+			opts.Capacity.CPU = status.Capacity.CPU
 
 			if b.limits != nil {
-				opts.Allocated.Workers = b.limits.WorkerInstances
-				opts.Allocated.Memory = uint64(b.limits.WorkerInstances) * uint64(b.limits.WorkerMemory)
-				opts.Allocated.Storage = uint64(b.limits.WorkerInstances) * uint64(b.limits.WorkerStorage)
-				opts.Allocated.Cpu = uint(b.limits.WorkerInstances) * uint(b.limits.WorkerCPU)
+				opts.Allocated.Workers = b.limits.workerInstances
+				opts.Allocated.RAM = int64(b.limits.workerInstances) * b.limits.workerRAM
+				opts.Allocated.Storage = int64(b.limits.workerInstances) * b.limits.workerStorage
+				opts.Allocated.CPU = int64(b.limits.workerInstances) * b.limits.workerCPU
 			} else {
 				opts.Allocated.Workers = status.Capacity.Workers
-				opts.Allocated.Memory = status.Capacity.Memory
+				opts.Allocated.RAM = status.Capacity.RAM
 				opts.Allocated.Storage = status.Capacity.Storage
-				opts.Allocated.Cpu = status.Capacity.Cpu
+				opts.Allocated.CPU = status.Capacity.CPU
 			}
 
 			u := b.getUsage()
 			opts.Usage.Workers = u.Workers
-			opts.Usage.Memory = u.Memory
+			opts.Usage.RAM = u.RAM
 			opts.Usage.Storage = u.Storage
-			opts.Usage.Cpu = u.Cpu
+			opts.Usage.CPU = u.CPU
 
 			<-time.After(defaultSendStatusDelay)
 
@@ -532,24 +584,24 @@ func (b Builder) status() error {
 
 func (b Builder) getUsage() *types.BuilderResources {
 	br := new(types.BuilderResources)
-	br.Workers = uint(len(b.workers))
+	br.Workers = len(b.workers)
 
-	br.Memory = uint64(br.Workers) * types.DEFAULT_MIN_WORKER_MEMORY
-	br.Cpu = 0     //uint(br.Workers) * types.DEFAULT_MIN_WORKER_CPU
+	br.RAM = int64(br.Workers) * types.DEFAULT_MIN_WORKER_MEMORY
+	br.CPU = int64(br.Workers) * types.DEFAULT_MIN_WORKER_CPU
 	br.Storage = 0 //uint64(br.Workers) * types.DEFAULT_MIN_WORKER_Storage
 
 	if b.limits != nil {
 
-		if b.limits.WorkerMemory != 0 {
-			br.Memory = uint64(br.Workers) * uint64(b.limits.WorkerMemory)
+		if b.limits.workerRAM != 0 {
+			br.RAM = int64(br.Workers) * b.limits.workerRAM
 		}
 
-		if b.limits.WorkerStorage != 0 {
-			br.Storage = 0 //uint64(br.Workers) * uint64(b.limits.WorkerMemory)
+		if b.limits.workerCPU != 0 {
+			br.CPU = int64(br.Workers) * b.limits.workerCPU
 		}
 
-		if b.limits.WorkerCPU != 0 {
-			br.Cpu = 0 //uint(br.Workers) * uint(b.limits.WorkerCPU)
+		if b.limits.workerStorage != 0 {
+			br.Storage = 0 //uint64(br.Workers) * uint64(b.limits.WorkerStorage)
 		}
 
 	}

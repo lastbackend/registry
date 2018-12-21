@@ -138,27 +138,28 @@ func (b *Builder) Update(builder *types.Builder, opts *types.BuilderUpdateOption
 	if opts.Limits != nil {
 		builder.Spec.Limits.WorkerLimit = opts.Limits.WorkerLimit
 		builder.Spec.Limits.Workers = opts.Limits.Workers
-		builder.Spec.Limits.WorkerMemory = opts.Limits.WorkerMemory
+		builder.Spec.Limits.WorkerRAM = opts.Limits.WorkerRAM
+		builder.Spec.Limits.WorkerCPU = opts.Limits.WorkerCPU
 	}
 
 	if opts.Allocated != nil {
 		builder.Status.Allocated.Workers = opts.Allocated.Workers
-		builder.Status.Allocated.Memory = opts.Allocated.Memory
-		builder.Status.Allocated.Cpu = opts.Allocated.Cpu
+		builder.Status.Allocated.RAM = opts.Allocated.RAM
+		builder.Status.Allocated.CPU = opts.Allocated.CPU
 		builder.Status.Allocated.Storage = opts.Allocated.Storage
 	}
 
 	if opts.Capacity != nil {
 		builder.Status.Capacity.Workers = opts.Capacity.Workers
-		builder.Status.Capacity.Memory = opts.Capacity.Memory
-		builder.Status.Capacity.Cpu = opts.Capacity.Cpu
+		builder.Status.Capacity.RAM = opts.Capacity.RAM
+		builder.Status.Capacity.CPU = opts.Capacity.CPU
 		builder.Status.Capacity.Storage = opts.Capacity.Storage
 	}
 
 	if opts.Usage != nil {
 		builder.Status.Usage.Workers = opts.Usage.Workers
-		builder.Status.Usage.Memory = opts.Usage.Memory
-		builder.Status.Usage.Cpu = opts.Usage.Cpu
+		builder.Status.Usage.RAM = opts.Usage.RAM
+		builder.Status.Usage.CPU = opts.Usage.CPU
 		builder.Status.Usage.Storage = opts.Usage.Storage
 	}
 

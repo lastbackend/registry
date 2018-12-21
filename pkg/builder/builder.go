@@ -84,6 +84,7 @@ func Daemon() bool {
 		bo.Stdout = viper.GetBool("builder.logger.stdout")
 	}
 
+	// Configure external storge for builder
 	if viper.IsSet("builder.blob_storage") {
 		var blobStorage blob.IBlobStorage
 		var cfg config.Config
@@ -103,6 +104,32 @@ func Daemon() bool {
 	}
 
 	b := builder.New(_cri, _cii, bo)
+
+	// Configure builder resources
+	if viper.IsSet("builder.resources") {
+
+		if viper.IsSet("builder.resources.reserve_memory") {
+			if err := b.SetReserveMemory(viper.GetString("builder.resources.reserve_memory")); err != nil {
+				panic(err)
+			}
+		}
+
+		if viper.IsSet("builder.resources.reserve_memory") {
+			if err := b.SetReserveMemory(viper.GetString("builder.resources.reserve_memory")); err != nil {
+				panic(err)
+			}
+		}
+
+		if viper.IsSet("builder.resources.workers") && viper.IsSet("builder.resources.workers.instances") {
+			if err := b.SetWorkerLimits(
+				viper.GetInt("builder.resources.workers.instances"),
+				viper.GetString("builder.resources.workers.worker_ram"),
+				viper.GetString("builder.resources.workers.worker_cpu"),
+			); err != nil {
+				panic(err)
+			}
+		}
+	}
 
 	if viper.IsSet("builder.ip") {
 		envs.Get().SetIP(viper.GetString("builder.ip"))
