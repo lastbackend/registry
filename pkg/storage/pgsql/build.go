@@ -424,19 +424,22 @@ func (s *BuildStorage) Unfreeze(ctx context.Context) error {
 	log.V(logLevel).Debugf("%s:unfreeze:> unfreeze builds", logBuildPrefix)
 
 	const query = `
-    UPDATE images_builds
-    SET
-      builder_id       = NULL,
-      state_step       = '',
-      state_status     = $1,
-      state_processing = FALSE,
-      state_started    = NULL,
-      updated          = now() at time zone 'utc'
-    WHERE updated <= (CURRENT_DATE :: timestamp - '1 day' :: interval)
+   UPDATE images_builds
+   SET
+     builder_id       = NULL,
+     state_step       = '',
+     state_status     = $1,
+     state_processing = FALSE,
+     state_started    = NULL,
+     updated          = now() at time zone 'utc'
+   WHERE (state_processing IS TRUE
+      AND builder_id IS NOT NULL
+      AND updated <= (CURRENT_DATE :: timestamp - '1 day' :: interval)
+     )
       OR builder_id =
-               (SELECT id
-                FROM builders
-                WHERE online = FALSE AND id = images_builds.builder_id AND state_processing IS TRUE);`
+         (SELECT id
+          FROM builders
+          WHERE online = FALSE AND id = images_builds.builder_id AND state_processing IS TRUE);`
 
 	result, err := getClient(ctx).ExecContext(ctx, query, types.BuildStatusQueued)
 	if err != nil {
