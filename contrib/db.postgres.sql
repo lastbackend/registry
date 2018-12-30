@@ -71,6 +71,7 @@ CREATE TABLE builders
   hostname  VARCHAR(512)     NOT NULL,
   ip        VARCHAR(512)     NOT NULL,
   port      INTEGER          NOT NULL,
+  online    BOOLEAN                   DEFAULT FALSE,
   tls       BOOLEAN                   DEFAULT FALSE,
   ssl       JSONB                     DEFAULT NULL,
   limits    JSONB                     DEFAULT NULL,

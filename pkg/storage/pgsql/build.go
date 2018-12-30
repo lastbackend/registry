@@ -398,10 +398,6 @@ func (s *BuildStorage) Attach(ctx context.Context, builder *types.Builder) (*typ
 
 	var id sql.NullString
 
-	if _, err := getClient(ctx).Exec(`SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;`); err != nil {
-		return nil, nil
-	}
-
 	err := getClient(ctx).QueryRowContext(ctx, query, builder.Meta.ID, types.BuildStatusPreparing).Scan(&id)
 	switch err {
 	case nil:

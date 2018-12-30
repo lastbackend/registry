@@ -54,7 +54,6 @@ type Storage struct {
 const sql_connection_name = "sqlc"
 
 func (s *Storage) Begin(ctx context.Context) (context.Context, error) {
-	s.Context, s.CancelFunc = context.WithCancel(ctx)
 	connect, err := client.Begin()
 	if err != nil {
 		return s.Context, err
@@ -70,7 +69,6 @@ func (s *Storage) Rollback(ctx context.Context) (context.Context, error) {
 	if err := c.Rollback(); err != nil {
 		return context.WithValue(s.Context, sql_connection_name, nil), err
 	}
-	s.CancelFunc()
 	return context.WithValue(s.Context, sql_connection_name, nil), nil
 }
 
@@ -82,7 +80,6 @@ func (s *Storage) Commit(ctx context.Context) (context.Context, error) {
 	if err := c.Commit(); err != nil {
 		return context.WithValue(s.Context, sql_connection_name, nil), err
 	}
-	s.Context.Done()
 	return context.WithValue(s.Context, sql_connection_name, nil), nil
 }
 
