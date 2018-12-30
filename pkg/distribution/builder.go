@@ -172,20 +172,9 @@ func (b *Builder) FindBuild(builder *types.Builder) (*types.Build, error) {
 
 	log.V(logLevel).Debugf("%s:find_build:> get build for builder  %s", logBuilderPrefix, builder.Meta.Hostname)
 
-	ctx, err := b.storage.Begin(b.context)
-	if err != nil {
-		log.V(logLevel).Debugf("%s:find_build:> create storage context err: ", logBuilderPrefix, err.Error())
-		return nil, err
-	}
-
-	build, err := b.storage.Build().Attach(ctx, builder)
+	build, err := b.storage.Build().Attach(b.context, builder)
 	if err != nil {
 		log.V(logLevel).Errorf("%s:find_build:> get build for builder %s err: %v", logBuilderPrefix, builder.Meta.Hostname, err)
-		return nil, err
-	}
-
-	if _, err := b.storage.Commit(ctx); err != nil {
-		log.V(logLevel).Errorf("%s:find_build:> commit storage context err: %s", logBuilderPrefix, err.Error())
 		return nil, err
 	}
 
