@@ -93,9 +93,9 @@ func (p *Pool) Listen() {
 }
 
 // Broadcast message to connections
-func (p Pool) Broadcast(event, op, entity string, msg []byte) {
+func (p Pool) Broadcast(event string, data []byte) {
 	log.V(logLevel).Debugf("%s:broadcast:> broadcast message to connections", logPrefix)
-	p.broadcast <- []byte(fmt.Sprintf("{\"event\":\"%s\", \"operation\":\"%s\", \"entity\":\"%s\", \"payload\":%s}", event, op, entity, string(msg)))
+	p.broadcast <- []byte(fmt.Sprintf("{\"event\":\"%s\", \"payload\":%s}", event, string(data)))
 }
 
 // manage connection and attach it to broker

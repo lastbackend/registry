@@ -21,6 +21,7 @@ package monitor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -109,29 +110,45 @@ func (m Monitor) listen() {
 		case e := <-evs:
 			{
 
-				event := types.Event{}
+				ev := types.StorageEvent{}
 
-				if err := json.Unmarshal([]byte(e), &event); err != nil {
+				if err := json.Unmarshal([]byte(e), &ev); err != nil {
 					log.V(logLevel).Errorf("%s:listen:> parse event from db err: %v", logPrefix, err)
 					continue
 				}
 
-				switch event.Name {
+				switch ev.Channel {
 				case "builder":
 
-					builder, err := bdm.Get(event.Entity)
-					if err != nil {
-						log.V(logLevel).Errorf("%s:listen:> get builder err: %v", logPrefix, err)
+					response := []byte(fmt.Sprintf("{\"id\":\"%s\"}", ev.Entity))
+
+					if ev.Operation == "insert" || ev.Operation == "update" {
+						builder, err := bdm.Get(ev.Entity)
+						if err != nil {
+							log.V(logLevel).Errorf("%s:listen:> get builder err: %v", logPrefix, err)
+							continue
+						}
+
+						response, err = v1.View().Builder().New(builder).ToJson()
+						if err != nil {
+							log.V(logLevel).Errorf("%s:listen:> convert struct to json err: %v", logPrefix, err)
+							continue
+						}
+					}
+
+					event := ""
+					switch ev.Operation {
+					case types.StorageInsertAction:
+						event = "builder:connect"
+					case types.StorageUpdateAction:
+						event = "builder:update"
+					case types.StorageDeleteAction:
+						event = "builder:remove"
+					default:
 						continue
 					}
 
-					response, err := v1.View().Builder().New(builder).ToJson()
-					if err != nil {
-						log.V(logLevel).Errorf("%s:listen:> convert struct to json err: %v", logPrefix, err)
-						continue
-					}
-
-					if err := m.pool.Broadcast(defaultChannel, "update", event.Name, response); err != nil {
+					if err := m.pool.Broadcast(defaultChannel, event, response); err != nil {
 						log.V(logLevel).Errorf("%s:listen:> send broadcast builder event err: %v", logPrefix, err)
 						continue
 					}
@@ -140,20 +157,36 @@ func (m Monitor) listen() {
 
 				case "build":
 
-					build, err := bm.Get(event.Entity)
-					if err != nil {
-						log.V(logLevel).Errorf("%s:listen:> get build err: %v", logPrefix, err)
+					response := []byte(fmt.Sprintf("{\"id\":\"%s\"}", ev.Entity))
+
+					if ev.Operation == "insert" || ev.Operation == "update" {
+						build, err := bm.Get(ev.Entity)
+						if err != nil {
+							log.V(logLevel).Errorf("%s:listen:> get builder err: %v", logPrefix, err)
+							continue
+						}
+
+						response, err = v1.View().Build().New(build).ToJson()
+						if err != nil {
+							log.V(logLevel).Errorf("%s:listen:> convert struct to json err: %v", logPrefix, err)
+							continue
+						}
+					}
+
+					event := ""
+					switch ev.Operation {
+					case types.StorageInsertAction:
+						event = "build:connect"
+					case types.StorageUpdateAction:
+						event = "build:update"
+					case types.StorageDeleteAction:
+						event = "build:remove"
+					default:
 						continue
 					}
 
-					response, err := v1.View().Build().New(build).ToJson()
-					if err != nil {
-						log.V(logLevel).Errorf("%s:listen:> convert struct to json err: %v", logPrefix, err)
-						continue
-					}
-
-					if err := m.pool.Broadcast(defaultChannel, event.Operation, event.Name, response); err != nil {
-						log.V(logLevel).Errorf("%s:listen:> send broadcast builder event err: %v", logPrefix, err)
+					if err := m.pool.Broadcast(defaultChannel, event, response); err != nil {
+						log.V(logLevel).Errorf("%s:listen:> send broadcast build event err: %v", logPrefix, err)
 						continue
 					}
 

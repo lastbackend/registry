@@ -102,9 +102,9 @@ func (c *Controller) Listen() {
 }
 
 // Broadcast message to all pools if channel
-func (c *Controller) Broadcast(channel, op, entity string, data []byte) error {
+func (c *Controller) Broadcast(channel, event string, data []byte) error {
 	if p, ok := c.pools[channel]; ok {
-		p.Broadcast(channel, op, entity, data)
+		p.Broadcast(event, data)
 	}
 	return nil
 }

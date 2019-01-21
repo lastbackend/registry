@@ -22,9 +22,19 @@ import (
 	"encoding/json"
 )
 
+const (
+	StorageInsertAction = "insert"
+	StorageUpdateAction = "update"
+	StorageDeleteAction = "delete"
+)
+
+type StorageEvent struct {
+	Channel   string `json:"channel"`
+	Operation string `json:"operation"`
+	Entity    string `json:"entity"`
+}
+
 type Event struct {
-	Name      string          `json:"channel"`
-	Operation string          `json:"operation"`
-	Entity    string          `json:"entity"`
-	Payload   json.RawMessage `json:"payload"`
+	Name    string          `json:"name"`
+	Payload json.RawMessage `json:"payload"`
 }
