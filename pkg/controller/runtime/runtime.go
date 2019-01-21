@@ -23,7 +23,6 @@ import (
 	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/controller/runtime/build"
 	"github.com/lastbackend/registry/pkg/controller/runtime/builder"
-	"github.com/lastbackend/registry/pkg/controller/runtime/exporter"
 	"github.com/lastbackend/registry/pkg/distribution/types"
 	"github.com/lastbackend/registry/pkg/system"
 )
@@ -43,7 +42,6 @@ type Runtime struct {
 
 	builderCtrl  *builder.BuilderController
 	buildCtrl    *build.BuildController
-	exporterCtrl *exporter.ExporterController
 }
 
 func New() *Runtime {
@@ -62,7 +60,6 @@ func New() *Runtime {
 
 	r.builderCtrl = builder.New()
 	r.buildCtrl = build.New()
-	r.exporterCtrl = exporter.New()
 
 	return r
 }
@@ -97,7 +94,6 @@ func (r *Runtime) Loop() {
 
 						go r.builderCtrl.Start(r.ctx)
 						go r.buildCtrl.Start(r.ctx)
-						go r.exporterCtrl.Start(r.ctx)
 
 						continue
 					}
@@ -112,7 +108,6 @@ func (r *Runtime) Loop() {
 
 					r.builderCtrl.Stop()
 					r.buildCtrl.Stop()
-					r.exporterCtrl.Stop()
 				}
 			}
 		}
