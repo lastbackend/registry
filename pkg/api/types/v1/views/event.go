@@ -16,14 +16,12 @@
 // from Last.Backend LLC.
 //
 
-package types
+package views
 
-import (
-	"encoding/json"
-)
+import "encoding/json"
 
 type Event struct {
-	Name      string          `json:"name"`
+	Name      string          `json:"event"`
 	Operation string          `json:"operation"`
 	Entity    string          `json:"entity"`
 	Payload   json.RawMessage `json:"payload"`

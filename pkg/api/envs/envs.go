@@ -19,6 +19,7 @@
 package envs
 
 import (
+	"github.com/lastbackend/registry/pkg/notifier"
 	"github.com/lastbackend/registry/pkg/storage"
 	"github.com/lastbackend/registry/pkg/util/blob"
 )
@@ -28,6 +29,7 @@ var e Env
 type Env struct {
 	storage     storage.IStorage
 	blobStorage blob.IBlobStorage
+	notifier    notifier.INotifier
 }
 
 func Get() *Env {
@@ -48,4 +50,12 @@ func (env *Env) SetBlobStorage(u blob.IBlobStorage) {
 
 func (env Env) GetBlobStorage() blob.IBlobStorage {
 	return env.blobStorage
+}
+
+func (env *Env) SetNotifier(u notifier.INotifier) {
+	env.notifier = u
+}
+
+func (env Env) GetNotifier() notifier.INotifier {
+	return env.notifier
 }

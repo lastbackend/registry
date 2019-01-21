@@ -173,7 +173,7 @@ BEGIN
     END IF;
 
     PERFORM
-    pg_notify('e_watch_build',
+    pg_notify('e_watch',
               JSON_BUILD_OBJECT('channel', 'build', 'entity', NEW.id :: TEXT, 'operation',
                                 'insert') :: TEXT);
 
@@ -182,8 +182,38 @@ BEGIN
   THEN
 
     PERFORM
-    pg_notify('e_watch_build',
+    pg_notify('e_watch',
               JSON_BUILD_OBJECT('channel', 'build', 'entity', NEW.id :: TEXT, 'operation',
+                                'update') :: TEXT);
+
+    RETURN NEW;
+  ELSE
+    RETURN NEW;
+  END IF;
+END;
+$$
+  LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION lb_after_builders_function()
+  RETURNS TRIGGER AS
+$$
+BEGIN
+  IF TG_OP = 'INSERT'
+  THEN
+
+    PERFORM
+    pg_notify('e_watch',
+              JSON_BUILD_OBJECT('channel', 'builder', 'entity', NEW.id :: TEXT, 'operation',
+                                'insert') :: TEXT);
+
+    RETURN NEW;
+  ELSIF TG_OP = 'UPDATE'
+  THEN
+
+    PERFORM
+    pg_notify('e_watch',
+              JSON_BUILD_OBJECT('channel', 'builder', 'entity', NEW.id :: TEXT, 'operation',
                                 'update') :: TEXT);
 
     RETURN NEW;
@@ -220,6 +250,13 @@ CREATE CONSTRAINT TRIGGER lb_after_images_builds_change
   DEFERRABLE
   FOR EACH ROW
 EXECUTE PROCEDURE lb_after_images_builds_function();
+
+CREATE CONSTRAINT TRIGGER lb_after_builders_change
+  AFTER INSERT OR UPDATE
+  ON builders
+  DEFERRABLE
+  FOR EACH ROW
+EXECUTE PROCEDURE lb_after_builders_function();
 
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------- Creates default records  ---------------------------------

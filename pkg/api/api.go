@@ -19,6 +19,7 @@
 package api
 
 import (
+	"github.com/lastbackend/registry/pkg/notifier"
 	"github.com/lastbackend/registry/pkg/util/blob/config"
 	"os"
 	"os/signal"
@@ -53,7 +54,9 @@ func Daemon() bool {
 	if viper.IsSet("api.blob_storage") {
 		var blobStorage blob.IBlobStorage
 		var cfg config.Config
-		viper.UnmarshalKey("api.blob_storage", &cfg)
+		if err := viper.UnmarshalKey("api.blob_storage", &cfg); err != nil {
+			log.Fatalf("parse blob_storage config err: %v", err)
+		}
 
 		switch viper.GetString("api.blob_storage.type") {
 		case blob.DriverS3:
@@ -63,6 +66,8 @@ func Daemon() bool {
 		}
 		envs.Get().SetBlobStorage(blobStorage)
 	}
+
+	envs.Get().SetNotifier(notifier.New(stg))
 
 	go func() {
 		opts := new(http.HttpOpts)
@@ -85,6 +90,7 @@ func Daemon() bool {
 		for {
 			select {
 			case <-sigs:
+				envs.Get().GetNotifier().Stop()
 				done <- true
 				return
 			}

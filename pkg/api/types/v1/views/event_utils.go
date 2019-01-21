@@ -16,15 +16,28 @@
 // from Last.Backend LLC.
 //
 
-package types
+package views
 
 import (
 	"encoding/json"
+	"unsafe"
+
+	"github.com/lastbackend/registry/pkg/distribution/types"
 )
 
-type Event struct {
-	Name      string          `json:"name"`
-	Operation string          `json:"operation"`
-	Entity    string          `json:"entity"`
-	Payload   json.RawMessage `json:"payload"`
+type EventView struct{}
+
+func (ev *EventView) New(obj *types.Event) *Event {
+	if obj == nil {
+		return nil
+	}
+	e := new(Event)
+	return e
+}
+
+func (ev *Event) ToJson() ([]byte, error) {
+	if unsafe.Sizeof(ev) == 0 {
+		return []byte{}, nil
+	}
+	return json.Marshal(ev)
 }

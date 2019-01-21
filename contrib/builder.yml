@@ -9,9 +9,9 @@ registry:
   uri: "https://hub.lstbknd.net"
   tls:
     insecure: true
-    ca: "/opt/cert/registry/ca.pem"
-    cert: "/opt/cert/registry/client.pem"
-    key: "/opt/cert/registry/client-key.pem"
+#    ca: "/opt/cert/registry/ca.pem"
+#    cert: "/opt/cert/registry/client.pem"
+#    key: "/opt/cert/registry/client-key.pem"
 
 builder:
   host: 0.0.0.0
@@ -19,13 +19,13 @@ builder:
   ip: "127.0.0.1"
   tls:
     insecure: true
-    ca: "/opt/cert/builder/ca.pem"
-    server_cert: "/opt/cert/builder/server.pem"
-    server_key: "/opt/cert/builder/server-key.pem"
-    client_cert: "/opt/cert/builder/client.pem"
-    client_key: "/opt/cert/builder/client-key.pem"
-  cacerts:
-  - "hub.lstbknd.net:/opt/cert/hub/ca.pem:ro"
+#    ca: "/opt/cert/builder/ca.pem"
+#    server_cert: "/opt/cert/builder/server.pem"
+#    server_key: "/opt/cert/builder/server-key.pem"
+#    client_cert: "/opt/cert/builder/client.pem"
+#    client_key: "/opt/cert/builder/client-key.pem"
+#  cacerts:
+#  - "hub.lstbknd.net:/opt/cert/hub/ca.pem:ro"
   logger:
     stdout: true
   blob_storage:

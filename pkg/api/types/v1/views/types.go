@@ -39,3 +39,7 @@ func (View) Image() *ImageView {
 func (View) Registry() *RegistryView {
 	return new(RegistryView)
 }
+
+func (View) Event() *EventView {
+	return new(EventView)
+}

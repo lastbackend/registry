@@ -16,15 +16,14 @@
 // from Last.Backend LLC.
 //
 
-package types
+package event
 
 import (
-	"encoding/json"
+	"github.com/lastbackend/registry/pkg/util/http"
+	"github.com/lastbackend/registry/pkg/util/http/middleware"
 )
 
-type Event struct {
-	Name      string          `json:"name"`
-	Operation string          `json:"operation"`
-	Entity    string          `json:"entity"`
-	Payload   json.RawMessage `json:"payload"`
+var Routes = []http.Route{
+	// Image handlers
+	{Path: "/registry/events", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: EventsH},
 }
