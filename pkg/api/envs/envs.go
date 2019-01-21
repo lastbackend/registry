@@ -19,7 +19,7 @@
 package envs
 
 import (
-	"github.com/lastbackend/registry/pkg/notifier"
+	"github.com/lastbackend/registry/pkg/monitor"
 	"github.com/lastbackend/registry/pkg/storage"
 	"github.com/lastbackend/registry/pkg/util/blob"
 )
@@ -29,7 +29,7 @@ var e Env
 type Env struct {
 	storage     storage.IStorage
 	blobStorage blob.IBlobStorage
-	notifier    notifier.INotifier
+	monitor     monitor.IMonitor
 }
 
 func Get() *Env {
@@ -52,10 +52,10 @@ func (env Env) GetBlobStorage() blob.IBlobStorage {
 	return env.blobStorage
 }
 
-func (env *Env) SetNotifier(u notifier.INotifier) {
-	env.notifier = u
+func (env *Env) SetMonitor(u monitor.IMonitor) {
+	env.monitor = u
 }
 
-func (env Env) GetNotifier() notifier.INotifier {
-	return env.notifier
+func (env Env) GetMonitor() monitor.IMonitor {
+	return env.monitor
 }

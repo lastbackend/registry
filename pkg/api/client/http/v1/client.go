@@ -20,11 +20,6 @@ package v1
 
 import (
 	"context"
-	"encoding/json"
-	"github.com/gorilla/websocket"
-	"log"
-	"time"
-
 	"github.com/lastbackend/lastbackend/pkg/distribution/errors"
 	"github.com/lastbackend/registry/pkg/api/client/types"
 	"github.com/lastbackend/registry/pkg/util/http/request"
@@ -121,55 +116,4 @@ func (rc Client) Update(ctx context.Context, opts *rv1.RegistryUpdateOptions) (*
 	}
 
 	return s, nil
-}
-
-func (rc Client) Watch(ctx context.Context, event chan *vv1.Event) error {
-
-	c, _, err := websocket.DefaultDialer.Dial("/registry/events", nil)
-	if err != nil {
-		log.Fatal("dial:", err)
-	}
-	defer c.Close()
-
-	done := make(chan struct{})
-
-	go func() {
-		defer close(done)
-		for {
-			_, m, err := c.ReadMessage()
-			if err != nil {
-				return
-			}
-
-			e := new(vv1.Event)
-
-			if err := json.Unmarshal(m, e); err != nil {
-				return
-			}
-
-			event <- e
-		}
-	}()
-
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-done:
-			// Cleanly close the connection by sending a close message and then
-			// waiting (with timeout) for the server to close the connection.
-			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-			if err != nil {
-				return err
-			}
-			return nil
-		case t := <-ticker.C:
-			err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
-			if err != nil {
-				return err
-			}
-		}
-	}
-
 }

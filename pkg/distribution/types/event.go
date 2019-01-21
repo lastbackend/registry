@@ -23,7 +23,7 @@ import (
 )
 
 type Event struct {
-	Name      string          `json:"name"`
+	Name      string          `json:"channel"`
 	Operation string          `json:"operation"`
 	Entity    string          `json:"entity"`
 	Payload   json.RawMessage `json:"payload"`

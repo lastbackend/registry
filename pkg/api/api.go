@@ -19,7 +19,7 @@
 package api
 
 import (
-	"github.com/lastbackend/registry/pkg/notifier"
+	"github.com/lastbackend/registry/pkg/monitor"
 	"github.com/lastbackend/registry/pkg/util/blob/config"
 	"os"
 	"os/signal"
@@ -67,7 +67,7 @@ func Daemon() bool {
 		envs.Get().SetBlobStorage(blobStorage)
 	}
 
-	envs.Get().SetNotifier(notifier.New(stg))
+	envs.Get().SetMonitor(monitor.New(stg))
 
 	go func() {
 		opts := new(http.HttpOpts)
@@ -90,7 +90,7 @@ func Daemon() bool {
 		for {
 			select {
 			case <-sigs:
-				envs.Get().GetNotifier().Stop()
+				envs.Get().GetMonitor().Stop()
 				done <- true
 				return
 			}

@@ -23,6 +23,7 @@ import (
 	"github.com/lastbackend/lastbackend/pkg/log"
 	"github.com/lastbackend/registry/pkg/api/http/build"
 	"github.com/lastbackend/registry/pkg/api/http/builder"
+	"github.com/lastbackend/registry/pkg/api/http/event"
 	"github.com/lastbackend/registry/pkg/api/http/image"
 	"github.com/lastbackend/registry/pkg/api/http/registry"
 	"github.com/lastbackend/registry/pkg/util/http"
@@ -56,6 +57,7 @@ func init() {
 	AddRoutes(build.Routes)
 	AddRoutes(builder.Routes)
 	AddRoutes(registry.Routes)
+	AddRoutes(event.Routes)
 }
 
 func Listen(host string, port int, opts *HttpOpts) error {

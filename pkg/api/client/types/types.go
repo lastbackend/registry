@@ -32,8 +32,6 @@ type ClientV1 interface {
 
 	Get(ctx context.Context) (*vv1.Registry, error)
 	Update(ctx context.Context, opts *rv1.RegistryUpdateOptions) (*vv1.Registry, error)
-
-	Watch(ctx context.Context, event chan *vv1.Event) error
 }
 
 type BuildClientV1 interface {

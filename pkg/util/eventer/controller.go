@@ -67,13 +67,6 @@ func (c *Controller) Listen() {
 				c.Unlock()
 
 			case e := <-c.Message:
-
-				if _, ok := c.conns[e.Socket]; ok {
-					c.Lock()
-					c.conns[e.Socket].leave <- e.Socket
-					c.Unlock()
-				}
-
 				ev := string(e.Data)
 				c.Events.Call(e.Socket.Context(), ev, e.Socket, c.pools)
 
@@ -108,11 +101,10 @@ func (c *Controller) Listen() {
 	}()
 }
 
-// Broadcast message to all pools
-// TODO: need optimization
-func (c *Controller) Broadcast(event, op, entity string, data []byte) error {
-	for _, p := range c.pools {
-		p.Broadcast(event, op, entity, data)
+// Broadcast message to all pools if channel
+func (c *Controller) Broadcast(channel, op, entity string, data []byte) error {
+	if p, ok := c.pools[channel]; ok {
+		p.Broadcast(channel, op, entity, data)
 	}
 	return nil
 }

@@ -110,6 +110,7 @@ func (s *Socket) listen() {
 				pipe <- MSG{websocket.PongMessage, p}
 
 			case <-s.close:
+
 				if err := s.socket.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
 					fmt.Println(err)
 				}

@@ -39,22 +39,22 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func EventsH(w http.ResponseWriter, r *http.Request) {
+func EventsSubscribeH(w http.ResponseWriter, r *http.Request) {
 
-	log.V(logLevel).Debugf("%s:get_events:> incoming connection", logPrefix)
+	log.V(logLevel).Debugf("%s:events_subscribe:> incoming connection", logPrefix)
 
 	if r.Method != http.MethodGet {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
 
-	log.V(logLevel).Debugf("%s:get_events:> upgrade connection", logPrefix)
+	log.V(logLevel).Debugf("%s:events_subscribe:> upgrade connection", logPrefix)
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.V(logLevel).Errorf("%s:get_events:> upgrade connection err: %v", err)
+		log.V(logLevel).Errorf("%s:events_subscribe:> upgrade connection err: %v", err)
 		return
 	}
 
-	envs.Get().GetNotifier().Attach(conn)
+	envs.Get().GetMonitor().Subscribe(conn)
 }

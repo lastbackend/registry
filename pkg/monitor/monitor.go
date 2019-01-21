@@ -16,7 +16,7 @@
 // from Last.Backend LLC.
 //
 
-package notifier
+package monitor
 
 import (
 	"context"
@@ -35,7 +35,7 @@ import (
 
 const defaultChannel = "notify"
 
-type Notifier struct {
+type Monitor struct {
 	sync.Mutex
 
 	ctx    context.Context
@@ -46,51 +46,56 @@ type Notifier struct {
 	storage storage.IStorage
 }
 
-type INotifier interface {
+type IMonitor interface {
 	Stop()
-	Attach(conn *websocket.Conn)
+	Subscribe(conn *websocket.Conn)
 }
 
 const (
 	logLevel  = 5
-	logPrefix = "notifier"
+	logPrefix = "monitor"
 )
 
-func New(storage storage.IStorage) *Notifier {
-	var n = new(Notifier)
+func New(storage storage.IStorage) *Monitor {
+	var m = new(Monitor)
 
-	n.ctx, n.cancel = context.WithCancel(context.Background())
+	m.ctx, m.cancel = context.WithCancel(context.Background())
 
-	n.pool = eventer.New()
+	m.pool = eventer.New()
 
-	n.storage = storage
+	m.storage = storage
 
-	go n.listen()
+	go m.listen()
 
-	return n
+	return m
 }
 
-func (n Notifier) Attach(conn *websocket.Conn) {
-	sock := socket.New(context.Background(), conn, n.pool.Leave, n.pool.Message)
-	p := n.pool.Get(defaultChannel)
+func (m Monitor) Subscribe(conn *websocket.Conn) {
+
+	log.Debugf("%s:subscribe: connection subscribe to events>", logPrefix)
+
+	sock := socket.New(context.Background(), conn, m.pool.Leave, m.pool.Message)
+	p := m.pool.Get(defaultChannel)
+
 	if p == nil {
-		p = n.pool.Add(defaultChannel, sock)
+		p = m.pool.Add(defaultChannel, sock)
 	} else {
-		n.pool.Attach(p, sock)
+		m.pool.Attach(p, sock)
 	}
+
 }
 
-func (n Notifier) Stop() {
-	n.cancel()
+func (m Monitor) Stop() {
+	m.cancel()
 }
 
-func (n Notifier) listen() {
-	var bm = distribution.NewBuildModel(n.ctx, n.storage)
-	var bdm = distribution.NewBuilderModel(n.ctx, n.storage)
+func (m Monitor) listen() {
+	var bm = distribution.NewBuildModel(m.ctx, m.storage)
+	var bdm = distribution.NewBuilderModel(m.ctx, m.storage)
 	var evs = make(chan string)
 
 	go func() {
-		err := n.storage.Listen(n.ctx, "e_watch", evs)
+		err := m.storage.Listen(m.ctx, "e_watch", evs)
 		if err != nil {
 			log.V(logLevel).Errorf("%s:listen:>  subscribe on events err: %v", logPrefix, err)
 			return
@@ -99,7 +104,7 @@ func (n Notifier) listen() {
 
 	for {
 		select {
-		case <-n.ctx.Done():
+		case <-m.ctx.Done():
 			return
 		case e := <-evs:
 			{
@@ -126,7 +131,7 @@ func (n Notifier) listen() {
 						continue
 					}
 
-					if err := n.pool.Broadcast(defaultChannel, "update", "builder", response); err != nil {
+					if err := m.pool.Broadcast(defaultChannel, "update", event.Name, response); err != nil {
 						log.V(logLevel).Errorf("%s:listen:> send broadcast builder event err: %v", logPrefix, err)
 						continue
 					}
@@ -147,7 +152,7 @@ func (n Notifier) listen() {
 						continue
 					}
 
-					if err := n.pool.Broadcast(defaultChannel, event.Operation, "build", response); err != nil {
+					if err := m.pool.Broadcast(defaultChannel, event.Operation, event.Name, response); err != nil {
 						log.V(logLevel).Errorf("%s:listen:> send broadcast builder event err: %v", logPrefix, err)
 						continue
 					}

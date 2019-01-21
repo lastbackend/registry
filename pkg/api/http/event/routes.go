@@ -25,5 +25,5 @@ import (
 
 var Routes = []http.Route{
 	// Image handlers
-	{Path: "/registry/events", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: EventsH},
+	{Path: "/registry/events", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: EventsSubscribeH},
 }

@@ -187,6 +187,15 @@ BEGIN
                                 'update') :: TEXT);
 
     RETURN NEW;
+  ELSIF TG_OP = 'DELETE'
+  THEN
+
+    PERFORM
+    pg_notify('e_watch',
+              JSON_BUILD_OBJECT('channel', 'build', 'entity', OLD.id :: TEXT, 'operation',
+                                'delete') :: TEXT);
+
+    RETURN OLD;
   ELSE
     RETURN NEW;
   END IF;
@@ -217,6 +226,15 @@ BEGIN
                                 'update') :: TEXT);
 
     RETURN NEW;
+  ELSIF TG_OP = 'DELETE'
+  THEN
+
+    PERFORM
+    pg_notify('e_watch',
+              JSON_BUILD_OBJECT('channel', 'builder', 'entity', OLD.id :: TEXT, 'operation',
+                                'delete') :: TEXT);
+
+    RETURN OLD;
   ELSE
     RETURN NEW;
   END IF;
@@ -244,15 +262,19 @@ $$
 ---------------------------------------- Creates triggers -----------------------------------------
 ---------------------------------------------------------------------------------------------------
 
+DROP TRIGGER IF EXISTS lb_after_images_builds_change
+  ON images_builds RESTRICT;
 CREATE CONSTRAINT TRIGGER lb_after_images_builds_change
-  AFTER INSERT OR UPDATE
+  AFTER INSERT OR UPDATE OR DELETE
   ON images_builds
   DEFERRABLE
   FOR EACH ROW
 EXECUTE PROCEDURE lb_after_images_builds_function();
 
+DROP TRIGGER IF EXISTS lb_after_builders_change
+  ON builders RESTRICT;
 CREATE CONSTRAINT TRIGGER lb_after_builders_change
-  AFTER INSERT OR UPDATE
+  AFTER INSERT OR UPDATE OR DELETE
   ON builders
   DEFERRABLE
   FOR EACH ROW
