@@ -176,7 +176,7 @@ func (m Monitor) listen() {
 					event := ""
 					switch ev.Operation {
 					case types.StorageInsertAction:
-						event = "build:connect"
+						event = "build:create"
 					case types.StorageUpdateAction:
 						event = "build:update"
 					case types.StorageDeleteAction:

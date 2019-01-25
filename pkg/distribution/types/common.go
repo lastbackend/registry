@@ -26,7 +26,7 @@ const EmptyString = ""
 const EmptyStringSlice = "[]"
 
 type Meta struct {
-	ID string `json:"c,omitempty"`
+	ID string `json:"id,omitempty"`
 	// Meta name
 	Name string `json:"name,omitempty"`
 	// Meta description

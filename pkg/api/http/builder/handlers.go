@@ -149,7 +149,7 @@ func BuilderConnectH(w http.ResponseWriter, r *http.Request) {
 
 func BuilderStatusH(w http.ResponseWriter, r *http.Request) {
 
-	log.V(logLevel).Debugf("%s:status:> connect builder to system", logPrefix)
+	log.V(logLevel).Debugf("%s:status:> update builder status in system", logPrefix)
 
 	var (
 		bm       = distribution.NewBuilderModel(r.Context(), envs.Get().GetStorage())

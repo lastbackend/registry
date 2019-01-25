@@ -35,6 +35,6 @@ type StorageEvent struct {
 }
 
 type Event struct {
-	Name    string          `json:"name"`
+	Name    string          `json:"event"`
 	Payload json.RawMessage `json:"payload"`
 }
