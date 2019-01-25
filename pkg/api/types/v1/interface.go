@@ -36,4 +36,5 @@ type IView interface {
 	Builder() *views.BuilderView
 	Image() *views.ImageView
 	Registry() *views.RegistryView
+	Event() *views.EventView
 }

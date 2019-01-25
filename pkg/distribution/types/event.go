@@ -18,8 +18,23 @@
 
 package types
 
+import (
+	"encoding/json"
+)
+
+const (
+	StorageInsertAction = "insert"
+	StorageUpdateAction = "update"
+	StorageDeleteAction = "delete"
+)
+
+type StorageEvent struct {
+	Channel   string `json:"channel"`
+	Operation string `json:"operation"`
+	Entity    string `json:"entity"`
+}
+
 type Event struct {
-	Channel   string    `json:"channel"`
-	Entity    string    `json:"entity"`
-	Operation string    `json:"operation"`
+	Name    string          `json:"event"`
+	Payload json.RawMessage `json:"payload"`
 }

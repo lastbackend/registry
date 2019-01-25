@@ -16,30 +16,14 @@
 // from Last.Backend LLC.
 //
 
-package views
+package event
 
-type View struct{}
+import (
+	"github.com/lastbackend/registry/pkg/util/http"
+	"github.com/lastbackend/registry/pkg/util/http/middleware"
+)
 
-func New() *View {
-	return new(View)
-}
-
-func (View) Build() *BuildView {
-	return new(BuildView)
-}
-
-func (View) Builder() *BuilderView {
-	return new(BuilderView)
-}
-
-func (View) Image() *ImageView {
-	return new(ImageView)
-}
-
-func (View) Registry() *RegistryView {
-	return new(RegistryView)
-}
-
-func (View) Event() *EventView {
-	return new(EventView)
+var Routes = []http.Route{
+	// Image handlers
+	{Path: "/registry/events", Method: http.MethodGet, Middleware: []http.Middleware{middleware.Authenticate}, Handler: EventsSubscribeH},
 }

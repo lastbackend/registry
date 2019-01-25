@@ -18,28 +18,11 @@
 
 package views
 
-type View struct{}
+import "encoding/json"
 
-func New() *View {
-	return new(View)
-}
-
-func (View) Build() *BuildView {
-	return new(BuildView)
-}
-
-func (View) Builder() *BuilderView {
-	return new(BuilderView)
-}
-
-func (View) Image() *ImageView {
-	return new(ImageView)
-}
-
-func (View) Registry() *RegistryView {
-	return new(RegistryView)
-}
-
-func (View) Event() *EventView {
-	return new(EventView)
+type Event struct {
+	Name      string          `json:"event"`
+	Operation string          `json:"operation"`
+	Entity    string          `json:"entity"`
+	Payload   json.RawMessage `json:"payload"`
 }

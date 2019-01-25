@@ -19,6 +19,7 @@
 package envs
 
 import (
+	"github.com/lastbackend/registry/pkg/monitor"
 	"github.com/lastbackend/registry/pkg/storage"
 	"github.com/lastbackend/registry/pkg/util/blob"
 )
@@ -28,6 +29,7 @@ var e Env
 type Env struct {
 	storage     storage.IStorage
 	blobStorage blob.IBlobStorage
+	monitor     monitor.IMonitor
 }
 
 func Get() *Env {
@@ -48,4 +50,12 @@ func (env *Env) SetBlobStorage(u blob.IBlobStorage) {
 
 func (env Env) GetBlobStorage() blob.IBlobStorage {
 	return env.blobStorage
+}
+
+func (env *Env) SetMonitor(u monitor.IMonitor) {
+	env.monitor = u
+}
+
+func (env Env) GetMonitor() monitor.IMonitor {
+	return env.monitor
 }

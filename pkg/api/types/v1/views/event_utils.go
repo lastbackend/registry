@@ -18,28 +18,26 @@
 
 package views
 
-type View struct{}
+import (
+	"encoding/json"
+	"unsafe"
 
-func New() *View {
-	return new(View)
+	"github.com/lastbackend/registry/pkg/distribution/types"
+)
+
+type EventView struct{}
+
+func (ev *EventView) New(obj *types.Event) *Event {
+	if obj == nil {
+		return nil
+	}
+	e := new(Event)
+	return e
 }
 
-func (View) Build() *BuildView {
-	return new(BuildView)
-}
-
-func (View) Builder() *BuilderView {
-	return new(BuilderView)
-}
-
-func (View) Image() *ImageView {
-	return new(ImageView)
-}
-
-func (View) Registry() *RegistryView {
-	return new(RegistryView)
-}
-
-func (View) Event() *EventView {
-	return new(EventView)
+func (ev *Event) ToJson() ([]byte, error) {
+	if unsafe.Sizeof(ev) == 0 {
+		return []byte{}, nil
+	}
+	return json.Marshal(ev)
 }

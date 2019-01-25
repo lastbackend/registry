@@ -18,7 +18,9 @@
 
 package request
 
-import "time"
+import (
+	"time"
+)
 
 type EventOptions struct {
 	Builds map[string]BuildEvent `json:"builds"`

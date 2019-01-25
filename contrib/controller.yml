@@ -5,7 +5,3 @@ verbose: 7
 
 # Database and Messages broker
 psql: "host=127.0.0.1 port=5432 user=lastbackend password=lastbackend dbname=registry sslmode=disable binary_parameters=yes"
-
-exporter:
-  uri: "http://localhost:2965/registry/events"
-  timeout: 5w
